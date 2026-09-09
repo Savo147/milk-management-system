@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Savo Milk Management System",
+  title: "Krishna Dairy — Milk Management",
   description: "Dairy milk delivery and monthly hisab management",
 };
 
