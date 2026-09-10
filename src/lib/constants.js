@@ -5,10 +5,21 @@
 export const MILK_QUANTITIES = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
 export const DELIVERY_STATUS = {
-  delivered: "Delivered",
+  // The database enum value stays "delivered"; only the label reads "Done".
+  delivered: "Done",
   partial: "Partial",
   extra: "Extra",
   missed: "Missed",
+};
+
+/**
+ * What the Daily Milk row shows. "pending" is UI-only — it means no entry has
+ * been saved for that customer on that date, so it has no database enum value;
+ * the other four mirror delivery_status.
+ */
+export const DAILY_ROW_STATUS = {
+  pending: "Pending",
+  ...DELIVERY_STATUS,
 };
 
 export const BILL_STATUS = {

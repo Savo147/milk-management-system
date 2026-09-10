@@ -3,7 +3,6 @@
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
@@ -27,22 +26,12 @@ import SaveIcon from "@mui/icons-material/Save";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import {
-  DELIVERY_STATUS,
+  DAILY_ROW_STATUS,
   MILK_QUANTITIES,
   STATUS_COLOR,
 } from "@/lib/constants";
 import { formatAmount, formatLiters } from "@/lib/format";
-import { saveDailyMilk, saveOneEntry } from "./actions";
-
-/** Mirrors deliveryStatus() in actions.js so a row reads the same as it saves. */
-function statusOf(actual, expected) {
-  if (actual === "") return null;
-  const a = Number(actual);
-  if (a === 0) return "missed";
-  if (a < expected) return "partial";
-  if (a > expected) return "extra";
-  return "delivered";
-}
+import { saveOneEntry } from "./actions";
 
 /**
  * − 2.5 L + stepper. Half-litre steps are the only quantities the business
@@ -127,6 +116,25 @@ function QuantityPicker({ value, onChange, changed }) {
   );
 }
 
+function Total({ label, value }) {
+  return (
+    <Box>
+      <Typography
+        variant="caption"
+        sx={{ color: "text.secondary", display: "block", lineHeight: 1.4 }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        variant="subtitle1"
+        sx={{ fontWeight: 700, fontVariantNumeric: "tabular-nums", lineHeight: 1.3 }}
+      >
+        {value}
+      </Typography>
+    </Box>
+  );
+}
+
 function RowSubmitButton({ saved }) {
   // useFormStatus reports the status of *this row's* form only, because each
   // row has its own.
@@ -158,7 +166,11 @@ function RowSave({ date, customerId, qty, saved }) {
   const [state, formAction] = useActionState(saveOneEntry, null);
 
   return (
-    <Box component="form" action={formAction}>
+    <Box
+      component="form"
+      action={formAction}
+      sx={{ display: "flex", justifyContent: "center" }}
+    >
       <input type="hidden" name="date" value={date} />
       <input type="hidden" name="customer_id" value={customerId} />
       <input type="hidden" name="qty" value={qty} />
@@ -176,25 +188,12 @@ function RowSave({ date, customerId, qty, saved }) {
   );
 }
 
-function SaveAllButton({ count }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button
-      type="submit"
-      variant="contained"
-      size="large"
-      startIcon={<SaveIcon />}
-      disabled={pending || count === 0}
-    >
-      {pending ? "Save thai rahyu..." : "Badha save karo"}
-    </Button>
-  );
-}
-
 export default function DailyMilkForm({ date, customers }) {
   const router = useRouter();
-  const [state, formAction] = useActionState(saveDailyMilk, null);
   const [query, setQuery] = useState("");
+  // Defaults to "pending": on a fresh day that is every customer, and each
+  // save drops a row out of the list, so what is left is what is left to do.
+  const [statusFilter, setStatusFilter] = useState("pending");
 
   // Existing entry wins; otherwise pre-fill with what the customer normally
   // takes, so a normal day needs no typing at all.
@@ -211,11 +210,13 @@ export default function DailyMilkForm({ date, customers }) {
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return customers;
-    return customers.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.mobile.includes(q),
-    );
-  }, [customers, query]);
+    return customers.filter((c) => {
+      const status = c.entry ? c.entry.delivery_status : "pending";
+      if (statusFilter !== "all" && status !== statusFilter) return false;
+      if (!q) return true;
+      return c.name.toLowerCase().includes(q) || c.mobile.includes(q);
+    });
+  }, [customers, query, statusFilter]);
 
   const totals = useMemo(() => {
     let count = 0;
@@ -231,21 +232,8 @@ export default function DailyMilkForm({ date, customers }) {
     return { count, liters, amount };
   }, [customers, values]);
 
-  const alreadySaved = customers.filter((c) => c.entry).length;
-
   return (
     <Box>
-      {state?.error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {state.error}
-        </Alert>
-      )}
-      {state?.ok && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          {state.saved} entries save thai gai.
-        </Alert>
-      )}
-
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={2}
@@ -275,14 +263,32 @@ export default function DailyMilkForm({ date, customers }) {
             },
           }}
         />
-      </Stack>
 
-      {alreadySaved > 0 && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Aa date ni {alreadySaved} entries pehla thi save chhe. Fari save karso
-          to e update thai jase.
-        </Alert>
-      )}
+        <TextField
+          select
+          size="small"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          sx={{ minWidth: 140 }}
+        >
+          <MenuItem value="all">Badha</MenuItem>
+          {Object.entries(DAILY_ROW_STATUS).map(([value, label]) => (
+            <MenuItem key={value} value={value}>
+              {label}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <Box sx={{ flexGrow: 1 }} />
+
+        {/* Totals sit with the controls rather than in a sticky footer: the
+            numbers are a summary of what is on screen, not an action. */}
+        <Stack direction="row" spacing={3} sx={{ pr: 0.5 }}>
+          <Total label="Entries" value={totals.count} />
+          <Total label="Total dudh" value={formatLiters(totals.liters)} />
+          <Total label="Total rakam" value={formatAmount(totals.amount)} />
+        </Stack>
+      </Stack>
 
       <TableContainer
         component={Paper}
@@ -292,13 +298,19 @@ export default function DailyMilkForm({ date, customers }) {
           <TableHead>
             <TableRow>
               <TableCell>Customer</TableCell>
-              <TableCell align="center" sx={{ width: 110 }}>
+              <TableCell align="center" sx={{ width: "14%" }}>
                 Aapyu
               </TableCell>
-              <TableCell align="right">Rate</TableCell>
-              <TableCell align="right">Rakam</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right" sx={{ width: 130 }}>
+              <TableCell align="center" sx={{ width: "14%" }}>
+                Rate
+              </TableCell>
+              <TableCell align="center" sx={{ width: "14%" }}>
+                Rakam
+              </TableCell>
+              <TableCell align="center" sx={{ width: "14%" }}>
+                Status
+              </TableCell>
+              <TableCell align="center" sx={{ width: "14%" }}>
                 Save
               </TableCell>
             </TableRow>
@@ -311,7 +323,9 @@ export default function DailyMilkForm({ date, customers }) {
                   <Typography variant="body2" color="text.secondary">
                     {customers.length === 0
                       ? "Ek pan active customer nathi. Pehla Customers page ma add karo."
-                      : "Aa shodh mate koi customer nathi malyo."}
+                      : statusFilter === "pending" && !query
+                        ? "Badha thai gaya! Aa date na badha customers save thai gaya chhe."
+                        : "Aa shodh/filter mate koi customer nathi malyo."}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -319,7 +333,15 @@ export default function DailyMilkForm({ date, customers }) {
 
             {visible.map((c) => {
               const qty = values[c.id] ?? "";
-              const status = statusOf(qty, Number(c.daily_quantity));
+              const storedQty = c.entry
+                ? String(c.entry.actual_quantity)
+                : String(c.daily_quantity);
+              const dirty = qty !== storedQty;
+
+              // Straight from the database: no row for this date means the
+              // delivery has not happened yet.
+              const status = c.entry ? c.entry.delivery_status : "pending";
+
               const amount =
                 qty === "" ? null : Number(qty) * Number(c.rate_per_liter);
 
@@ -337,36 +359,38 @@ export default function DailyMilkForm({ date, customers }) {
                   <TableCell align="center">
                     <QuantityPicker
                       value={qty}
-                      changed={Number(qty) !== Number(c.daily_quantity)}
+                      changed={dirty}
                       onChange={(v) => setQty(c.id, v)}
                     />
                   </TableCell>
 
-                  <TableCell align="right">
+                  <TableCell align="center">
                     {formatAmount(c.rate_per_liter)}
                   </TableCell>
 
-                  <TableCell align="right">
+                  <TableCell align="center">
                     {amount === null ? "—" : formatAmount(amount)}
                   </TableCell>
 
-                  <TableCell>
-                    {status && (
-                      <Chip
-                        size="small"
-                        label={DELIVERY_STATUS[status]}
-                        color={STATUS_COLOR[status]}
-                        variant={status === "delivered" ? "filled" : "outlined"}
-                      />
-                    )}
+                  <TableCell align="center">
+                    <Chip
+                      size="small"
+                      label={DAILY_ROW_STATUS[status]}
+                      color={STATUS_COLOR[status]}
+                      variant={
+                        status === "pending" || status === "missed"
+                          ? "outlined"
+                          : "filled"
+                      }
+                    />
                   </TableCell>
 
-                  <TableCell align="right">
+                  <TableCell align="center">
                     <RowSave
                       date={date}
                       customerId={c.id}
                       qty={qty}
-                      saved={Boolean(c.entry)}
+                      saved={Boolean(c.entry) && !dirty}
                     />
                   </TableCell>
                 </TableRow>
@@ -375,72 +399,6 @@ export default function DailyMilkForm({ date, customers }) {
           </TableBody>
         </Table>
       </TableContainer>
-
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ mt: 1.5, display: "block" }}
-      >
-        {visible.length} / {customers.length} customers dekhay chhe
-      </Typography>
-
-      {/*
-        The "save everything" form sits outside the table: a <form> cannot be
-        nested inside another <form>, and each row already has its own.
-      */}
-      <Box component="form" action={formAction}>
-        <input type="hidden" name="date" value={date} />
-        {customers.map((c) => (
-          <input
-            key={c.id}
-            type="hidden"
-            name={`qty_${c.id}`}
-            value={values[c.id] ?? ""}
-          />
-        ))}
-
-        <Paper
-          sx={{
-            position: "sticky",
-            bottom: 0,
-            mt: 2,
-            p: 2,
-            border: 1,
-            borderColor: "divider",
-            display: "flex",
-            alignItems: "center",
-            gap: 3,
-            flexWrap: "wrap",
-          }}
-        >
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Entries
-            </Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              {totals.count}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Total dudh
-            </Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              {formatLiters(totals.liters)}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Total rakam
-            </Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              {formatAmount(totals.amount)}
-            </Typography>
-          </Box>
-          <Box sx={{ flexGrow: 1 }} />
-          <SaveAllButton count={totals.count} />
-        </Paper>
-      </Box>
     </Box>
   );
 }

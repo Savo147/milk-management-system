@@ -28,7 +28,7 @@ export default async function DailyMilkPage({ searchParams }) {
       .order("name"),
     supabase
       .from("milk_entries")
-      .select("customer_id, actual_quantity, notes")
+      .select("customer_id, actual_quantity, delivery_status")
       .eq("date", date),
   ]);
 

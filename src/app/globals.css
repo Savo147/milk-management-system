@@ -1,26 +1,18 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/*
+  Colours are the MUI theme's job — CssBaseline paints body from
+  palette.background.default and palette.text.primary.
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-}
+  There used to be a create-next-app `body { color: var(--foreground) }` here
+  with a prefers-color-scheme:dark override that flipped it to #ededed. MUI's
+  styles sit in `@layer mui` (enableCssLayer), and unlayered CSS always beats a
+  layer, so that body rule won: with the OS in dark mode every heading outside
+  a Card turned light grey on a white page. Text inside Card/Paper kept its
+  colour, because Paper sets text.primary on the element itself.
+*/

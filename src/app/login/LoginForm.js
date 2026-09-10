@@ -32,22 +32,31 @@ export default function LoginForm({ initialError }) {
     <Box component="form" action={formAction} sx={{ display: "grid", gap: 2 }}>
       {error && <Alert severity="error">{error}</Alert>}
 
+      {/*
+        shrink is forced on both fields. Browser autofill writes a value
+        without firing an event MUI can see, so the label stays sitting on top
+        of the filled-in text.
+      */}
       <TextField
         name="email"
         type="email"
         label="Email"
+        placeholder="tamaru@email.com"
         autoComplete="email"
         required
         fullWidth
         autoFocus
+        slotProps={{ inputLabel: { shrink: true } }}
       />
       <TextField
         name="password"
         type="password"
         label="Password"
+        placeholder="••••••••"
         autoComplete="current-password"
         required
         fullWidth
+        slotProps={{ inputLabel: { shrink: true } }}
       />
       <SubmitButton />
     </Box>

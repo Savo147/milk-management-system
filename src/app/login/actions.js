@@ -19,9 +19,23 @@ export async function signIn(prevState, formData) {
   });
 
   if (error) {
-    // Deliberately vague: saying which half was wrong tells an attacker which
-    // email addresses exist.
-    return { error: "Email ke password khotu chhe." };
+    // Only a genuine credential rejection should read as one. Anything else —
+    // the database unreachable, the project paused, a network failure — was
+    // being reported as "wrong password", which sends you hunting for a
+    // problem that is not there.
+    const credentialsRejected =
+      error.status === 400 || /invalid login credentials/i.test(error.message);
+
+    if (credentialsRejected) {
+      // Deliberately vague: saying which half was wrong tells an attacker
+      // which email addresses exist.
+      return { error: "Email ke password khotu chhe." };
+    }
+
+    console.error("[login] sign-in failed:", error);
+    return {
+      error: `Login na thai shakyu — server sudhi pahonchatu nathi. (${error.message})`,
+    };
   }
 
   const { data: profile } = await supabase
