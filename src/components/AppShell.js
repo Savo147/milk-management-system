@@ -19,6 +19,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
+import NotificationBell from "@/components/NotificationBell";
 import { signOut } from "@/app/login/actions";
 
 const DRAWER_WIDTH = 250;
@@ -35,6 +36,8 @@ export default function AppShell({
   dairyName,
   logoUrl,
   user,
+  notifications = [],
+  unread = 0,
   children,
 }) {
   const pathname = usePathname();
@@ -138,9 +141,12 @@ export default function AppShell({
             {current?.label ?? ""}
           </Typography>
 
+          <NotificationBell notifications={notifications} unread={unread} />
+
           <IconButton
             onClick={(e) => setAnchorEl(e.currentTarget)}
             aria-label="Account"
+            sx={{ ml: 0.5 }}
           >
             <Avatar
               src={user.profile_photo ?? undefined}

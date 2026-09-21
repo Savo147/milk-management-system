@@ -16,3 +16,25 @@
   a Card turned light grey on a white page. Text inside Card/Paper kept its
   colour, because Paper sets text.primary on the element itself.
 */
+
+/*
+  Print / "save as PDF" from the Reports page. The sidebar, top bar and the
+  report's own controls are on screen to get you to the numbers — on paper they
+  are noise, so they are dropped and the table gets the full width.
+*/
+@media print {
+  .no-print,
+  header,
+  nav {
+    display: none !important;
+  }
+
+  main {
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+}

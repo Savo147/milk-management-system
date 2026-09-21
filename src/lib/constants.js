@@ -27,26 +27,12 @@ export const BILL_STATUS = {
   done: "Done",
 };
 
-/** A customer's claim. Only an admin confirming it moves the bill to done. */
-export const PAYMENT_REQUEST_STATUS = {
-  pending_verification: "Pending Verification",
-  confirmed: "Confirmed",
-  rejected: "Rejected",
-};
-
 export const ISSUE_TYPE = {
   wrong_quantity: "Wrong Quantity",
   milk_not_received: "Milk Not Received",
   extra_milk: "Extra Milk",
   less_milk: "Less Milk",
   other: "Other",
-};
-
-export const REPORT_STATUS = {
-  pending: "Pending",
-  in_progress: "In Progress",
-  resolved: "Resolved",
-  rejected: "Rejected",
 };
 
 export const ACCOUNT_STATUS = {
@@ -69,4 +55,25 @@ export const STATUS_COLOR = {
   resolved: "success",
   active: "success",
   inactive: "default",
+};
+
+/**
+ * Problems, as the admin thinks of them: still open, or dealt with.
+ *
+ * The database enum keeps four values (pending, in_progress, resolved,
+ * rejected) — collapsing them here rather than migrating means old rows still
+ * read correctly, and "rejected" lands under Done because it has been handled.
+ */
+export const PROBLEM_STATE = {
+  pending: "Pending",
+  done: "Done",
+};
+
+export const problemState = (status) =>
+  status === "resolved" || status === "rejected" ? "done" : "pending";
+
+/** What to write when the admin picks one of the two. */
+export const PROBLEM_STATE_VALUE = {
+  pending: "pending",
+  done: "resolved",
 };
