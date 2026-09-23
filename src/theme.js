@@ -34,7 +34,12 @@ const theme = createTheme({
   cssVariables: true,
 
   palette: {
-    primary: { ...BRAND, main: BRAND[500], dark: BRAND[700], light: BRAND[200] },
+    primary: {
+      ...BRAND,
+      main: BRAND[500],
+      dark: BRAND[700],
+      light: BRAND[200],
+    },
     secondary: { main: "#00897b" },
     success: { main: "#12855c", light: "#e6f5ee", dark: "#0c6244" },
     warning: { main: "#b26a00", light: "#fdf1e0", dark: "#8a5200" },
@@ -112,7 +117,9 @@ const theme = createTheme({
           borderRadius: 9,
           backgroundColor: "#fff",
           "& .MuiOutlinedInput-notchedOutline": { borderColor: GREY[300] },
-          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: GREY[400] },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: GREY[400],
+          },
         },
       },
     },

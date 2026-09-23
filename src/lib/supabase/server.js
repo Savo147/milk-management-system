@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import { fetchWithRetry } from "./fetch";
 
 /**
  * Supabase client for Server Components, Server Actions and Route Handlers.
@@ -13,6 +14,9 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     {
+      // A stale pooled socket otherwise surfaces as a bare "fetch failed"
+      // on the first request after the server has been idle.
+      global: { fetch: fetchWithRetry },
       cookies: {
         getAll() {
           return cookieStore.getAll();

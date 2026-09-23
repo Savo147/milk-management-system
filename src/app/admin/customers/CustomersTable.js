@@ -21,14 +21,18 @@ import Typography from "@mui/material/Typography";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
+import KeyIcon from "@mui/icons-material/Key";
+import KeyOffIcon from "@mui/icons-material/KeyOff";
 import { formatAmount, formatLiters } from "@/lib/format";
 import { STATUS_COLOR, ACCOUNT_STATUS } from "@/lib/constants";
 import CustomerDialog from "./CustomerDialog";
+import LoginDialog from "./LoginDialog";
 
-export default function CustomersTable({ customers }) {
+export default function CustomersTable({ customers, unlinkedLogins = [] }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [editing, setEditing] = useState(undefined); // undefined = closed
+  const [login, setLogin] = useState(null);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -94,19 +98,22 @@ export default function CustomersTable({ customers }) {
       >
         <Table size="small" sx={{ minWidth: 720 }}>
           <TableHead>
-            <TableRow sx={{ "& th": { fontWeight: 700, whiteSpace: "nowrap" } }}>
+            <TableRow
+              sx={{ "& th": { fontWeight: 700, whiteSpace: "nowrap" } }}
+            >
               <TableCell>Naam</TableCell>
               <TableCell>Mobile</TableCell>
               <TableCell align="right">Roj nu dudh</TableCell>
               <TableCell align="right">Rate</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell align="center">Login</TableCell>
               <TableCell align="right">Edit</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     {customers.length === 0
                       ? 'Hju koi customer nathi. "Navo customer" par click karo.'
@@ -143,6 +150,28 @@ export default function CustomersTable({ customers }) {
                     variant={c.status === "active" ? "filled" : "outlined"}
                   />
                 </TableCell>
+                <TableCell align="center">
+                  <Tooltip
+                    title={
+                      c.user_id
+                        ? `${c.login_email} — password badlo`
+                        : "Login banavo"
+                    }
+                  >
+                    <IconButton
+                      size="small"
+                      onClick={() => setLogin(c)}
+                      color={c.user_id ? "primary" : "default"}
+                    >
+                      {c.user_id ? (
+                        <KeyIcon fontSize="small" />
+                      ) : (
+                        <KeyOffIcon fontSize="small" sx={{ opacity: 0.55 }} />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+
                 <TableCell align="right">
                   <Tooltip title="Edit">
                     <IconButton size="small" onClick={() => setEditing(c)}>
@@ -156,7 +185,11 @@ export default function CustomersTable({ customers }) {
         </Table>
       </TableContainer>
 
-      <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: "block" }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ mt: 1.5, display: "block" }}
+      >
         {rows.length} / {customers.length} customers
       </Typography>
 
@@ -164,6 +197,12 @@ export default function CustomersTable({ customers }) {
         open={editing !== undefined}
         customer={editing ?? null}
         onClose={() => setEditing(undefined)}
+      />
+
+      <LoginDialog
+        customer={login}
+        unlinkedLogins={unlinkedLogins}
+        onClose={() => setLogin(null)}
       />
     </>
   );

@@ -5,36 +5,11 @@ import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
-import {
-  formatAmount,
-  formatDate,
-  formatLiters,
-  formatMonth,
-} from "@/lib/format";
+import { formatAmount, formatLiters } from "@/lib/format";
+import { resolveRange, todayLocal } from "@/lib/range";
 import HisabTable from "./HisabTable";
 
 export const metadata = { title: "Hisab — Krishna Dairy" };
-
-const pad = (n) => String(n).padStart(2, "0");
-const isMonth = (v) => /^\d{4}-\d{2}$/.test(v ?? "");
-const isDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v ?? "");
-
-function currentMonth() {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
-}
-
-/** Local YYYY-MM-DD. toISOString() would roll back a day in IST. */
-function todayLocal() {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-/** Last day of a YYYY-MM month. */
-function monthEnd(month) {
-  const [y, m] = month.split("-").map(Number);
-  return `${month}-${pad(new Date(y, m, 0).getDate())}`;
-}
 
 /**
  * Milk delivered and money received, per customer, for one span of days.
@@ -129,38 +104,10 @@ function Summary({ label, value, color = "text.primary" }) {
 
 export default async function HisabPage({ searchParams }) {
   const params = await searchParams;
-  const mode = params?.mode === "date" ? "date" : "month";
 
   // Both pickers resolve to the same thing: a span of days. Milk and payments
   // are dated, so the span is all the query needs.
-  let from;
-  let to;
-  let label;
-
-  // Kept whichever mode is not active, so switching back lands somewhere sane.
-  let monthFrom = currentMonth();
-  let monthTo = currentMonth();
-
-  if (mode === "date") {
-    to = isDate(params?.to) ? params.to : todayLocal();
-    const start = isDate(params?.from) ? params.from : `${currentMonth()}-01`;
-    from = start > to ? to : start;
-    label = `${formatDate(from)} – ${formatDate(to)}`;
-    monthFrom = from.slice(0, 7);
-    monthTo = to.slice(0, 7);
-  } else {
-    monthTo = isMonth(params?.to) ? params.to : currentMonth();
-    const fromRaw = isMonth(params?.from) ? params.from : monthTo;
-    // A start after the end would return nothing at all; clamp it instead.
-    monthFrom = fromRaw > monthTo ? monthTo : fromRaw;
-
-    from = `${monthFrom}-01`;
-    to = monthEnd(monthTo);
-    label =
-      monthFrom === monthTo
-        ? formatMonth(from)
-        : `${formatMonth(from)} – ${formatMonth(`${monthTo}-01`)}`;
-  }
+  const { mode, from, to, label, monthFrom, monthTo } = resolveRange(params);
 
   const supabase = await createClient();
   const { rows, paymentsMissing, error } = await fetchRange(supabase, from, to);
@@ -186,9 +133,8 @@ export default async function HisabPage({ searchParams }) {
         <>
           {paymentsMissing && (
             <Alert severity="warning" sx={{ mb: 2 }}>
-              <strong>payments</strong> table hju banyu nathi — payment nondhai
-              nahi shakay. <code>supabase/migrations/0006_payments.sql</code>{" "}
-              chalavo.
+              <strong>payments</strong> table database ma nathi — payment
+              nondhai nahi shakay. Dudh no hisab niche dekhay chhe.
             </Alert>
           )}
 

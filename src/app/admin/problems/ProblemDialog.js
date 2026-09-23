@@ -210,7 +210,11 @@ export default function ProblemDialog({ problem, replies, onClose }) {
                 sx={{ mb: 1.5 }}
               />
 
-              <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ justifyContent: "flex-end" }}
+              >
                 <Button onClick={onClose}>Band karo</Button>
                 <ReplyButton />
               </Stack>
@@ -221,4 +225,3 @@ export default function ProblemDialog({ problem, replies, onClose }) {
     </Dialog>
   );
 }
-

@@ -25,7 +25,7 @@ import {
   problemState,
 } from "@/lib/constants";
 import { formatDate, formatLiters } from "@/lib/format";
-import RangePicker from "@/app/admin/hisab/RangePicker";
+import RangePicker from "@/components/RangePicker";
 import ProblemDialog from "./ProblemDialog";
 
 export default function ProblemsView({
@@ -193,7 +193,9 @@ export default function ProblemsView({
                       label={PROBLEM_STATE[problemState(p.status)]}
                       color={STATUS_COLOR[problemState(p.status)]}
                       variant={
-                        problemState(p.status) === "done" ? "filled" : "outlined"
+                        problemState(p.status) === "done"
+                          ? "filled"
+                          : "outlined"
                       }
                     />
                   </TableCell>

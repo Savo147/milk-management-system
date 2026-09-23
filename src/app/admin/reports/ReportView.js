@@ -23,7 +23,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import DownloadIcon from "@mui/icons-material/Download";
 import PrintIcon from "@mui/icons-material/Print";
 import { formatAmount, formatLiters } from "@/lib/format";
-import RangePicker from "@/app/admin/hisab/RangePicker";
+import RangePicker from "@/components/RangePicker";
 
 function Summary({ label, value }) {
   return (
@@ -101,8 +101,7 @@ export default function ReportView({
 
     // A BOM so Excel opens rupee signs and Gujarati text as UTF-8.
     const csv =
-      "﻿" +
-      [header.map(csvCell), ...body].map((r) => r.join(",")).join("\r\n");
+      "﻿" + [header.map(csvCell), ...body].map((r) => r.join(",")).join("\r\n");
 
     const url = URL.createObjectURL(
       new Blob([csv], { type: "text/csv;charset=utf-8;" }),
@@ -255,7 +254,9 @@ export default function ReportView({
                 <TableCell align="center">
                   {formatAmount(totals.amount)}
                 </TableCell>
-                <TableCell align="center">{formatAmount(totals.paid)}</TableCell>
+                <TableCell align="center">
+                  {formatAmount(totals.paid)}
+                </TableCell>
                 <TableCell align="center">
                   {formatAmount(totals.baki)}
                 </TableCell>

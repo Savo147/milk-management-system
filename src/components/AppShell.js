@@ -1,11 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
@@ -23,6 +29,41 @@ import NotificationBell from "@/components/NotificationBell";
 import { signOut } from "@/app/login/actions";
 
 const DRAWER_WIDTH = 250;
+
+/**
+ * The confirmation dialog's two buttons.
+ *
+ * Its own component because useFormStatus only reports on a form it sits
+ * inside. Signing out is three round trips to Supabase — the session check,
+ * the sign-out itself, then the login page loading — and with no sign of that
+ * happening the dialog just seems to hang.
+ */
+function LogoutActions({ onCancel }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <>
+      <Button onClick={onCancel} disabled={pending}>
+        Na, rehva do
+      </Button>
+      <Button
+        type="submit"
+        variant="contained"
+        color="error"
+        disabled={pending}
+        startIcon={
+          pending ? (
+            <CircularProgress size={15} color="inherit" />
+          ) : (
+            <LogoutIcon sx={{ fontSize: 17 }} />
+          )
+        }
+      >
+        {pending ? "Logout thai rahyu..." : "Logout"}
+      </Button>
+    </>
+  );
+}
 
 function isActive(pathname, href, rootHref) {
   // The section index must match exactly, or it stays lit on every child route.
@@ -43,6 +84,7 @@ export default function AppShell({
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   const current = navItems.find((i) => isActive(pathname, i.href, rootHref));
 
@@ -172,31 +214,51 @@ export default function AppShell({
               </Typography>
             </Box>
             <Divider />
+            {/*
+              A plain item, not a <form>. MUI focuses the first item when the
+              menu opens; with a submit button sitting inside it, the opening
+              click landed on that button and signed you straight out.
+            */}
             <MenuItem
-              component="form"
-              action={signOut}
-              sx={{ p: 0 }}
-              disableRipple
+              onClick={() => {
+                setAnchorEl(null);
+                setConfirmLogout(true);
+              }}
+              sx={{ gap: 1.5 }}
             >
-              <Box
-                component="button"
-                type="submit"
-                sx={{
-                  all: "unset",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  width: "100%",
-                  px: 2,
-                  py: 1,
-                  cursor: "pointer",
-                }}
-              >
-                <LogoutIcon fontSize="small" />
-                <Typography variant="body2">Logout</Typography>
-              </Box>
+              <LogoutIcon fontSize="small" />
+              <Typography variant="body2">Logout</Typography>
             </MenuItem>
           </Menu>
+
+          <Dialog
+            open={confirmLogout}
+            onClose={() => setConfirmLogout(false)}
+            maxWidth="xs"
+            fullWidth
+          >
+            <DialogTitle>Logout karvu chhe?</DialogTitle>
+            <DialogContent>
+              <Typography variant="body2" color="text.secondary">
+                Fari kaam karva mate pachhu login karvu padse.
+              </Typography>
+            </DialogContent>
+            {/* Both buttons live inside the form so useFormStatus can reach
+                them — Cancel has to go dead once logout is under way. */}
+            <Box
+              component="form"
+              action={signOut}
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 1,
+                px: 3,
+                pb: 2.5,
+              }}
+            >
+              <LogoutActions onCancel={() => setConfirmLogout(false)} />
+            </Box>
+          </Dialog>
         </Toolbar>
       </AppBar>
 

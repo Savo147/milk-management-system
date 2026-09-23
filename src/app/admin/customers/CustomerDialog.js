@@ -78,7 +78,9 @@ export default function CustomerDialog({ open, onClose, customer }) {
                 defaultValue={customer?.mobile ?? ""}
                 required
                 fullWidth
-                slotProps={{ htmlInput: { inputMode: "numeric", maxLength: 10 } }}
+                slotProps={{
+                  htmlInput: { inputMode: "numeric", maxLength: 10 },
+                }}
                 helperText="10 aank"
               />
             </Grid>

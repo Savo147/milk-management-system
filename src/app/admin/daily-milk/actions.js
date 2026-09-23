@@ -31,7 +31,8 @@ export async function saveOneEntry(prevState, formData) {
   const customerId = String(formData.get("customer_id") ?? "");
   const raw = String(formData.get("qty") ?? "");
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "Date barabar nathi." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date))
+    return { error: "Date barabar nathi." };
   if (!customerId) return { error: "Customer malyo nahi." };
 
   const actual = Number(raw);

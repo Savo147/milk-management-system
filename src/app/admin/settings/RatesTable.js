@@ -1,0 +1,103 @@
+"use client";
+
+import Chip from "@mui/material/Chip";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
+import { formatAmount, formatDate } from "@/lib/format";
+
+export default function RatesTable({ rates }) {
+  return (
+    <>
+      <TableContainer
+        component={Paper}
+        sx={{ border: 1, borderColor: "divider" }}
+      >
+        <Table size="small" sx={{ minWidth: 700 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell>Customer</TableCell>
+              <TableCell align="center" sx={{ width: "16%" }}>
+                Rate
+              </TableCell>
+              <TableCell align="center" sx={{ width: "18%" }}>
+                Kyar thi
+              </TableCell>
+              <TableCell align="center" sx={{ width: "18%" }}>
+                Kyar sudhi
+              </TableCell>
+              <TableCell align="center" sx={{ width: "14%" }}>
+                Chalu
+              </TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {rates.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Hju koi rate history nathi.
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+
+            {rates.map((r) => {
+              const current = !r.effective_to;
+              return (
+                <TableRow key={r.id} hover>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {r.customer_name}
+                    </Typography>
+                  </TableCell>
+
+                  <TableCell align="center" sx={{ fontWeight: 600 }}>
+                    {formatAmount(r.rate_per_liter)}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    {formatDate(r.effective_from)}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    {r.effective_to ? (
+                      formatDate(r.effective_to)
+                    ) : (
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "text.disabled" }}
+                      >
+                        —
+                      </Typography>
+                    )}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    {current && (
+                      <Chip size="small" label="Chalu" color="success" />
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Typography
+        variant="caption"
+        sx={{ mt: 1.5, display: "block", color: "text.secondary" }}
+      >
+        Rate ahi thi nathi badalato — Customers page ma customer nu rate badlo,
+        etle juni row jate band thai jaay chhe ane navi shuru thai jaay chhe.
+      </Typography>
+    </>
+  );
+}

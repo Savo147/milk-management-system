@@ -21,7 +21,7 @@ import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import EditIcon from "@mui/icons-material/Edit";
 import { BILL_STATUS, STATUS_COLOR } from "@/lib/constants";
 import { formatAmount, formatDate, formatLiters } from "@/lib/format";
-import RangePicker from "./RangePicker";
+import RangePicker from "@/components/RangePicker";
 import PaymentDialog from "./PaymentDialog";
 
 /** Settled once the money in matches the milk out for the shown span. */

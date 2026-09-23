@@ -1,5 +1,5 @@
-// Business rules from the requirements doc, mirrored from the database enums.
-// Keep these in step with supabase/migrations/0001_initial_schema.sql.
+// Business rules from the requirements doc. These mirror the database enums —
+// keep the two in step.
 
 /** Fixed options: 0.5 L to 5 L in 0.5 L steps. The DB enforces this too. */
 export const MILK_QUANTITIES = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];

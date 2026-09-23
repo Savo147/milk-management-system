@@ -13,7 +13,10 @@ import { formatAmount, formatLiters } from "@/lib/format";
 /** Who got how much on the selected date. */
 export default function DayTable({ rows }) {
   return (
-    <TableContainer component={Paper} sx={{ border: 1, borderColor: "divider" }}>
+    <TableContainer
+      component={Paper}
+      sx={{ border: 1, borderColor: "divider" }}
+    >
       <Table size="small" sx={{ minWidth: 700 }}>
         <TableHead>
           <TableRow>
@@ -69,7 +72,9 @@ export default function DayTable({ rows }) {
                   size="small"
                   label={DAILY_ROW_STATUS[r.delivery_status]}
                   color={STATUS_COLOR[r.delivery_status]}
-                  variant={r.delivery_status === "missed" ? "outlined" : "filled"}
+                  variant={
+                    r.delivery_status === "missed" ? "outlined" : "filled"
+                  }
                 />
               </TableCell>
             </TableRow>

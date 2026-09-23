@@ -1,30 +1,10 @@
 import Alert from "@mui/material/Alert";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
-import { formatDate, formatMonth } from "@/lib/format";
+import { resolveRange } from "@/lib/range";
 import ReportView from "./ReportView";
 
 export const metadata = { title: "Reports — Krishna Dairy" };
-
-const pad = (n) => String(n).padStart(2, "0");
-const isMonth = (v) => /^\d{4}-\d{2}$/.test(v ?? "");
-const isDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v ?? "");
-
-function currentMonth() {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
-}
-
-function todayLocal() {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-/** Last day of a YYYY-MM month. */
-function monthEnd(month) {
-  const [y, m] = month.split("-").map(Number);
-  return `${month}-${pad(new Date(y, m, 0).getDate())}`;
-}
 
 /** Milk out and money in, per customer, for the period. */
 async function buildReport(supabase, from, to) {
@@ -82,33 +62,7 @@ async function buildReport(supabase, from, to) {
 
 export default async function ReportsPage({ searchParams }) {
   const params = await searchParams;
-  const mode = params?.mode === "date" ? "date" : "month";
-
-  let from;
-  let to;
-  let label;
-  let monthFrom = currentMonth();
-  let monthTo = currentMonth();
-
-  if (mode === "date") {
-    to = isDate(params?.to) ? params.to : todayLocal();
-    const start = isDate(params?.from) ? params.from : `${currentMonth()}-01`;
-    from = start > to ? to : start;
-    label = `${formatDate(from)} – ${formatDate(to)}`;
-    monthFrom = from.slice(0, 7);
-    monthTo = to.slice(0, 7);
-  } else {
-    monthTo = isMonth(params?.to) ? params.to : currentMonth();
-    const fromRaw = isMonth(params?.from) ? params.from : monthTo;
-    monthFrom = fromRaw > monthTo ? monthTo : fromRaw;
-
-    from = `${monthFrom}-01`;
-    to = monthEnd(monthTo);
-    label =
-      monthFrom === monthTo
-        ? formatMonth(from)
-        : `${formatMonth(from)} – ${formatMonth(`${monthTo}-01`)}`;
-  }
+  const { mode, from, to, label, monthFrom, monthTo } = resolveRange(params);
 
   const supabase = await createClient();
   const report = await buildReport(supabase, from, to);

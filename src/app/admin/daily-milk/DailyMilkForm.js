@@ -127,7 +127,11 @@ function Total({ label, value }) {
       </Typography>
       <Typography
         variant="subtitle1"
-        sx={{ fontWeight: 700, fontVariantNumeric: "tabular-nums", lineHeight: 1.3 }}
+        sx={{
+          fontWeight: 700,
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1.3,
+        }}
       >
         {value}
       </Typography>
@@ -244,7 +248,9 @@ export default function DailyMilkForm({ date, customers }) {
           label="Date"
           size="small"
           value={date}
-          onChange={(e) => router.push(`/admin/daily-milk?date=${e.target.value}`)}
+          onChange={(e) =>
+            router.push(`/admin/daily-milk?date=${e.target.value}`)
+          }
           sx={{ minWidth: 180 }}
         />
         <TextField
