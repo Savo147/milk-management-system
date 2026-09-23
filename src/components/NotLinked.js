@@ -10,10 +10,10 @@ import AlertTitle from "@mui/material/AlertTitle";
 export default function NotLinked() {
   return (
     <Alert severity="info">
-      <AlertTitle>Tamaru account hju dairy sathe jodayu nathi</AlertTitle>
-      Tamaru login to chalu chhe, pan dairy na chopde tamaru khatu hju jodayu
-      nathi — etle dudh ke hisab ahi dekhay nahi. Dairy no sampark karo, eo ek j
-      click ma jodi aapse.
+      <AlertTitle>Your account is not linked to the dairy yet</AlertTitle>
+      Your login works, but the dairy&rsquo;s records are not pointing at you
+      yet — so no milk or billing shows here. Contact the dairy; they can link
+      it in one click.
     </Alert>
   );
 }

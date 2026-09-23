@@ -12,7 +12,7 @@ export default async function ProfilePage() {
     <>
       <PageHeader
         title="Profile"
-        subtitle="Tamari vigat, tamaro milk plan ane password"
+        subtitle="Your details, your milk plan and your password"
       />
       <ProfileView user={user} customer={customer} settings={settings} />
     </>

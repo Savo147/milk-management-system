@@ -4,9 +4,9 @@ import AuthCard from "@/components/AuthCard";
 import LoginForm from "./LoginForm";
 
 const ERRORS = {
-  inactive: "Tamaru account band chhe. Admin no sampark karo.",
-  google: "Google thi login na thai shakyu. Fari prayatna karo.",
-  nosetup: "Aa account setup thayelu nathi. Admin no sampark karo.",
+  inactive: "Your account is disabled. Contact the admin.",
+  google: "Could not sign in with Google. Please try again.",
+  nosetup: "This account has not been set up. Contact the admin.",
 };
 
 export const metadata = { title: "Login — Krishna Dairy" };

@@ -81,7 +81,7 @@ export default function ProblemsView({
           onChange={(e) => setStatusFilter(e.target.value)}
           sx={{ minWidth: 160 }}
         >
-          <MenuItem value="all">Badhi</MenuItem>
+          <MenuItem value="all">All</MenuItem>
           {Object.entries(PROBLEM_STATE).map(([value, text]) => (
             <MenuItem key={value} value={value}>
               {text}
@@ -96,7 +96,7 @@ export default function ProblemsView({
           startIcon={<AddIcon />}
           onClick={() => setCreating(true)}
         >
-          Navi fariyad
+          New complaint
         </Button>
       </Stack>
 
@@ -110,21 +110,21 @@ export default function ProblemsView({
             <TableRow
               sx={{ "& th": { fontWeight: 700, whiteSpace: "nowrap" } }}
             >
-              <TableCell>Su thayu</TableCell>
+              <TableCell>What happened</TableCell>
               <TableCell align="center" sx={{ width: "18%" }}>
-                Kai bhul
+                Issue
               </TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
-                Joitu / Malyu
+                Expected / Got
               </TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
-                Tarikh
+                Date
               </TableCell>
               <TableCell align="center" sx={{ width: "13%" }}>
                 Status
               </TableCell>
               <TableCell align="center" sx={{ width: "10%" }}>
-                Jawab
+                Replies
               </TableCell>
             </TableRow>
           </TableHead>
@@ -135,8 +135,8 @@ export default function ProblemsView({
                 <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     {problems.length === 0
-                      ? 'Aa gala ma tame koi fariyad nathi kari. "Navi fariyad" par click karo.'
-                      : "Aa status ni koi fariyad nathi."}
+                      ? 'You have not raised any complaints in this period. Click "New complaint".'
+                      : "No complaints with this status."}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -221,8 +221,7 @@ export default function ProblemsView({
 
       <Box sx={{ mt: 1.5 }}>
         <Typography variant="caption" color="text.secondary">
-          Row par click karo etle dairy no jawab dekhase ane tame pan lakhi
-          shakso.
+          Click a row to see the dairy&rsquo;s reply and add your own.
         </Typography>
       </Box>
 

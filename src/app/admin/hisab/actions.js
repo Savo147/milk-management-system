@@ -32,12 +32,12 @@ export async function recordPayment(prevState, formData) {
   const paidOn = String(formData.get("paid_on") ?? "");
   const amount = Number(formData.get("amount"));
 
-  if (!customerId) return { error: "Customer malyo nahi." };
+  if (!customerId) return { error: "Customer not found." };
   if (!isDate(from) || !isDate(to) || !isDate(paidOn)) {
-    return { error: "Tarikh barabar nathi." };
+    return { error: "That date is not valid." };
   }
   if (!Number.isFinite(amount) || amount < 0) {
-    return { error: "Rakam 0 ke tethi vadhu hovi joiye." };
+    return { error: "The amount must be 0 or more." };
   }
 
   const supabase = await createClient();
@@ -49,7 +49,7 @@ export async function recordPayment(prevState, formData) {
     .gte("paid_on", from)
     .lte("paid_on", to);
 
-  if (delErr) return { error: `Save na thai shakyu: ${delErr.message}` };
+  if (delErr) return { error: `Could not save: ${delErr.message}` };
 
   if (amount > 0) {
     // Dated inside the span, so re-opening the same span reads it back.
@@ -62,7 +62,7 @@ export async function recordPayment(prevState, formData) {
       created_by: admin.id,
     });
 
-    if (error) return { error: `Save na thai shakyu: ${error.message}` };
+    if (error) return { error: `Could not save: ${error.message}` };
   }
 
   refresh();

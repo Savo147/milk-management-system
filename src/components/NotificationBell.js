@@ -58,7 +58,7 @@ export default function NotificationBell({ notifications = [], unread = 0 }) {
               disabled={pending}
               onClick={() => startTransition(() => markNotificationsRead())}
             >
-              Badha vanchi lidha
+              Mark all as read
             </Button>
           )}
         </Stack>
@@ -68,7 +68,7 @@ export default function NotificationBell({ notifications = [], unread = 0 }) {
         {notifications.length === 0 && (
           <Box sx={{ p: 3, textAlign: "center" }}>
             <Typography variant="body2" color="text.secondary">
-              Kai navu nathi.
+              Nothing new.
             </Typography>
           </Box>
         )}

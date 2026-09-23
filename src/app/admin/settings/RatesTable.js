@@ -26,10 +26,10 @@ export default function RatesTable({ rates }) {
                 Rate
               </TableCell>
               <TableCell align="center" sx={{ width: "18%" }}>
-                Kyar thi
+                From
               </TableCell>
               <TableCell align="center" sx={{ width: "18%" }}>
-                Kyar sudhi
+                Until
               </TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
                 Chalu
@@ -42,7 +42,7 @@ export default function RatesTable({ rates }) {
               <TableRow>
                 <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Hju koi rate history nathi.
+                    No rate history yet.
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -95,8 +95,8 @@ export default function RatesTable({ rates }) {
         variant="caption"
         sx={{ mt: 1.5, display: "block", color: "text.secondary" }}
       >
-        Rate ahi thi nathi badalato — Customers page ma customer nu rate badlo,
-        etle juni row jate band thai jaay chhe ane navi shuru thai jaay chhe.
+        Rates are not changed here — change a customer&rsquo;s rate on the
+        Customers page, and the old row closes itself as a new one starts.
       </Typography>
     </>
   );

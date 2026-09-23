@@ -73,14 +73,14 @@ export default async function ReportProblemPage({ searchParams }) {
         title="Report Problem"
         subtitle={
           open > 0
-            ? `${label} — ${open} fariyad jawab ni raah ma`
-            : `${label} — dudh ma kai bhul hoy to ahi kaho`
+            ? `${label} — ${open} complaints awaiting a reply`
+            : `${label} — tell us if anything was wrong with your milk`
         }
       />
 
       {error ? (
         <Alert severity="error">
-          Fariyado load na thai shakya: {error.message}
+          Could not load complaints: {error.message}
         </Alert>
       ) : (
         <ProblemsView

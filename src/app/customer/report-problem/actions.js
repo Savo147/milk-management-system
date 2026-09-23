@@ -51,7 +51,7 @@ export async function raiseProblem(prevState, formData) {
   const { customer } = await requireCustomerAccount();
 
   if (!customer) {
-    return { error: "Tamaru account hju dairy sathe jodayu nathi." };
+    return { error: "Your account is not linked to the dairy yet." };
   }
 
   const issueType = String(formData.get("issue_type") ?? "");
@@ -59,9 +59,9 @@ export async function raiseProblem(prevState, formData) {
   const message = String(formData.get("message") ?? "").trim();
   const receivedRaw = String(formData.get("received_quantity") ?? "");
 
-  if (!ISSUE_TYPE[issueType]) return { error: "Kai bhul thai e pasand karo." };
-  if (!message) return { error: "Su thayu e lakho." };
-  if (date && !isDate(date)) return { error: "Tarikh barabar nathi." };
+  if (!ISSUE_TYPE[issueType]) return { error: "Choose what went wrong." };
+  if (!message) return { error: "Describe what happened." };
+  if (date && !isDate(date)) return { error: "That date is not valid." };
 
   const supabase = await createClient();
 
@@ -82,7 +82,7 @@ export async function raiseProblem(prevState, formData) {
     receivedRaw === "" ? (entry?.actual_quantity ?? null) : Number(receivedRaw);
 
   if (received !== null && (!Number.isFinite(received) || received < 0)) {
-    return { error: "Ketlu malyu e barabar nakho." };
+    return { error: "Enter a valid amount received." };
   }
 
   const { data: made, error } = await supabase
@@ -98,10 +98,10 @@ export async function raiseProblem(prevState, formData) {
     .select("id")
     .maybeSingle();
 
-  if (error) return { error: `Fariyad na nondhai: ${error.message}` };
+  if (error) return { error: `Complaint not saved: ${error.message}` };
 
   await notifyAdmins(
-    "Navi fariyad",
+    "New complaint",
     `${customer.name}: ${ISSUE_TYPE[issueType]}`,
     made?.id ?? null,
   );
@@ -115,14 +115,14 @@ export async function replyOnProblem(prevState, formData) {
   const { user, customer } = await requireCustomerAccount();
 
   if (!customer) {
-    return { error: "Tamaru account hju dairy sathe jodayu nathi." };
+    return { error: "Your account is not linked to the dairy yet." };
   }
 
   const reportId = String(formData.get("report_id") ?? "");
   const message = String(formData.get("message") ?? "").trim();
 
-  if (!reportId) return { error: "Fariyad mali nahi." };
-  if (!message) return { error: "Message lakho." };
+  if (!reportId) return { error: "Complaint not found." };
+  if (!message) return { error: "Write a message." };
 
   const supabase = await createClient();
 
@@ -136,7 +136,7 @@ export async function replyOnProblem(prevState, formData) {
     .eq("customer_id", customer.id)
     .maybeSingle();
 
-  if (!own) return { error: "Fariyad mali nahi." };
+  if (!own) return { error: "Complaint not found." };
 
   const { error } = await supabase.from("report_replies").insert({
     report_id: reportId,
@@ -144,11 +144,11 @@ export async function replyOnProblem(prevState, formData) {
     message,
   });
 
-  if (error) return { error: `Message na mokalai shakyo: ${error.message}` };
+  if (error) return { error: `Could not send the message: ${error.message}` };
 
   await notifyAdmins(
-    "Fariyad par navo message",
-    `${customer.name} e jawab aapyo chhe`,
+    "New message on a complaint",
+    `${customer.name} has replied`,
     reportId,
   );
 

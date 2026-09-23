@@ -23,7 +23,7 @@ export default async function CustomersPage() {
   }));
 
   // Logins with nobody attached — almost always somebody who has just signed
-  // in with Google and is sitting on the "account jodayu nathi" screen.
+  // in with Google and is sitting on the "not linked yet" screen.
   const { data: accounts } = await supabase
     .from("users")
     .select("id, name, email")
@@ -38,24 +38,26 @@ export default async function CustomersPage() {
     <>
       <PageHeader
         title="Customers"
-        subtitle="Customer ni details, roj nu dudh, rate ane eno login ahi thi manage thay chhe"
+        subtitle="Customer details, daily milk, rate and login are all managed here"
       />
 
       {error ? (
         <Alert severity="error">
-          Customers load na thai shakya: {error.message}
+          Could not load customers: {error.message}
         </Alert>
       ) : (
         <>
           {unlinkedLogins.length > 0 && (
             <Alert severity="info" sx={{ mb: 2 }}>
-              {unlinkedLogins.length} login koi customer sathe jodayela nathi —{" "}
+              {unlinkedLogins.length} login
+              {unlinkedLogins.length === 1 ? " is" : "s are"} not linked to any
+              customer —{" "}
               {unlinkedLogins
                 .slice(0, 3)
                 .map((a) => a.email)
                 .join(", ")}
-              {unlinkedLogins.length > 3 ? " ane bija" : ""}. Jene jodvu hoy e
-              customer ni chavi par click karo.
+              {unlinkedLogins.length > 3 ? " and more" : ""}. Click the key icon
+              on the customer you want to link.
             </Alert>
           )}
 

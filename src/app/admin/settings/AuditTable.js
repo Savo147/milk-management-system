@@ -22,11 +22,11 @@ export default function AuditTable({ logs }) {
           <TableHead>
             <TableRow>
               <TableCell align="center" sx={{ width: "18%" }}>
-                Tarikh
+                Date
               </TableCell>
-              <TableCell sx={{ width: "22%" }}>Kone</TableCell>
+              <TableCell sx={{ width: "22%" }}>Who</TableCell>
               <TableCell align="center" sx={{ width: "18%" }}>
-                Shu karyu
+                What was done
               </TableCell>
               <TableCell>Kya</TableCell>
             </TableRow>
@@ -37,7 +37,7 @@ export default function AuditTable({ logs }) {
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Hju koi nondh nathi.
+                    No records yet.
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -65,8 +65,8 @@ export default function AuditTable({ logs }) {
         variant="caption"
         sx={{ mt: 1.5, display: "block", color: "text.secondary" }}
       >
-        Chhelli 100 nondh. Audit logs fakt vanchi shakay chhe — badalvani ke
-        kadhvani koi rite nathi, e j to eno matlab chhe.
+        The last 100 records. Audit logs are read-only — there is no way to edit
+        or delete them, which is the whole point.
       </Typography>
     </>
   );

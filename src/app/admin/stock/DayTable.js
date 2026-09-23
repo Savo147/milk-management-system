@@ -22,13 +22,13 @@ export default function DayTable({ rows }) {
           <TableRow>
             <TableCell>Customer</TableCell>
             <TableCell align="center" sx={{ width: "16%" }}>
-              Aapyu
+              Delivered
             </TableCell>
             <TableCell align="center" sx={{ width: "16%" }}>
               Rate
             </TableCell>
             <TableCell align="center" sx={{ width: "16%" }}>
-              Rakam
+              Amount
             </TableCell>
             <TableCell align="center" sx={{ width: "16%" }}>
               Status
@@ -41,8 +41,8 @@ export default function DayTable({ rows }) {
             <TableRow>
               <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Aa date nu ek pan dudh nondhayelu nathi. Daily Milk page ma
-                  entry karo.
+                  No milk has been recorded for this date. Add entries on the
+                  Daily Milk page.
                 </Typography>
               </TableCell>
             </TableRow>

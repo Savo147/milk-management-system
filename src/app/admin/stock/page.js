@@ -116,27 +116,27 @@ export default async function StockPage({ searchParams }) {
     <>
       <PageHeader
         title="Stock"
-        subtitle={`${formatDate(date)} — aa divase ketlu dudh apyu`}
+        subtitle={`${formatDate(date)} — milk delivered on this day`}
         action={<DayPicker date={date} />}
       />
 
       {error ? (
-        <Alert severity="error">Load na thai shakyu: {error.message}</Alert>
+        <Alert severity="error">Could not load: {error.message}</Alert>
       ) : (
         <>
           <Grid container spacing={2} sx={{ mb: 4 }}>
             <Grid size={{ xs: 6, md: 3 }}>
-              <Stat label="Kul dudh apyu" value={formatLiters(liters)} />
+              <Stat label="Total milk delivered" value={formatLiters(liters)} />
             </Grid>
             <Grid size={{ xs: 6, md: 3 }}>
               <Stat
-                label="Kul rakam"
+                label="Total amount"
                 value={formatAmount(amount)}
                 color="success.main"
               />
             </Grid>
             <Grid size={{ xs: 6, md: 3 }}>
-              <Stat label="Customers ne apyu" value={served} />
+              <Stat label="Given to customers" value={served} />
             </Grid>
             <Grid size={{ xs: 6, md: 3 }}>
               <Stat
@@ -147,11 +147,11 @@ export default async function StockPage({ searchParams }) {
             </Grid>
           </Grid>
 
-          <SectionLabel>Kone ketlu apyu</SectionLabel>
+          <SectionLabel>Who got how much</SectionLabel>
           <DayTable rows={rows} />
 
           <Box sx={{ mt: 4 }}>
-            <SectionLabel>Chhella 30 divas</SectionLabel>
+            <SectionLabel>Last 30 days</SectionLabel>
 
             <TableContainer
               component={Paper}
@@ -162,10 +162,10 @@ export default async function StockPage({ searchParams }) {
                   <TableRow>
                     <TableCell>Date</TableCell>
                     <TableCell align="center" sx={{ width: "22%" }}>
-                      Dudh
+                      Milk
                     </TableCell>
                     <TableCell align="center" sx={{ width: "22%" }}>
-                      Rakam
+                      Amount
                     </TableCell>
                     <TableCell align="center" sx={{ width: "22%" }}>
                       Customers
@@ -177,7 +177,7 @@ export default async function StockPage({ searchParams }) {
                     <TableRow>
                       <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
                         <Typography variant="body2" color="text.secondary">
-                          Chhella 30 divas ma koi entry nathi.
+                          No entries in the last 30 days.
                         </Typography>
                       </TableCell>
                     </TableRow>

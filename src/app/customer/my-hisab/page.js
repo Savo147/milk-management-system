@@ -4,14 +4,14 @@ import { requireCustomerAccount } from "@/lib/auth";
 import { resolveRange } from "@/lib/range";
 import PageHeader from "@/components/PageHeader";
 import NotLinked from "@/components/NotLinked";
-import MyHisabView from "./MyHisabView";
+import MyBillingView from "./MyBillingView";
 
-export const metadata = { title: "My Hisab — Krishna Dairy" };
+export const metadata = { title: "My Billing — Krishna Dairy" };
 
 const sum = (rows, key) =>
   (rows ?? []).reduce((t, r) => t + Number(r[key] ?? 0), 0);
 
-export default async function MyHisabPage({ searchParams }) {
+export default async function MyBillingPage({ searchParams }) {
   const { customer } = await requireCustomerAccount();
   const params = await searchParams;
   const { mode, from, to, label, monthFrom, monthTo } = resolveRange(params);
@@ -19,7 +19,7 @@ export default async function MyHisabPage({ searchParams }) {
   if (!customer) {
     return (
       <>
-        <PageHeader title="My Hisab" />
+        <PageHeader title="My Billing" />
         <NotLinked />
       </>
     );
@@ -28,7 +28,7 @@ export default async function MyHisabPage({ searchParams }) {
   const supabase = await createClient();
 
   // Milk and money are both dated rows, so one span answers both sides — the
-  // same shape the admin's Hisab uses, narrowed to this one customer.
+  // same shape the admin's Billing uses, narrowed to this one customer.
   const [entries, payments, allMilk, allPaid] = await Promise.all([
     supabase
       .from("milk_entries")
@@ -67,14 +67,16 @@ export default async function MyHisabPage({ searchParams }) {
   return (
     <>
       <PageHeader
-        title="My Hisab"
-        subtitle={`${label} — dudh ni rakam ane apeli payment`}
+        title="My Billing"
+        subtitle={`${label} — milk charges and payments made`}
       />
 
       {error ? (
-        <Alert severity="error">Hisab load na thayo: {error.message}</Alert>
+        <Alert severity="error">
+          Could not load your billing: {error.message}
+        </Alert>
       ) : (
-        <MyHisabView
+        <MyBillingView
           mode={mode}
           from={from}
           to={to}
@@ -86,7 +88,7 @@ export default async function MyHisabPage({ searchParams }) {
           // Paying ahead leaves payments above the milk; a negative figure
           // would just read as broken.
           baki={Math.max(0, billed - received)}
-          totalBaki={Math.max(0, totalBilled - totalPaid)}
+          totalDue={Math.max(0, totalBilled - totalPaid)}
           lastPaidOn={allPaid.data?.[0]?.paid_on ?? null}
           payments={payments.data ?? []}
           days={entries.data?.length ?? 0}

@@ -54,23 +54,23 @@ export default function MyMilkView({
     <>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard label="Total dudh" value={formatLiters(liters)} />
+          <StatCard label="Total milk" value={formatLiters(liters)} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
-            label="Total rakam"
+            label="Total amount"
             value={formatAmount(amount)}
             color="success"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard label="Ketla divas" value={entries.length} color="info" />
+          <StatCard label="Days" value={entries.length} color="info" />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
-            label="Nahi malyu"
+            label="Not received"
             value={missed}
-            sub={missed > 0 ? "divas" : ""}
+            sub={missed > 0 ? "days" : ""}
             color={missed > 0 ? "error" : "success"}
           />
         </Grid>
@@ -97,7 +97,7 @@ export default function MyMilkView({
           onChange={(e) => setStatusFilter(e.target.value)}
           sx={{ minWidth: 160 }}
         >
-          <MenuItem value="all">Badha divas</MenuItem>
+          <MenuItem value="all">All days</MenuItem>
           {Object.entries(DELIVERY_STATUS).map(([value, text]) => (
             <MenuItem key={value} value={value}>
               {text}
@@ -116,10 +116,10 @@ export default function MyMilkView({
             <TableRow
               sx={{ "& th": { fontWeight: 700, whiteSpace: "nowrap" } }}
             >
-              <TableCell>Tarikh</TableCell>
-              <TableCell align="right">Aapyu</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell align="right">Delivered</TableCell>
               <TableCell align="right">Rate</TableCell>
-              <TableCell align="right">Rakam</TableCell>
+              <TableCell align="right">Amount</TableCell>
               <TableCell align="center">Status</TableCell>
             </TableRow>
           </TableHead>
@@ -130,8 +130,8 @@ export default function MyMilkView({
                 <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     {entries.length === 0
-                      ? "Aa gala ma koi entry nathi."
-                      : "Aa status na koi divas nathi."}
+                      ? "No entries in this period."
+                      : "No days with this status."}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -179,8 +179,8 @@ export default function MyMilkView({
         color="text.secondary"
         sx={{ mt: 1.5, display: "block" }}
       >
-        Rate e divase je hato e j dekhade chhe — pachhi rate badle to juna divas
-        badalta nathi.
+        Each day shows the rate as it was that day — changing the rate later
+        does not alter past days.
       </Typography>
     </>
   );

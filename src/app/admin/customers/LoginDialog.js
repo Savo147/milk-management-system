@@ -74,14 +74,14 @@ function ExistingLogin({ customer, onClose }) {
             <TextField
               type="text"
               name="password"
-              label="Navo password"
+              label="New password"
               required
               fullWidth
               autoComplete="off"
               // Shown as plain text on purpose: the admin has to read it out
               // to the customer, and a masked box they cannot check is how
               // wrong passwords get handed over.
-              helperText="Ochha ma ochha 8 akshar. Juno password turant band thai jase."
+              helperText="At least 8 characters. The old password stops working immediately."
             />
           </Stack>
         </Box>
@@ -98,15 +98,15 @@ function ExistingLogin({ customer, onClose }) {
               sx={{ alignItems: "center", flexWrap: "wrap" }}
             >
               <Typography variant="body2" color="text.secondary">
-                Aa login kadhi nakhvu chhe?
+                Remove this login?
               </Typography>
               <Box sx={{ flexGrow: 1 }} />
               <Button size="small" onClick={() => setConfirming(false)}>
                 Na
               </Button>
               <ActionButton
-                label="Ha, kadho"
-                busy="Kadhi rahyu..."
+                label="Yes, remove it"
+                busy="Removing..."
                 icon={LinkOffIcon}
                 color="error"
               />
@@ -118,7 +118,7 @@ function ExistingLogin({ customer, onClose }) {
               startIcon={<LinkOffIcon sx={{ fontSize: 17 }} />}
               onClick={() => setConfirming(true)}
             >
-              Login aa customer parthi kadho
+              Detach this login from the customer
             </Button>
           )}
 
@@ -127,13 +127,13 @@ function ExistingLogin({ customer, onClose }) {
             color="text.secondary"
             sx={{ display: "block", mt: 1 }}
           >
-            Login band nahi thay — e faqt aa customer thi chhuto padse.
+            The login is not disabled — it is only detached from this customer.
           </Typography>
         </Box>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={onClose}>Rehva do</Button>
+        <Button onClick={onClose}>Cancel</Button>
         {/* Submits the form above by id — it cannot be nested in this one,
             and the unlink form sits between them. */}
         <Button
@@ -142,7 +142,7 @@ function ExistingLogin({ customer, onClose }) {
           variant="contained"
           startIcon={<KeyIcon sx={{ fontSize: 17 }} />}
         >
-          Password badlo
+          Change password
         </Button>
       </DialogActions>
     </>
@@ -182,14 +182,14 @@ function NoLogin({ customer, unlinkedLogins, onClose }) {
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField
             select
-            label="Kayu login"
+            label="Which login"
             value={choice}
             onChange={(e) => setChoice(e.target.value)}
             fullWidth
             helperText={
               unlinkedLogins.length
-                ? `${unlinkedLogins.length} login koi customer sathe jodayela nathi.`
-                : "Koi chhuto login nathi — navu banavvu padse."
+                ? `${unlinkedLogins.length} logins are not linked to any customer.`
+                : "No unlinked logins — you will need to create one."
             }
           >
             {unlinkedLogins.map((a) => (
@@ -197,7 +197,7 @@ function NoLogin({ customer, unlinkedLogins, onClose }) {
                 {a.name} — {a.email}
               </MenuItem>
             ))}
-            <MenuItem value={NEW}>＋ Navu login banavo</MenuItem>
+            <MenuItem value={NEW}>＋ Create a new login</MenuItem>
           </TextField>
 
           {making && (
@@ -209,7 +209,7 @@ function NoLogin({ customer, unlinkedLogins, onClose }) {
                 required
                 fullWidth
                 autoComplete="off"
-                helperText="Aa email ane password thi customer login karse."
+                helperText="The customer will sign in with this email and password."
               />
               <TextField
                 type="text"
@@ -218,24 +218,24 @@ function NoLogin({ customer, unlinkedLogins, onClose }) {
                 required
                 fullWidth
                 autoComplete="off"
-                helperText="Ochha ma ochha 8 akshar. Customer ne aa kahi devu."
+                helperText="At least 8 characters. Pass this on to the customer."
               />
             </>
           )}
 
           <Typography variant="caption" color="text.secondary">
             {making
-              ? "Login banya pachhi customer potanu dudh, hisab ane fariyad jate joi shakse."
-              : "Aa vyakti e Google ke email thi login kari lidhu chhe — jodya pachhi ene potano hisab dekhava mandse."}
+              ? "Once the login exists, the customer can see their own milk, billing and complaints."
+              : "This person has already signed in with Google or email — once linked they will start seeing their own account."}
           </Typography>
         </Stack>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={onClose}>Rehva do</Button>
+        <Button onClick={onClose}>Cancel</Button>
         <ActionButton
-          label={making ? "Login banavo" : "Jodi do"}
-          busy="Thai rahyu..."
+          label={making ? "Create login" : "Link it"}
+          busy="Working..."
           icon={making ? KeyIcon : LinkIcon}
         />
       </DialogActions>
@@ -259,7 +259,7 @@ export default function LoginDialog({ customer, unlinkedLogins, onClose }) {
       {customer && (
         <>
           <DialogTitle sx={{ pb: 1 }}>
-            {existing ? "Login" : "Login aapo"}
+            {existing ? "Login" : "Give a login"}
             <Typography variant="body2" color="text.secondary">
               {customer.name}
             </Typography>

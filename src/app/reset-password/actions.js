@@ -23,7 +23,7 @@ export async function setNewPassword(prevState, formData) {
 
   if (!user) {
     return {
-      error: "Link ni mudat puri thai gai. Navi link mangavi ne fari karo.",
+      error: "This link has expired. Request a new one and try again.",
     };
   }
 
@@ -32,16 +32,16 @@ export async function setNewPassword(prevState, formData) {
 
   if (password.length < MIN_PASSWORD) {
     return {
-      error: `Password ochha ma ochho ${MIN_PASSWORD} akshar no hovo joiye.`,
+      error: `The password must be at least ${MIN_PASSWORD} characters.`,
     };
   }
-  if (password !== confirm) return { error: "Bunne password sarkha nathi." };
+  if (password !== confirm) return { error: "The two passwords do not match." };
 
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
     console.error("[reset] password update failed:", error);
-    return { error: `Password badlai na shakyo: ${error.message}` };
+    return { error: `Could not change the password: ${error.message}` };
   }
 
   const { data: profile } = await supabase

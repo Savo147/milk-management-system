@@ -3,8 +3,8 @@ import { formatDate, formatMonth } from "@/lib/format";
 /**
  * Turning ?mode/?from/?to into one span of days.
  *
- * Every screen that filters by time — Hisab, Reports, Problems, and the
- * customer's own Milk and Hisab — asks the same question: which days. A month
+ * Every screen that filters by time — Billing, Reports, Problems, and the
+ * customer's own Milk and Billing — asks the same question: which days. A month
  * is just a span from its first day to its last, so both picker modes end up
  * as a `from`/`to` pair and the queries downstream never have to care which
  * one was used.

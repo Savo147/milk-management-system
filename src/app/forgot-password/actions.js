@@ -15,8 +15,9 @@ import { siteOrigin } from "@/lib/site";
 export async function sendResetLink(prevState, formData) {
   const email = String(formData.get("email") ?? "").trim();
 
-  if (!email) return { error: "Email nakho." };
-  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Email barabar nathi." };
+  if (!email) return { error: "Enter an email." };
+  if (!/^\S+@\S+\.\S+$/.test(email))
+    return { error: "That email is not valid." };
 
   const supabase = await createClient();
 
@@ -40,8 +41,8 @@ export async function sendResetLink(prevState, formData) {
 
       return {
         error: wait
-          ? `Thodi var thambo — ${wait} second pachhi fari prayatna karo.`
-          : "Aa kalak ni email limit puri thai gai. Ek kalak pachhi fari prayatna karo.",
+          ? `Hold on — try again in ${wait} seconds.`
+          : "This hour's email limit is used up. Try again in an hour.",
       };
     }
 
@@ -51,11 +52,11 @@ export async function sendResetLink(prevState, formData) {
     if (error.status === 0 || /fetch failed/i.test(error.message)) {
       return {
         error:
-          "Server sudhi pahonchi na shakayu. Internet tapaso ane fari prayatna karo.",
+          "Could not reach the server. Check your connection and try again.",
       };
     }
 
-    return { error: `Email na mokli shakai. (${error.message})` };
+    return { error: `Could not send the email. (${error.message})` };
   }
 
   return { ok: true, email };

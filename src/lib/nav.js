@@ -13,7 +13,7 @@ export const adminNav = [
   { href: "/admin/customers", label: "Customers", icon: PeopleIcon },
   { href: "/admin/daily-milk", label: "Daily Milk", icon: LocalShippingIcon },
   { href: "/admin/stock", label: "Stock", icon: InventoryIcon },
-  { href: "/admin/hisab", label: "Hisab", icon: ReceiptLongIcon },
+  { href: "/admin/hisab", label: "Billing", icon: ReceiptLongIcon },
   { href: "/admin/reports", label: "Reports", icon: AssessmentIcon },
   { href: "/admin/problems", label: "Problems", icon: ReportProblemIcon },
   { href: "/admin/settings", label: "Settings", icon: SettingsIcon },

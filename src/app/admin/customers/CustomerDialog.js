@@ -22,7 +22,7 @@ function Actions({ onClose }) {
         Cancel
       </Button>
       <Button type="submit" variant="contained" disabled={pending}>
-        {pending ? "Save thai rahyu..." : "Save"}
+        {pending ? "Saving..." : "Save"}
       </Button>
     </DialogActions>
   );
@@ -47,9 +47,7 @@ export default function CustomerDialog({ open, onClose, customer }) {
       key={customer?.id ?? "new"}
     >
       <form action={formAction}>
-        <DialogTitle>
-          {customer ? "Customer edit karo" : "Navo customer"}
-        </DialogTitle>
+        <DialogTitle>{customer ? "Edit customer" : "New customer"}</DialogTitle>
 
         <DialogContent>
           {customer && <input type="hidden" name="id" value={customer.id} />}
@@ -64,7 +62,7 @@ export default function CustomerDialog({ open, onClose, customer }) {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="name"
-                label="Naam"
+                label="Name"
                 defaultValue={customer?.name ?? ""}
                 required
                 fullWidth
@@ -81,13 +79,13 @@ export default function CustomerDialog({ open, onClose, customer }) {
                 slotProps={{
                   htmlInput: { inputMode: "numeric", maxLength: 10 },
                 }}
-                helperText="10 aank"
+                helperText="10 digits"
               />
             </Grid>
             <Grid size={12}>
               <TextField
                 name="address"
-                label="Sarnamu"
+                label="Address"
                 defaultValue={customer?.address ?? ""}
                 fullWidth
                 multiline
@@ -97,7 +95,7 @@ export default function CustomerDialog({ open, onClose, customer }) {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="daily_quantity"
-                label="Roj nu dudh"
+                label="Daily milk"
                 defaultValue={customer?.daily_quantity ?? 1}
                 select
                 required
@@ -121,7 +119,7 @@ export default function CustomerDialog({ open, onClose, customer }) {
                 slotProps={{ htmlInput: { min: 0.01, step: 0.5 } }}
                 helperText={
                   customer
-                    ? "Badalso to juno rate history ma jate save thai jase"
+                    ? "Change it and the old rate is kept in history automatically"
                     : undefined
                 }
               />
@@ -132,7 +130,7 @@ export default function CustomerDialog({ open, onClose, customer }) {
                 label="Delivery time"
                 defaultValue={customer?.delivery_time ?? ""}
                 fullWidth
-                placeholder="Savare 6:00"
+                placeholder="6:00 in the morning"
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>

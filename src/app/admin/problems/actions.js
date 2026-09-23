@@ -52,8 +52,8 @@ export async function replyToProblem(prevState, formData) {
   const reportId = String(formData.get("report_id") ?? "");
   const message = String(formData.get("message") ?? "").trim();
 
-  if (!reportId) return { error: "Problem malyu nahi." };
-  if (!message) return { error: "Jawab lakho." };
+  if (!reportId) return { error: "Complaint not found." };
+  if (!message) return { error: "Write a reply." };
 
   const supabase = await createClient();
 
@@ -63,11 +63,11 @@ export async function replyToProblem(prevState, formData) {
     message,
   });
 
-  if (error) return { error: `Jawab save na thayo: ${error.message}` };
+  if (error) return { error: `Reply not saved: ${error.message}` };
 
   await notifyCustomer(
     reportId,
-    "Tamari fariyad no jawab aavyo",
+    "Your complaint has a reply",
     message.slice(0, 120),
   );
 
@@ -81,11 +81,11 @@ export async function setProblemStatus(prevState, formData) {
   const reportId = String(formData.get("report_id") ?? "");
   const state = String(formData.get("status") ?? "");
 
-  if (!reportId) return { error: "Problem malyu nahi." };
+  if (!reportId) return { error: "Complaint not found." };
 
   // The screen offers two states; the column keeps its four enum values.
   const status = PROBLEM_STATE_VALUE[state];
-  if (!status) return { error: "Status barabar nathi." };
+  if (!status) return { error: "That status is not valid." };
 
   const supabase = await createClient();
 
@@ -98,16 +98,16 @@ export async function setProblemStatus(prevState, formData) {
     })
     .eq("id", reportId);
 
-  if (error) return { error: `Status badlai na shakyu: ${error.message}` };
+  if (error) return { error: `Could not change the status: ${error.message}` };
 
   await notifyCustomer(
     reportId,
     status === "resolved"
-      ? "Tamari fariyad solve thai gai"
-      : "Tamari fariyad fari kholai chhe",
+      ? "Your complaint has been resolved"
+      : "Your complaint has been reopened",
     status === "resolved"
-      ? "Dairy e aa fariyad puri thayeli gani chhe."
-      : "Dairy fari thi aa fariyad jui rahi chhe.",
+      ? "The dairy has marked this complaint as done."
+      : "The dairy is looking at this complaint again.",
   );
 
   refresh();

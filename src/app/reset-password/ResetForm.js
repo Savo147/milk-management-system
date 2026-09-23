@@ -23,7 +23,7 @@ function SubmitButton() {
       fullWidth
       disabled={pending}
     >
-      {pending ? "Save thai rahyu chhe..." : "Navo password save karo"}
+      {pending ? "Saving..." : "Save new password"}
     </Button>
   );
 }
@@ -41,7 +41,7 @@ export default function ResetForm({ email }) {
           onClick={() => setShow((on) => !on)}
           edge="end"
           size="small"
-          aria-label={show ? "Password chhupavo" : "Password batavo"}
+          aria-label={show ? "Hide password" : "Show password"}
           tabIndex={-1}
         >
           {show ? (
@@ -69,20 +69,20 @@ export default function ResetForm({ email }) {
       <TextField
         name="password"
         type={show ? "text" : "password"}
-        label="Navo password"
+        label="New password"
         placeholder="••••••••"
         autoComplete="new-password"
         required
         fullWidth
         autoFocus
-        helperText="Ochha ma ochha 8 akshar."
+        helperText="At least 8 characters."
         slotProps={{ inputLabel: { shrink: true }, input: eye }}
       />
 
       <TextField
         name="confirm"
         type={show ? "text" : "password"}
-        label="Fari lakho"
+        label="Repeat it"
         placeholder="••••••••"
         autoComplete="new-password"
         required

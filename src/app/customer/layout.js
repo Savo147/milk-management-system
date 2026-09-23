@@ -11,7 +11,7 @@ import AppShell from "@/components/AppShell";
 const customerNav = [
   { href: "/customer", label: "Dashboard", icon: DashboardIcon },
   { href: "/customer/my-milk", label: "My Milk", icon: LocalDrinkIcon },
-  { href: "/customer/my-hisab", label: "My Hisab", icon: ReceiptLongIcon },
+  { href: "/customer/my-hisab", label: "My Billing", icon: ReceiptLongIcon },
   {
     href: "/customer/report-problem",
     label: "Report Problem",

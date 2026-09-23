@@ -51,7 +51,7 @@ function QuantityPicker({ value, onChange, changed }) {
     <>
       <ButtonBase
         onClick={(e) => setAnchorEl(e.currentTarget)}
-        aria-label="Quantity pasand karo"
+        aria-label="Choose a quantity"
         sx={{
           pl: 1,
           pr: 0.25,
@@ -256,7 +256,7 @@ export default function DailyMilkForm({ date, customers }) {
         <TextField
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Customer shodho"
+          placeholder="Search customer"
           size="small"
           sx={{ flexGrow: 1, maxWidth: { sm: 320 } }}
           slotProps={{
@@ -277,7 +277,7 @@ export default function DailyMilkForm({ date, customers }) {
           onChange={(e) => setStatusFilter(e.target.value)}
           sx={{ minWidth: 140 }}
         >
-          <MenuItem value="all">Badha</MenuItem>
+          <MenuItem value="all">All</MenuItem>
           {Object.entries(DAILY_ROW_STATUS).map(([value, label]) => (
             <MenuItem key={value} value={value}>
               {label}
@@ -291,8 +291,8 @@ export default function DailyMilkForm({ date, customers }) {
             numbers are a summary of what is on screen, not an action. */}
         <Stack direction="row" spacing={3} sx={{ pr: 0.5 }}>
           <Total label="Entries" value={totals.count} />
-          <Total label="Total dudh" value={formatLiters(totals.liters)} />
-          <Total label="Total rakam" value={formatAmount(totals.amount)} />
+          <Total label="Total milk" value={formatLiters(totals.liters)} />
+          <Total label="Total amount" value={formatAmount(totals.amount)} />
         </Stack>
       </Stack>
 
@@ -305,13 +305,13 @@ export default function DailyMilkForm({ date, customers }) {
             <TableRow>
               <TableCell>Customer</TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
-                Aapyu
+                Delivered
               </TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
                 Rate
               </TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
-                Rakam
+                Amount
               </TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
                 Status
@@ -328,10 +328,10 @@ export default function DailyMilkForm({ date, customers }) {
                 <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     {customers.length === 0
-                      ? "Ek pan active customer nathi. Pehla Customers page ma add karo."
+                      ? "There are no active customers. Add them on the Customers page first."
                       : statusFilter === "pending" && !query
-                        ? "Badha thai gaya! Aa date na badha customers save thai gaya chhe."
-                        : "Aa shodh/filter mate koi customer nathi malyo."}
+                        ? "All done — every customer for this date has been saved."
+                        : "No customer matches this search or filter."}
                   </Typography>
                 </TableCell>
               </TableRow>

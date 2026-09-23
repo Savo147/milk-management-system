@@ -19,9 +19,9 @@ export async function updateMyProfile(prevState, formData) {
   const mobile = String(formData.get("mobile") ?? "").trim();
   const photo = String(formData.get("profile_photo") ?? "").trim();
 
-  if (!name) return { error: "Naam nakho." };
+  if (!name) return { error: "Enter a name." };
   if (mobile && !/^\d{10}$/.test(mobile)) {
-    return { error: "Mobile 10 aank no hovo joiye." };
+    return { error: "The mobile number must be 10 digits." };
   }
 
   const supabase = await createClient();
@@ -35,7 +35,7 @@ export async function updateMyProfile(prevState, formData) {
     })
     .eq("id", user.id);
 
-  if (error) return { error: `Save na thai shakyu: ${error.message}` };
+  if (error) return { error: `Could not save: ${error.message}` };
 
   revalidatePath("/", "layout");
   return { ok: true };
@@ -48,14 +48,15 @@ export async function changeMyPassword(prevState, formData) {
   const confirm = String(formData.get("confirm") ?? "");
 
   if (password.length < 8) {
-    return { error: "Password ochha ma ochho 8 akshar no hovo joiye." };
+    return { error: "The password must be at least 8 characters." };
   }
-  if (password !== confirm) return { error: "Bunne password sarkha nathi." };
+  if (password !== confirm) return { error: "The two passwords do not match." };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
 
-  if (error) return { error: `Password badlai na shakyo: ${error.message}` };
+  if (error)
+    return { error: `Could not change the password: ${error.message}` };
 
   return { ok: true };
 }

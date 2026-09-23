@@ -23,7 +23,7 @@ function SubmitButton() {
       startIcon={<SaveIcon sx={{ fontSize: 17 }} />}
       disabled={pending}
     >
-      {pending ? "Save thai rahyu..." : "Save karo"}
+      {pending ? "Saving..." : "Save"}
     </Button>
   );
 }
@@ -42,7 +42,7 @@ export default function DairyForm({ settings }) {
           )}
           {state?.ok && (
             <Alert severity="success" sx={{ mb: 2 }}>
-              Save thai gayu.
+              Saved.
             </Alert>
           )}
 
@@ -50,7 +50,7 @@ export default function DairyForm({ settings }) {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="dairy_name"
-                label="Dairy nu naam"
+                label="Dairy name"
                 defaultValue={settings.dairy_name ?? ""}
                 required
                 fullWidth
@@ -68,7 +68,7 @@ export default function DairyForm({ settings }) {
             <Grid size={12}>
               <TextField
                 name="address"
-                label="Sarnamu"
+                label="Address"
                 defaultValue={settings.address ?? ""}
                 fullWidth
                 multiline
@@ -79,11 +79,11 @@ export default function DairyForm({ settings }) {
             <Grid size={{ xs: 12, sm: 8 }}>
               <TextField
                 name="logo_url"
-                label="Logo nu URL"
+                label="Logo URL"
                 defaultValue={settings.logo_url ?? ""}
                 fullWidth
                 placeholder="https://..."
-                helperText="Khali rakho to public/logo.png vaparashe"
+                helperText="Leave it empty and public/logo.png is used"
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
@@ -123,7 +123,7 @@ export default function DairyForm({ settings }) {
               sx={{ width: 44, height: 44, objectFit: "contain" }}
             />
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              Atyare aa logo vaparaay chhe
+              This is the logo in use
             </Typography>
           </Box>
         </Box>

@@ -23,7 +23,7 @@ function SubmitButton() {
       fullWidth
       disabled={pending}
     >
-      {pending ? "Mokali rahyu chhe..." : "Link mokalo"}
+      {pending ? "Sending..." : "Send link"}
     </Button>
   );
 }
@@ -36,14 +36,13 @@ export default function ForgotForm({ initialError }) {
     return (
       <Box sx={{ display: "grid", gap: 2 }}>
         <Alert severity="success" icon={<MarkEmailReadIcon />}>
-          <AlertTitle>Email mokli didhu</AlertTitle>
-          <strong>{state.email}</strong> par password badalvani link mokli chhe.
-          Email kholi ne e link par click karo.
+          <AlertTitle>Email sent</AlertTitle>A password reset link has been sent
+          to <strong>{state.email}</strong>. Open the email and click the link.
         </Alert>
 
         <Alert severity="info">
-          Email na dekhay to <strong>Spam</strong> ma joi lejo. Link{" "}
-          <strong>1 kalak</strong> sudhi j chale chhe.
+          If you cannot see it, check your <strong>Spam</strong> folder. The
+          link works for <strong>1 hour</strong> only.
         </Alert>
 
         <Button
@@ -51,7 +50,7 @@ export default function ForgotForm({ initialError }) {
           href="/login"
           startIcon={<ArrowBackIcon sx={{ fontSize: 17 }} />}
         >
-          Login par pachha jao
+          Back to sign in
         </Button>
       </Box>
     );
@@ -65,7 +64,7 @@ export default function ForgotForm({ initialError }) {
         name="email"
         type="email"
         label="Email"
-        placeholder="tamaru@email.com"
+        placeholder="you@example.com"
         autoComplete="email"
         required
         fullWidth
@@ -80,7 +79,7 @@ export default function ForgotForm({ initialError }) {
         href="/login"
         startIcon={<ArrowBackIcon sx={{ fontSize: 17 }} />}
       >
-        Login par pachha jao
+        Back to sign in
       </Button>
     </Box>
   );

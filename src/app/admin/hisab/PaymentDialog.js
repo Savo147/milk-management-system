@@ -43,7 +43,7 @@ function Actions({ onClose }) {
         Cancel
       </Button>
       <Button type="submit" variant="contained" disabled={pending}>
-        {pending ? "Save thai rahyu..." : "Save karo"}
+        {pending ? "Saving..." : "Save"}
       </Button>
     </DialogActions>
   );
@@ -87,7 +87,7 @@ export default function PaymentDialog({ row, from, to, today, onClose }) {
             )}
 
             <Stack spacing={1} sx={{ mb: 3 }}>
-              <Row label="Dudh" value={formatLiters(row.total_liters)} />
+              <Row label="Milk" value={formatLiters(row.total_liters)} />
               <Row label="Total" value={formatAmount(total)} strong />
             </Stack>
 
@@ -97,7 +97,7 @@ export default function PaymentDialog({ row, from, to, today, onClose }) {
 
             <TextField
               name="amount"
-              label="Rakam"
+              label="Amount"
               type="number"
               // The span's own total, so what the box says matches the Total
               // right above it. The action treats it as the running total for

@@ -74,7 +74,7 @@ function ReplyButton() {
       startIcon={<SendIcon sx={{ fontSize: 17 }} />}
       disabled={pending}
     >
-      {pending ? "Mokali rahyu..." : "Jawab mokalo"}
+      {pending ? "Sending..." : "Send reply"}
     </Button>
   );
 }
@@ -115,11 +115,11 @@ export default function ProblemDialog({ problem, replies, onClose }) {
               sx={{ flexWrap: "wrap", gap: 2, mb: 2, mt: 1 }}
             >
               <Field
-                label="Joitu hatu"
+                label="Expected"
                 value={formatLiters(problem.expected_quantity)}
               />
               <Field
-                label="Malyu"
+                label="Got"
                 value={formatLiters(problem.received_quantity)}
               />
               <Box sx={{ flexGrow: 1 }} />
@@ -147,14 +147,14 @@ export default function ProblemDialog({ problem, replies, onClose }) {
 
             <Divider sx={{ mb: 2 }}>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                Vaatchit ({replies.length})
+                Conversation ({replies.length})
               </Typography>
             </Divider>
 
             <Stack spacing={1.5} sx={{ mb: 2 }}>
               {replies.length === 0 && (
                 <Typography variant="body2" color="text.secondary">
-                  Hju koi jawab nathi apyo.
+                  No reply has been sent yet.
                 </Typography>
               )}
 
@@ -202,7 +202,7 @@ export default function ProblemDialog({ problem, replies, onClose }) {
               <TextField
                 id="problem-reply"
                 name="message"
-                label="Jawab"
+                label="Replies"
                 multiline
                 rows={2}
                 fullWidth
@@ -215,7 +215,7 @@ export default function ProblemDialog({ problem, replies, onClose }) {
                 spacing={1}
                 sx={{ justifyContent: "flex-end" }}
               >
-                <Button onClick={onClose}>Band karo</Button>
+                <Button onClick={onClose}>Close</Button>
                 <ReplyButton />
               </Stack>
             </Box>

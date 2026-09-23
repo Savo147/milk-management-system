@@ -90,10 +90,10 @@ export default function ReportView({
     const header = [
       "Customer",
       "Mobile",
-      "Dudh (L)",
-      "Rakam",
-      "Mali gayu",
-      "Baki",
+      "Milk (L)",
+      "Amount",
+      "Received",
+      "Due",
     ];
     const body = rows.map((r) =>
       [r.label, r.sub, r.liters, r.amount, r.paid, r.baki].map(csvCell),
@@ -117,10 +117,10 @@ export default function ReportView({
     <Box>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Summary label="Total dudh" value={formatLiters(totals.liters)} />
+          <Summary label="Total milk" value={formatLiters(totals.liters)} />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Summary label="Total rakam" value={formatAmount(totals.amount)} />
+          <Summary label="Total amount" value={formatAmount(totals.amount)} />
         </Grid>
       </Grid>
 
@@ -142,7 +142,7 @@ export default function ReportView({
         <TextField
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Customer shodho"
+          placeholder="Search customer"
           size="small"
           sx={{ flexGrow: 1, maxWidth: { md: 280 } }}
           slotProps={{
@@ -185,16 +185,16 @@ export default function ReportView({
             <TableRow>
               <TableCell>Customer</TableCell>
               <TableCell align="center" sx={{ width: "16%" }}>
-                Dudh
+                Milk
               </TableCell>
               <TableCell align="center" sx={{ width: "18%" }}>
-                Rakam
+                Amount
               </TableCell>
               <TableCell align="center" sx={{ width: "18%" }}>
-                Mali gayu
+                Received
               </TableCell>
               <TableCell align="center" sx={{ width: "18%" }}>
-                Baki
+                Due
               </TableCell>
             </TableRow>
           </TableHead>
@@ -204,7 +204,7 @@ export default function ReportView({
               <TableRow>
                 <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Aa gala ma koi nondh nathi.
+                    No records in this period.
                   </Typography>
                 </TableCell>
               </TableRow>

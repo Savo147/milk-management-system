@@ -44,7 +44,7 @@ function LogoutActions({ onCancel }) {
   return (
     <>
       <Button onClick={onCancel} disabled={pending}>
-        Na, rehva do
+        No, keep me in
       </Button>
       <Button
         type="submit"
@@ -59,7 +59,7 @@ function LogoutActions({ onCancel }) {
           )
         }
       >
-        {pending ? "Logout thai rahyu..." : "Logout"}
+        {pending ? "Signing out..." : "Logout"}
       </Button>
     </>
   );
@@ -167,7 +167,7 @@ export default function AppShell({
         <Toolbar sx={{ minHeight: { xs: 64, md: 68 } }}>
           <IconButton
             edge="start"
-            aria-label="Menu kholo"
+            aria-label="Open menu"
             onClick={() => setMobileOpen(true)}
             sx={{ mr: 2, display: { md: "none" } }}
           >
@@ -237,10 +237,10 @@ export default function AppShell({
             maxWidth="xs"
             fullWidth
           >
-            <DialogTitle>Logout karvu chhe?</DialogTitle>
+            <DialogTitle>Sign out?</DialogTitle>
             <DialogContent>
               <Typography variant="body2" color="text.secondary">
-                Fari kaam karva mate pachhu login karvu padse.
+                You will need to sign in again to carry on.
               </Typography>
             </DialogContent>
             {/* Both buttons live inside the form so useFormStatus can reach

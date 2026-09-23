@@ -38,12 +38,12 @@ export default async function MyMilkPage({ searchParams }) {
     <>
       <PageHeader
         title="My Milk"
-        subtitle={`${label} — roj ketlu dudh malyu`}
+        subtitle={`${label} — how much milk you got each day`}
       />
 
       {error ? (
         <Alert severity="error">
-          Dudh no hisab load na thayo: {error.message}
+          Could not load your milk records: {error.message}
         </Alert>
       ) : (
         <MyMilkView

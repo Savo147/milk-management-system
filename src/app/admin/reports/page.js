@@ -73,7 +73,7 @@ export default async function ReportsPage({ searchParams }) {
 
       {report.error ? (
         <Alert severity="error">
-          Report banavi na shakayo: {report.error.message}
+          Could not build the report: {report.error.message}
         </Alert>
       ) : (
         <ReportView

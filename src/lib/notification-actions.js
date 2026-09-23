@@ -12,7 +12,7 @@ import { getCurrentUser } from "@/lib/auth";
  */
 export async function markNotificationsRead() {
   const user = await getCurrentUser();
-  if (!user) return { error: "Login karo." };
+  if (!user) return { error: "Please sign in." };
 
   const supabase = await createClient();
 

@@ -32,12 +32,12 @@ export async function saveOneEntry(prevState, formData) {
   const raw = String(formData.get("qty") ?? "");
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date))
-    return { error: "Date barabar nathi." };
-  if (!customerId) return { error: "Customer malyo nahi." };
+    return { error: "That date is not valid." };
+  if (!customerId) return { error: "Customer not found." };
 
   const actual = Number(raw);
   if (raw === "" || !ALLOWED.has(actual)) {
-    return { error: "Quantity 0 thi 5 L, 0.5 na step ma hovi joiye." };
+    return { error: "Quantity must be 0 to 5 L, in steps of 0.5." };
   }
 
   const supabase = await createClient();
@@ -51,7 +51,7 @@ export async function saveOneEntry(prevState, formData) {
     .eq("status", "active")
     .maybeSingle();
 
-  if (cErr || !customer) return { error: "Customer malyo nahi." };
+  if (cErr || !customer) return { error: "Customer not found." };
 
   const expected = Number(customer.daily_quantity);
 
@@ -67,7 +67,7 @@ export async function saveOneEntry(prevState, formData) {
     { onConflict: "customer_id,date" },
   );
 
-  if (error) return { error: `Save na thai shakyu: ${error.message}` };
+  if (error) return { error: `Could not save: ${error.message}` };
 
   await syncStock(supabase, date);
 

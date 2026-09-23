@@ -45,12 +45,12 @@ export default async function DailyMilkPage({ searchParams }) {
     <>
       <PageHeader
         title="Daily Milk"
-        subtitle={`${formatDate(date)} — kone ketlu dudh apyu e nakho`}
+        subtitle={`${formatDate(date)} — record how much milk each customer got`}
       />
 
       {error ? (
         <Alert severity="error">
-          Customers load na thai shakya: {error.message}
+          Could not load customers: {error.message}
         </Alert>
       ) : (
         <DailyMilkForm date={date} customers={rows} />

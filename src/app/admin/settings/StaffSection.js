@@ -34,7 +34,7 @@ function StaffControls({ member, isSelf }) {
   if (isSelf) {
     return (
       <Typography variant="caption" sx={{ color: "text.secondary" }}>
-        Tame pote
+        You
       </Typography>
     );
   }
@@ -88,7 +88,7 @@ function AddButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" variant="contained" disabled={pending}>
-      {pending ? "Banavi rahyu..." : "Banavo"}
+      {pending ? "Creating..." : "Create"}
     </Button>
   );
 }
@@ -103,7 +103,7 @@ function AddStaffDialog({ open, onClose }) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <form action={formAction}>
-        <DialogTitle>Navo admin</DialogTitle>
+        <DialogTitle>New admin</DialogTitle>
 
         <DialogContent>
           {state?.error && (
@@ -116,7 +116,7 @@ function AddStaffDialog({ open, onClose }) {
             <Grid size={12}>
               <TextField
                 name="name"
-                label="Naam"
+                label="Name"
                 required
                 fullWidth
                 autoFocus
@@ -148,7 +148,7 @@ function AddStaffDialog({ open, onClose }) {
                 label="Password"
                 required
                 fullWidth
-                helperText="Ochha ma ochha 8 akshar"
+                helperText="At least 8 characters"
               />
             </Grid>
           </Grid>
@@ -174,7 +174,7 @@ export default function StaffSection({ staff, currentUserId }) {
           startIcon={<PersonAddIcon sx={{ fontSize: 18 }} />}
           onClick={() => setAdding(true)}
         >
-          Navo admin
+          New admin
         </Button>
       </Stack>
 
@@ -185,7 +185,7 @@ export default function StaffSection({ staff, currentUserId }) {
         <Table size="small" sx={{ minWidth: 720 }}>
           <TableHead>
             <TableRow>
-              <TableCell>Naam</TableCell>
+              <TableCell>Name</TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
                 Mobile
               </TableCell>
@@ -196,7 +196,7 @@ export default function StaffSection({ staff, currentUserId }) {
                 Atyare
               </TableCell>
               <TableCell align="center" sx={{ width: "28%" }}>
-                Role ane status
+                Role and status
               </TableCell>
             </TableRow>
           </TableHead>
@@ -206,7 +206,7 @@ export default function StaffSection({ staff, currentUserId }) {
               <TableRow>
                 <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Koi user nathi.
+                    No users.
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -249,8 +249,8 @@ export default function StaffSection({ staff, currentUserId }) {
         variant="caption"
         sx={{ mt: 1.5, display: "block", color: "text.secondary" }}
       >
-        Tamaro potano role ke status ahi thi badli na shakay — chhello admin
-        pote j bandh thai jaay to pachhu andar aavvano koi rasto na rahe.
+        You cannot change your own role or status here — if the last admin
+        locked themselves out there would be no way back in.
       </Typography>
 
       <AddStaffDialog open={adding} onClose={() => setAdding(false)} />

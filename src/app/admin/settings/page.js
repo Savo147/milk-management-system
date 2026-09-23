@@ -51,13 +51,11 @@ export default async function SettingsPage() {
     <>
       <PageHeader
         title="Settings"
-        subtitle="Dairy, tamari vigat, users, rates ane audit logs"
+        subtitle="Dairy, your details, users, rates and audit logs"
       />
 
       {error ? (
-        <Alert severity="error">
-          Settings load na thai shakya: {error.message}
-        </Alert>
+        <Alert severity="error">Could not load settings: {error.message}</Alert>
       ) : (
         <SettingsTabs
           settings={settings}

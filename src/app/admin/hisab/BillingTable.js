@@ -28,7 +28,7 @@ import PaymentDialog from "./PaymentDialog";
 const statusOf = (row) =>
   Number(row.received_amount) >= Number(row.total_amount) ? "done" : "pending";
 
-export default function HisabTable({
+export default function BillingTable({
   mode,
   from,
   to,
@@ -76,7 +76,7 @@ export default function HisabTable({
         <TextField
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Customer shodho"
+          placeholder="Search customer"
           size="small"
           sx={{ flexGrow: 1, maxWidth: { sm: 280 } }}
           slotProps={{
@@ -97,7 +97,7 @@ export default function HisabTable({
           onChange={(e) => setStatusFilter(e.target.value)}
           sx={{ minWidth: 130 }}
         >
-          <MenuItem value="all">Badha</MenuItem>
+          <MenuItem value="all">All</MenuItem>
           <MenuItem value="pending">Pending</MenuItem>
           <MenuItem value="done">Done</MenuItem>
         </TextField>
@@ -112,13 +112,13 @@ export default function HisabTable({
             <TableRow>
               <TableCell>Customer</TableCell>
               <TableCell align="center" sx={{ width: "16%" }}>
-                Dudh
+                Milk
               </TableCell>
               <TableCell align="center" sx={{ width: "18%" }}>
-                Total rakam
+                Total amount
               </TableCell>
               <TableCell align="center" sx={{ width: "15%" }}>
-                Chhellu payment
+                Last payment
               </TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
                 Status
@@ -135,8 +135,8 @@ export default function HisabTable({
                 <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     {allRows.length === 0
-                      ? "Aa gala ma koi nondh nathi."
-                      : "Aa shodh mate kai nathi malyu."}
+                      ? "No records in this period."
+                      : "Nothing matches this search."}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -203,7 +203,7 @@ export default function HisabTable({
                         startIcon={<CurrencyRupeeIcon sx={{ fontSize: 16 }} />}
                         onClick={() => setPaying(r)}
                       >
-                        Payment lo
+                        Take payment
                       </Button>
                     )}
                   </TableCell>

@@ -81,8 +81,8 @@ export default function ProfileView({ user, customer, settings }) {
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 6 }}>
         <Section
-          title="Mari vigat"
-          subtitle="Naam, mobile ane photo tame jate badli shako chho."
+          title="My details"
+          subtitle="You can change your name, mobile and photo yourself."
         >
           <Box component="form" action={saveProfile}>
             <Stack
@@ -111,14 +111,14 @@ export default function ProfileView({ user, customer, settings }) {
             )}
             {profileState?.ok && (
               <Alert severity="success" sx={{ mb: 2 }}>
-                Vigat save thai gai.
+                Details saved.
               </Alert>
             )}
 
             <Stack spacing={2}>
               <TextField
                 name="name"
-                label="Naam"
+                label="Name"
                 defaultValue={user.name ?? ""}
                 required
                 fullWidth
@@ -134,7 +134,7 @@ export default function ProfileView({ user, customer, settings }) {
               />
               <TextField
                 name="profile_photo"
-                label="Photo ni link"
+                label="Photo link"
                 defaultValue={user.profile_photo ?? ""}
                 fullWidth
                 placeholder="https://..."
@@ -146,11 +146,11 @@ export default function ProfileView({ user, customer, settings }) {
                 value={user.email ?? ""}
                 fullWidth
                 disabled
-                helperText="Email badalvu hoy to dairy no sampark karo."
+                helperText="To change your email, contact the dairy."
               />
 
               <Box sx={{ textAlign: "right" }}>
-                <SaveButton label="Save karo" busy="Save thai rahyu..." />
+                <SaveButton label="Save" busy="Saving..." />
               </Box>
             </Stack>
           </Box>
@@ -160,24 +160,27 @@ export default function ProfileView({ user, customer, settings }) {
       <Grid size={{ xs: 12, md: 6 }}>
         <Stack spacing={3}>
           <Section
-            title="Maro milk plan"
-            subtitle="Aa vigat dairy nakki kare chhe."
+            title="My milk plan"
+            subtitle="The dairy sets these details."
           >
             {customer ? (
               <>
-                <Row label="Naam (dairy na chopde)" value={customer.name} />
+                <Row
+                  label="Name (in the dairy's records)"
+                  value={customer.name}
+                />
                 <Divider />
                 <Row label="Mobile" value={customer.mobile} />
                 <Divider />
-                <Row label="Sarnamu" value={customer.address || "—"} />
+                <Row label="Address" value={customer.address || "—"} />
                 <Divider />
                 <Row
-                  label="Roj nu dudh"
+                  label="Daily milk"
                   value={formatLiters(customer.daily_quantity)}
                 />
                 <Divider />
                 <Row
-                  label="Maro rate"
+                  label="My rate"
                   value={`${formatAmount(customer.rate_per_liter)} / L`}
                 />
                 <Divider />
@@ -212,22 +215,21 @@ export default function ProfileView({ user, customer, settings }) {
                   color="text.secondary"
                   sx={{ display: "block", mt: 2 }}
                 >
-                  Kai badalvu hoy to {settings.dairy_name}
-                  {settings.phone ? ` — ${settings.phone}` : ""} no sampark
-                  karo.
+                  To change any of this, contact {settings.dairy_name}
+                  {settings.phone ? ` — ${settings.phone}` : ""}.
                 </Typography>
               </>
             ) : (
               <Alert severity="info">
-                Tamaru login hju dairy na khata sathe jodayu nathi. Dairy no
-                sampark karo.
+                Your login is not linked to a dairy record yet. Contact the
+                dairy.
               </Alert>
             )}
           </Section>
 
           <Section
-            title="Password badlo"
-            subtitle="Ochha ma ochho 8 akshar no rakho."
+            title="Change password"
+            subtitle="Use at least 8 characters."
           >
             <Box component="form" action={savePassword}>
               {passwordState?.error && (
@@ -237,7 +239,7 @@ export default function ProfileView({ user, customer, settings }) {
               )}
               {passwordState?.ok && (
                 <Alert severity="success" sx={{ mb: 2 }}>
-                  Password badlai gayo.
+                  Password changed.
                 </Alert>
               )}
 
@@ -245,7 +247,7 @@ export default function ProfileView({ user, customer, settings }) {
                 <TextField
                   type="password"
                   name="password"
-                  label="Navo password"
+                  label="New password"
                   required
                   fullWidth
                   autoComplete="new-password"
@@ -253,7 +255,7 @@ export default function ProfileView({ user, customer, settings }) {
                 <TextField
                   type="password"
                   name="confirm"
-                  label="Fari lakho"
+                  label="Repeat it"
                   required
                   fullWidth
                   autoComplete="new-password"
@@ -261,8 +263,8 @@ export default function ProfileView({ user, customer, settings }) {
                 <Box sx={{ textAlign: "right" }}>
                   <SaveButton
                     icon={LockResetIcon}
-                    label="Password badlo"
-                    busy="Badli rahyu..."
+                    label="Change password"
+                    busy="Changing..."
                   />
                 </Box>
               </Stack>

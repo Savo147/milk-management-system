@@ -46,7 +46,7 @@ function SendButton() {
       startIcon={<SendIcon sx={{ fontSize: 17 }} />}
       disabled={pending}
     >
-      {pending ? "Mokali rahyu..." : "Message mokalo"}
+      {pending ? "Sending..." : "Send message"}
     </Button>
   );
 }
@@ -88,11 +88,11 @@ export default function ThreadDialog({ problem, replies, onClose }) {
               sx={{ flexWrap: "wrap", gap: 2, mb: 2, mt: 1 }}
             >
               <Field
-                label="Joitu hatu"
+                label="Expected"
                 value={formatLiters(problem.expected_quantity)}
               />
               <Field
-                label="Malyu"
+                label="Got"
                 value={formatLiters(problem.received_quantity)}
               />
               <Box sx={{ flexGrow: 1 }} />
@@ -118,7 +118,7 @@ export default function ThreadDialog({ problem, replies, onClose }) {
                 }}
               >
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  Tame lakhyu hatu
+                  What you wrote
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 0.5 }}>
                   {problem.message}
@@ -128,14 +128,14 @@ export default function ThreadDialog({ problem, replies, onClose }) {
 
             <Divider sx={{ mb: 2 }}>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                Vaatchit ({replies.length})
+                Conversation ({replies.length})
               </Typography>
             </Divider>
 
             <Stack spacing={1.5} sx={{ mb: 2 }}>
               {replies.length === 0 && (
                 <Typography variant="body2" color="text.secondary">
-                  Dairy e hju jawab nathi aapyo.
+                  The dairy has not replied yet.
                 </Typography>
               )}
 
@@ -156,7 +156,7 @@ export default function ThreadDialog({ problem, replies, onClose }) {
                   >
                     <Chip
                       size="small"
-                      label={r.from_admin ? `${r.sender_name} (Dairy)` : "Tame"}
+                      label={r.from_admin ? `${r.sender_name} (Dairy)` : "You"}
                       color={r.from_admin ? "primary" : "default"}
                       variant={r.from_admin ? "filled" : "outlined"}
                     />
@@ -174,8 +174,8 @@ export default function ThreadDialog({ problem, replies, onClose }) {
 
             {done && (
               <Alert severity="success" sx={{ mb: 2 }}>
-                Dairy e aa fariyad solve thayeli gani chhe. Haju kai baki hoy to
-                niche lakho.
+                The dairy has marked this complaint resolved. If anything is
+                still pending, write below.
               </Alert>
             )}
 
@@ -191,7 +191,7 @@ export default function ThreadDialog({ problem, replies, onClose }) {
               <TextField
                 id="customer-reply"
                 name="message"
-                label="Tamaro message"
+                label="Your message"
                 multiline
                 rows={2}
                 fullWidth
@@ -204,7 +204,7 @@ export default function ThreadDialog({ problem, replies, onClose }) {
                 spacing={1}
                 sx={{ justifyContent: "flex-end" }}
               >
-                <Button onClick={onClose}>Band karo</Button>
+                <Button onClick={onClose}>Close</Button>
                 <SendButton />
               </Stack>
             </Box>

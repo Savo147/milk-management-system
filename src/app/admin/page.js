@@ -88,19 +88,19 @@ export default async function AdminDashboard() {
         })}
       />
 
-      <SectionLabel>Aaj</SectionLabel>
+      <SectionLabel>Today</SectionLabel>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
           <StatCard
-            label="Aaj nu dudh"
+            label="Today's milk"
             value={formatLiters(todayMilk)}
-            sub={`${served} customer ne apayu`}
+            sub={`delivered to ${served} customers`}
             icon={LocalDrinkIcon}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
           <StatCard
-            label="Aaj ni rakam"
+            label="Today's amount"
             value={formatAmount(todayAmount)}
             sub={`${todayEntries?.length ?? 0} entries`}
             icon={CurrencyRupeeIcon}
@@ -127,18 +127,18 @@ export default async function AdminDashboard() {
       </Grid>
 
       <Box sx={{ mt: 4 }} />
-      <SectionLabel>Aa mahino</SectionLabel>
+      <SectionLabel>This month</SectionLabel>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
           <StatCard
-            label="Aa mahina nu dudh"
+            label="This month's milk"
             value={formatLiters(monthMilk)}
             icon={LocalDrinkIcon}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
           <StatCard
-            label="Aa mahina ni rakam"
+            label="This month's amount"
             value={formatAmount(monthAmount)}
             icon={CurrencyRupeeIcon}
             color="success"
@@ -146,16 +146,16 @@ export default async function AdminDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
           <StatCard
-            label="Baki hisab"
+            label="Unpaid bills"
             value={pendingBills ?? 0}
-            sub={`${doneBills ?? 0} pura thaya`}
+            sub={`${doneBills ?? 0} settled`}
             icon={PendingActionsIcon}
             color="warning"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
           <StatCard
-            label="Stock baki"
+            label="Stock left"
             value={formatLiters(stock?.remaining_stock ?? 0)}
             sub="aaj"
             icon={InventoryIcon}

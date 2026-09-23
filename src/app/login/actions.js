@@ -34,11 +34,11 @@ async function registerFirstTime(email, password) {
     .eq("email", email)
     .maybeSingle();
 
-  if (existing) return { error: "Password khotu chhe." };
+  if (existing) return { error: "That password is wrong." };
 
   if (password.length < MIN_PASSWORD) {
     return {
-      error: `Navu account banavva mate password ochha ma ochho ${MIN_PASSWORD} akshar no hovo joiye.`,
+      error: `To create a new account the password must be at least ${MIN_PASSWORD} characters.`,
     };
   }
 
@@ -54,10 +54,10 @@ async function registerFirstTime(email, password) {
   if (error) {
     // An auth user with no profile row would slip past the check above.
     if (/already (registered|exists)/i.test(error.message)) {
-      return { error: "Password khotu chhe." };
+      return { error: "That password is wrong." };
     }
     console.error("[login] first-time sign-up failed:", error);
-    return { error: `Account na banyu: ${error.message}` };
+    return { error: `Account not created: ${error.message}` };
   }
 
   return { ok: true };
@@ -68,7 +68,7 @@ export async function signIn(prevState, formData) {
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) {
-    return { error: "Email ane password bunne nakho." };
+    return { error: "Enter both email and password." };
   }
 
   const supabase = await createClient();
@@ -88,7 +88,7 @@ export async function signIn(prevState, formData) {
     if (!credentialsRejected) {
       console.error("[login] sign-in failed:", error);
       return {
-        error: `Login na thai shakyu — server sudhi pahonchatu nathi. (${error.message})`,
+        error: `Could not sign in — the server cannot be reached. (${error.message})`,
       };
     }
 
@@ -96,7 +96,7 @@ export async function signIn(prevState, formData) {
     // reported as a wrong password, and no password would ever fix it.
     if (/email not confirmed/i.test(error.message)) {
       return {
-        error: "Aa account haju chalu thayu nathi. Admin no sampark karo.",
+        error: "This account has not been activated yet. Contact the admin.",
       };
     }
 
@@ -111,7 +111,7 @@ export async function signIn(prevState, formData) {
     if (error) {
       console.error("[login] sign-in after sign-up failed:", error);
       return {
-        error: `Account to banyu, pan login na thayu. (${error.message})`,
+        error: `The account was created, but signing in failed. (${error.message})`,
       };
     }
   }
@@ -124,12 +124,12 @@ export async function signIn(prevState, formData) {
 
   if (!profile) {
     await supabase.auth.signOut();
-    return { error: "Aa account setup thayelu nathi. Admin no sampark karo." };
+    return { error: "This account has not been set up. Contact the admin." };
   }
 
   if (profile.status !== "active") {
     await supabase.auth.signOut();
-    return { error: "Tamaru account band chhe. Admin no sampark karo." };
+    return { error: "Your account is disabled. Contact the admin." };
   }
 
   revalidatePath("/", "layout");
@@ -159,7 +159,7 @@ export async function signInWithGoogle() {
   if (error) {
     console.error("[login] google sign-in failed:", error);
     return {
-      error: `Google thi login na thai shakyu. (${error.message})`,
+      error: `Could not sign in with Google. (${error.message})`,
     };
   }
 

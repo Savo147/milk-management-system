@@ -148,7 +148,7 @@ export default function RangePicker({
             variant="caption"
             sx={{ display: "block", color: "text.secondary", lineHeight: 1.2 }}
           >
-            {mode === "date" ? "Tarikh" : "Mahino"}
+            {mode === "date" ? "Date" : "Month"}
           </Typography>
           <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
             {triggerText}
@@ -172,8 +172,8 @@ export default function RangePicker({
             value={tab}
             onChange={(e, v) => v && setTab(v)}
           >
-            <ToggleButton value="month">Mahina wise</ToggleButton>
-            <ToggleButton value="date">Tarikh wise</ToggleButton>
+            <ToggleButton value="month">By month</ToggleButton>
+            <ToggleButton value="date">By date</ToggleButton>
           </ToggleButtonGroup>
         </Box>
 
@@ -248,8 +248,8 @@ export default function RangePicker({
               sx={{ display: "block", px: 1.5, py: 1, color: "text.secondary" }}
             >
               {pendingStart
-                ? `${monthLabel(pendingStart)} thi — have chhello mahino pasand karo`
-                : "Ek mahino, ke sharu ane chhello — be var click karo"}
+                ? `From ${monthLabel(pendingStart)} — now pick the last month`
+                : "One month, or a first and a last — click twice"}
             </Typography>
 
             <Divider />
@@ -259,25 +259,25 @@ export default function RangePicker({
                 size="small"
                 onClick={() => apply("month", monthsAgo(0), monthsAgo(0))}
               >
-                Aa mahino
+                This month
               </Button>
               <Button
                 size="small"
                 onClick={() => apply("month", monthsAgo(1), monthsAgo(1))}
               >
-                Gayo mahino
+                Last month
               </Button>
               <Button
                 size="small"
                 onClick={() => apply("month", monthsAgo(2), monthsAgo(0))}
               >
-                Chhella 3
+                Last 3
               </Button>
               <Button
                 size="small"
                 onClick={() => apply("month", monthsAgo(11), monthsAgo(0))}
               >
-                Chhella 12
+                Last 12
               </Button>
             </Stack>
           </>
@@ -286,7 +286,7 @@ export default function RangePicker({
             <Stack spacing={2} sx={{ p: 1.5 }}>
               <TextField
                 type="date"
-                label="Thi"
+                label="From"
                 size="small"
                 value={start}
                 onChange={(e) => {
@@ -301,7 +301,7 @@ export default function RangePicker({
               />
               <TextField
                 type="date"
-                label="Sudhi"
+                label="To"
                 size="small"
                 value={end}
                 onChange={(e) => {
@@ -319,7 +319,7 @@ export default function RangePicker({
                 size="small"
                 onClick={() => apply("date", start, end)}
               >
-                Lagu karo
+                Apply
               </Button>
             </Stack>
 
@@ -330,19 +330,19 @@ export default function RangePicker({
                 size="small"
                 onClick={() => apply("date", daysAgo(6), daysAgo(0))}
               >
-                Chhella 7 divas
+                Last 7 days
               </Button>
               <Button
                 size="small"
                 onClick={() => apply("date", daysAgo(29), daysAgo(0))}
               >
-                Chhella 30 divas
+                Last 30 days
               </Button>
               <Button
                 size="small"
                 onClick={() => apply("date", daysAgo(0), daysAgo(0))}
               >
-                Aaj
+                Today
               </Button>
             </Stack>
           </>

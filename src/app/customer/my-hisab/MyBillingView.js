@@ -21,7 +21,7 @@ import { formatAmount, formatDate, formatLiters } from "@/lib/format";
 import RangePicker from "@/components/RangePicker";
 import StatCard, { SectionLabel } from "@/components/StatCard";
 
-export default function MyHisabView({
+export default function MyBillingView({
   mode,
   from,
   to,
@@ -31,7 +31,7 @@ export default function MyHisabView({
   billed,
   received,
   baki,
-  totalBaki,
+  totalDue,
   lastPaidOn,
   payments,
   days,
@@ -61,22 +61,22 @@ export default function MyHisabView({
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
-            label="Total dudh"
+            label="Total milk"
             value={formatLiters(liters)}
-            sub={`${days} divas`}
+            sub={`${days} days`}
             icon={LocalDrinkIcon}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
-            label="Total rakam"
+            label="Total amount"
             value={formatAmount(billed)}
             icon={CurrencyRupeeIcon}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
-            label="Apeli payment"
+            label="Payments made"
             value={formatAmount(received)}
             sub={`${payments.length} var`}
             icon={PaymentsIcon}
@@ -85,7 +85,7 @@ export default function MyHisabView({
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
-            label="Aa gala nu baki"
+            label="Due for this period"
             value={formatAmount(baki)}
             icon={AccountBalanceWalletIcon}
             color={baki > 0 ? "warning" : "success"}
@@ -94,7 +94,7 @@ export default function MyHisabView({
       </Grid>
 
       <Alert
-        severity={totalBaki > 0 ? "warning" : "success"}
+        severity={totalDue > 0 ? "warning" : "success"}
         icon={<AccountBalanceWalletIcon fontSize="small" />}
         sx={{ mb: 3 }}
       >
@@ -103,17 +103,17 @@ export default function MyHisabView({
           sx={{ alignItems: { sm: "baseline" }, gap: 1, flexWrap: "wrap" }}
         >
           <Typography variant="body2">
-            <strong>Kul baki (aaj sudhi nu):</strong> {formatAmount(totalBaki)}
+            <strong>Total due (to date):</strong> {formatAmount(totalDue)}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {lastPaidOn
-              ? `Chhelli payment ${formatDate(lastPaidOn)} na roj`
-              : "Hju koi payment nathi apai"}
+              ? `Last payment on ${formatDate(lastPaidOn)}`
+              : "No payment has been made yet"}
           </Typography>
         </Stack>
       </Alert>
 
-      <SectionLabel>Apeli payment</SectionLabel>
+      <SectionLabel>Payments made</SectionLabel>
       <TableContainer
         component={Paper}
         elevation={0}
@@ -124,9 +124,9 @@ export default function MyHisabView({
             <TableRow
               sx={{ "& th": { fontWeight: 700, whiteSpace: "nowrap" } }}
             >
-              <TableCell>Tarikh</TableCell>
-              <TableCell align="right">Rakam</TableCell>
-              <TableCell>Nondh</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell align="right">Amount</TableCell>
+              <TableCell>Note</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -134,7 +134,7 @@ export default function MyHisabView({
               <TableRow>
                 <TableCell colSpan={3} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Aa gala ma koi payment nondhai nathi.
+                    No payments recorded in this period.
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -162,8 +162,8 @@ export default function MyHisabView({
 
       <Box sx={{ mt: 1.5 }}>
         <Typography variant="caption" color="text.secondary">
-          Payment dairy nondhe chhe. Kai far padto lage to Report Problem par
-          jaine kaho.
+          Payments are recorded by the dairy. If something looks wrong, tell
+          them on Report Problem.
         </Typography>
       </Box>
     </>

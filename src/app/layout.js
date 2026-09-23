@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Krishna Dairy — Milk Management",
-  description: "Dairy milk delivery and monthly hisab management",
+  description: "Dairy milk delivery and monthly billing management",
 };
 
 export default function RootLayout({ children }) {

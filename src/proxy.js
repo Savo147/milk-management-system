@@ -33,8 +33,23 @@ export async function proxy(request) {
     },
   );
 
-  // Do not remove: this call is what actually refreshes the token.
-  await supabase.auth.getUser();
+  // Do not remove: this call is what actually refreshes the token — getClaims
+  // reads the session first, and reading an expired one is what triggers the
+  // refresh whose rotated cookies are written onto the response above.
+  //
+  // getClaims rather than getUser: this runs on every request in the app, and
+  // getUser is a round trip to Supabase — ~200ms measured, against ~1ms to
+  // verify the signature here against a cached public key.
+  //
+  // Wrapped because getClaims throws on a malformed token rather than
+  // returning an error. Every route is guarded on the server anyway, so the
+  // right thing here is to pass the request on and let the page turn them
+  // away — not to fail the request.
+  try {
+    await supabase.auth.getClaims();
+  } catch {
+    // A junk cookie. Nothing to refresh.
+  }
 
   return response;
 }

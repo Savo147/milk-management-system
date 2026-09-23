@@ -57,7 +57,7 @@ export default function CustomersTable({ customers, unlinkedLogins = [] }) {
         <TextField
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Naam, mobile ke sarnamu shodho"
+          placeholder="Search name, mobile or address"
           size="small"
           sx={{ flexGrow: 1, maxWidth: { sm: 360 } }}
           slotProps={{
@@ -77,7 +77,7 @@ export default function CustomersTable({ customers, unlinkedLogins = [] }) {
           onChange={(e) => setStatusFilter(e.target.value)}
           sx={{ minWidth: 140 }}
         >
-          <MenuItem value="all">Badha</MenuItem>
+          <MenuItem value="all">All</MenuItem>
           <MenuItem value="active">Active</MenuItem>
           <MenuItem value="inactive">Inactive</MenuItem>
         </TextField>
@@ -87,7 +87,7 @@ export default function CustomersTable({ customers, unlinkedLogins = [] }) {
           startIcon={<AddIcon />}
           onClick={() => setEditing(null)}
         >
-          Navo customer
+          New customer
         </Button>
       </Stack>
 
@@ -101,9 +101,9 @@ export default function CustomersTable({ customers, unlinkedLogins = [] }) {
             <TableRow
               sx={{ "& th": { fontWeight: 700, whiteSpace: "nowrap" } }}
             >
-              <TableCell>Naam</TableCell>
+              <TableCell>Name</TableCell>
               <TableCell>Mobile</TableCell>
-              <TableCell align="right">Roj nu dudh</TableCell>
+              <TableCell align="right">Daily milk</TableCell>
               <TableCell align="right">Rate</TableCell>
               <TableCell>Status</TableCell>
               <TableCell align="center">Login</TableCell>
@@ -116,8 +116,8 @@ export default function CustomersTable({ customers, unlinkedLogins = [] }) {
                 <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     {customers.length === 0
-                      ? 'Hju koi customer nathi. "Navo customer" par click karo.'
-                      : "Aa shodh mate koi customer nathi malyo."}
+                      ? 'No customers yet. Click "New customer".'
+                      : "No customer matches this search."}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -154,8 +154,8 @@ export default function CustomersTable({ customers, unlinkedLogins = [] }) {
                   <Tooltip
                     title={
                       c.user_id
-                        ? `${c.login_email} — password badlo`
-                        : "Login banavo"
+                        ? `${c.login_email} — change password`
+                        : "Create login"
                     }
                   >
                     <IconButton

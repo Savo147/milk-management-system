@@ -27,7 +27,7 @@ function SubmitButton() {
       startIcon={<SendIcon sx={{ fontSize: 17 }} />}
       disabled={pending}
     >
-      {pending ? "Mokali rahyu..." : "Fariyad mokalo"}
+      {pending ? "Sending..." : "Send complaint"}
     </Button>
   );
 }
@@ -51,9 +51,10 @@ export default function NewProblemDialog({ open, customer, today, onClose }) {
       key={open ? "open" : "closed"}
     >
       <DialogTitle sx={{ pb: 1 }}>
-        Navi fariyad
+        New complaint
         <Typography variant="body2" color="text.secondary">
-          Dudh ma kai bhul hoy to ahi lakho — dairy ne turant khabar padse.
+          If anything was wrong with your milk, write it here — the dairy is
+          told straight away.
         </Typography>
       </DialogTitle>
 
@@ -69,7 +70,7 @@ export default function NewProblemDialog({ open, customer, today, onClose }) {
             <TextField
               select
               name="issue_type"
-              label="Kai bhul thai"
+              label="What went wrong"
               defaultValue=""
               required
               fullWidth
@@ -84,10 +85,10 @@ export default function NewProblemDialog({ open, customer, today, onClose }) {
             <TextField
               type="date"
               name="date"
-              label="Kai tarikh nu"
+              label="Which date"
               defaultValue={today}
               fullWidth
-              helperText="E divas ni entry sathe fariyad jodai jase."
+              helperText="The complaint will be attached to that day's entry."
               slotProps={{
                 inputLabel: { shrink: true },
                 htmlInput: { max: today },
@@ -97,15 +98,15 @@ export default function NewProblemDialog({ open, customer, today, onClose }) {
             <TextField
               select
               name="received_quantity"
-              label="Kharekhar ketlu malyu"
+              label="How much you actually got"
               defaultValue=""
               fullWidth
-              helperText={`Roj malvu joiye: ${formatLiters(customer.daily_quantity)}`}
+              helperText={`Should get ${formatLiters(customer.daily_quantity)} a day`}
             >
               <MenuItem value="">
-                <em>E divase je nondhayu hoy te</em>
+                <em>Whatever was recorded that day</em>
               </MenuItem>
-              <MenuItem value="0">Kai nahi (0 L)</MenuItem>
+              <MenuItem value="0">Nothing (0 L)</MenuItem>
               {MILK_QUANTITIES.map((q) => (
                 <MenuItem key={q} value={q}>
                   {formatLiters(q)}
@@ -115,18 +116,18 @@ export default function NewProblemDialog({ open, customer, today, onClose }) {
 
             <TextField
               name="message"
-              label="Su thayu"
+              label="What happened"
               multiline
               rows={3}
               fullWidth
               required
-              placeholder="Dakhla tarike: aaje savare dudh aavyu j nahi"
+              placeholder="For example: no milk arrived this morning"
             />
           </Stack>
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={onClose}>Rehva do</Button>
+          <Button onClick={onClose}>Cancel</Button>
           <SubmitButton />
         </DialogActions>
       </Box>

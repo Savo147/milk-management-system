@@ -23,7 +23,7 @@ function SubmitButton({ label, icon }) {
       startIcon={icon}
       disabled={pending}
     >
-      {pending ? "Save thai rahyu..." : label}
+      {pending ? "Saving..." : label}
     </Button>
   );
 }
@@ -45,7 +45,7 @@ export default function ProfileForm({ user }) {
       <Card>
         <CardContent sx={{ p: 3 }}>
           <Typography variant="subtitle1" sx={{ mb: 2 }}>
-            Mari vigat
+            My details
           </Typography>
 
           <Box component="form" action={profileAction}>
@@ -56,7 +56,7 @@ export default function ProfileForm({ user }) {
             )}
             {profileState?.ok && (
               <Alert severity="success" sx={{ mb: 2 }}>
-                Save thai gayu.
+                Saved.
               </Alert>
             )}
 
@@ -64,7 +64,7 @@ export default function ProfileForm({ user }) {
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   name="name"
-                  label="Naam"
+                  label="Name"
                   defaultValue={user.name ?? ""}
                   required
                   fullWidth
@@ -84,7 +84,7 @@ export default function ProfileForm({ user }) {
               <Grid size={12}>
                 <TextField
                   name="profile_photo"
-                  label="Photo nu URL"
+                  label="Photo URL"
                   defaultValue={user.profile_photo ?? ""}
                   fullWidth
                   placeholder="https://..."
@@ -96,14 +96,14 @@ export default function ProfileForm({ user }) {
                   value={user.email ?? ""}
                   fullWidth
                   disabled
-                  helperText="Email badalvu hoy to navu account banavvu pade"
+                  helperText="Changing the email means creating a new account"
                 />
               </Grid>
             </Grid>
 
             <Box sx={{ mt: 3 }}>
               <SubmitButton
-                label="Save karo"
+                label="Save"
                 icon={<SaveIcon sx={{ fontSize: 17 }} />}
               />
             </Box>
@@ -114,7 +114,7 @@ export default function ProfileForm({ user }) {
       <Card>
         <CardContent sx={{ p: 3 }}>
           <Typography variant="subtitle1" sx={{ mb: 2 }}>
-            Password badlo
+            Change password
           </Typography>
 
           <Box component="form" action={passAction}>
@@ -125,7 +125,7 @@ export default function ProfileForm({ user }) {
             )}
             {passState?.ok && (
               <Alert severity="success" sx={{ mb: 2 }}>
-                Password badlai gayo.
+                Password changed.
               </Alert>
             )}
 
@@ -135,10 +135,10 @@ export default function ProfileForm({ user }) {
                   id="new-password"
                   name="password"
                   type="password"
-                  label="Navo password"
+                  label="New password"
                   required
                   fullWidth
-                  helperText="Ochha ma ochha 8 akshar"
+                  helperText="At least 8 characters"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -146,7 +146,7 @@ export default function ProfileForm({ user }) {
                   id="confirm-password"
                   name="confirm"
                   type="password"
-                  label="Fari lakho"
+                  label="Repeat it"
                   required
                   fullWidth
                 />
@@ -155,7 +155,7 @@ export default function ProfileForm({ user }) {
 
             <Box sx={{ mt: 3 }}>
               <SubmitButton
-                label="Password badlo"
+                label="Change password"
                 icon={<LockResetIcon sx={{ fontSize: 18 }} />}
               />
             </Box>

@@ -7,9 +7,9 @@ import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
 import { formatAmount, formatLiters } from "@/lib/format";
 import { resolveRange, todayLocal } from "@/lib/range";
-import HisabTable from "./HisabTable";
+import BillingTable from "./BillingTable";
 
-export const metadata = { title: "Hisab — Krishna Dairy" };
+export const metadata = { title: "Billing — Krishna Dairy" };
 
 /**
  * Milk delivered and money received, per customer, for one span of days.
@@ -102,7 +102,7 @@ function Summary({ label, value, color = "text.primary" }) {
   );
 }
 
-export default async function HisabPage({ searchParams }) {
+export default async function BillingPage({ searchParams }) {
   const params = await searchParams;
 
   // Both pickers resolve to the same thing: a span of days. Milk and payments
@@ -116,45 +116,45 @@ export default async function HisabPage({ searchParams }) {
   const total = rows.reduce((t, r) => t + Number(r.total_amount), 0);
   const received = rows.reduce((t, r) => t + Number(r.received_amount), 0);
   // Paying a span in full and then looking at a later span leaves payments
-  // ahead of the milk. Nothing is owed then — a negative "Baki" would just
+  // ahead of the milk. Nothing is owed then — a negative "Due" would just
   // read as broken.
   const baki = Math.max(0, total - received);
 
   return (
     <>
       <PageHeader
-        title="Hisab & Payment"
-        subtitle={`${label} — har customer no hisab`}
+        title="Billing & Payments"
+        subtitle={`${label} — every customer's account`}
       />
 
       {error ? (
-        <Alert severity="error">Load na thayu: {error.message}</Alert>
+        <Alert severity="error">Could not load: {error.message}</Alert>
       ) : (
         <>
           {paymentsMissing && (
             <Alert severity="warning" sx={{ mb: 2 }}>
-              <strong>payments</strong> table database ma nathi — payment
-              nondhai nahi shakay. Dudh no hisab niche dekhay chhe.
+              The <strong>payments</strong> table is missing from the database,
+              so payments cannot be recorded. The milk side is shown below.
             </Alert>
           )}
 
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid size={{ xs: 6, md: 4 }}>
-              <Summary label="Total rakam" value={formatAmount(total)} />
+              <Summary label="Total amount" value={formatAmount(total)} />
             </Grid>
             <Grid size={{ xs: 6, md: 4 }}>
-              <Summary label="Total dudh" value={formatLiters(liters)} />
+              <Summary label="Total milk" value={formatLiters(liters)} />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Summary
-                label="Baki"
+                label="Due"
                 value={formatAmount(baki)}
                 color={baki > 0 ? "warning.dark" : "text.secondary"}
               />
             </Grid>
           </Grid>
 
-          <HisabTable
+          <BillingTable
             mode={mode}
             from={from}
             to={to}

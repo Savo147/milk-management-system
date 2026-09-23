@@ -10,7 +10,7 @@ import StaffSection from "./StaffSection";
 import RatesTable from "./RatesTable";
 import AuditTable from "./AuditTable";
 
-const TABS = ["Dairy", "Mari vigat", "Users", "Rates", "Audit logs"];
+const TABS = ["Dairy", "My details", "Users", "Rates", "Audit logs"];
 
 export default function SettingsTabs({ settings, user, staff, rates, logs }) {
   const [tab, setTab] = useState(0);

@@ -15,14 +15,16 @@ function parseForm(formData) {
   const deliveryTime = String(formData.get("delivery_time") ?? "").trim();
   const status = formData.get("status") === "inactive" ? "inactive" : "active";
 
-  if (!name) return { error: "Naam nakho." };
+  if (!name) return { error: "Enter a name." };
   if (!/^\d{10}$/.test(mobile))
-    return { error: "Mobile 10 aank no hovo joiye." };
+    return { error: "The mobile number must be 10 digits." };
   if (!MILK_QUANTITIES.includes(dailyQuantity)) {
-    return { error: "Daily quantity 0.5 thi 5 L ni vachche, 0.5 na step ma." };
+    return {
+      error: "Daily quantity must be between 0.5 and 5 L, in steps of 0.5.",
+    };
   }
   if (!Number.isFinite(rate) || rate <= 0) {
-    return { error: "Rate 0 thi vadhare hovo joiye." };
+    return { error: "The rate must be greater than 0." };
   }
 
   return {
@@ -54,7 +56,7 @@ export async function saveCustomer(prevState, formData) {
     : await supabase.from("customers").insert(values);
 
   if (error) {
-    return { error: `Save na thai shakyu: ${error.message}` };
+    return { error: `Could not save: ${error.message}` };
   }
 
   revalidatePath("/admin/customers");
@@ -80,10 +82,11 @@ export async function createCustomerLogin(prevState, formData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
-  if (!customerId) return { error: "Customer malyo nahi." };
-  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Email barabar nathi." };
+  if (!customerId) return { error: "Customer not found." };
+  if (!/^\S+@\S+\.\S+$/.test(email))
+    return { error: "That email is not valid." };
   if (password.length < 8) {
-    return { error: "Password ochha ma ochho 8 akshar no hovo joiye." };
+    return { error: "The password must be at least 8 characters." };
   }
 
   const db = createAdminClient();
@@ -94,9 +97,9 @@ export async function createCustomerLogin(prevState, formData) {
     .eq("id", customerId)
     .maybeSingle();
 
-  if (!customer) return { error: "Customer malyo nahi." };
+  if (!customer) return { error: "Customer not found." };
   if (customer.user_id) {
-    return { error: "Aa customer nu login pehle thi j chhe." };
+    return { error: "This customer already has a login." };
   }
 
   const { data, error } = await db.auth.admin.createUser({
@@ -106,7 +109,7 @@ export async function createCustomerLogin(prevState, formData) {
     user_metadata: { name: customer.name, mobile: customer.mobile },
   });
 
-  if (error) return { error: `Login banavi na shakayu: ${error.message}` };
+  if (error) return { error: `Could not create the login: ${error.message}` };
 
   // The trigger has already inserted the profile as a customer; fill in the
   // name and mobile the dairy already knows.
@@ -120,7 +123,7 @@ export async function createCustomerLogin(prevState, formData) {
     })
     .eq("id", data.user.id);
 
-  if (upErr) return { error: `Profile update na thayu: ${upErr.message}` };
+  if (upErr) return { error: `Profile not updated: ${upErr.message}` };
 
   const { error: linkErr } = await db
     .from("customers")
@@ -131,7 +134,7 @@ export async function createCustomerLogin(prevState, formData) {
     // A login with nothing attached is worse than none at all — it would sign
     // in to an empty panel — so undo it rather than leave it stranded.
     await db.auth.admin.deleteUser(data.user.id);
-    return { error: `Jodai na shakyu: ${linkErr.message}` };
+    return { error: `Could not link it: ${linkErr.message}` };
   }
 
   revalidatePath("/admin/customers");
@@ -142,7 +145,7 @@ export async function createCustomerLogin(prevState, formData) {
  * Attaches a login that already exists to a customer.
  *
  * This is the other half of Google sign-in: somebody signs in with Google, the
- * trigger gives them a profile, and they land on "account jodayu nathi" until
+ * trigger gives them a profile, and they land on "not linked yet" until
  * an admin points a customer row at them here.
  *
  * Goes through the service-role client because `authenticated` has no grant on
@@ -155,8 +158,8 @@ export async function linkCustomerLogin(prevState, formData) {
   const customerId = String(formData.get("customer_id") ?? "");
   const userId = String(formData.get("user_id") ?? "");
 
-  if (!customerId) return { error: "Customer malyo nahi." };
-  if (!userId) return { error: "Kayu login jodvu chhe e pasand karo." };
+  if (!customerId) return { error: "Customer not found." };
+  if (!userId) return { error: "Choose which login to link." };
 
   const db = createAdminClient();
 
@@ -181,17 +184,17 @@ export async function linkCustomerLogin(prevState, formData) {
         .maybeSingle(),
     ]);
 
-  if (!customer) return { error: "Customer malyo nahi." };
+  if (!customer) return { error: "Customer not found." };
   if (customer.user_id) {
-    return { error: "Aa customer nu login pehle thi j chhe." };
+    return { error: "This customer already has a login." };
   }
-  if (!account) return { error: "Login malyu nahi." };
+  if (!account) return { error: "Login not found." };
   if (account.role !== "customer") {
-    return { error: "Aa login customer nu nathi." };
+    return { error: "This login does not belong to a customer." };
   }
-  if (account.status !== "active") return { error: "Aa login band chhe." };
+  if (account.status !== "active") return { error: "This login is disabled." };
   if (taken) {
-    return { error: `Aa login pehle thi j ${taken.name} sathe jodayelu chhe.` };
+    return { error: `This login is already linked to ${taken.name}.` };
   }
 
   const { error } = await db
@@ -199,7 +202,7 @@ export async function linkCustomerLogin(prevState, formData) {
     .update({ user_id: userId })
     .eq("id", customerId);
 
-  if (error) return { error: `Jodai na shakyu: ${error.message}` };
+  if (error) return { error: `Could not link it: ${error.message}` };
 
   revalidatePath("/admin/customers");
   return { ok: true };
@@ -210,13 +213,13 @@ export async function linkCustomerLogin(prevState, formData) {
  *
  * The login itself is left alone — deleting somebody's account because it was
  * pointed at the wrong customer would be far more than what was asked for.
- * They simply see "account jodayu nathi" again until it is re-attached.
+ * They simply see "not linked yet" again until it is re-attached.
  */
 export async function unlinkCustomerLogin(prevState, formData) {
   await requireAdmin();
 
   const customerId = String(formData.get("customer_id") ?? "");
-  if (!customerId) return { error: "Customer malyo nahi." };
+  if (!customerId) return { error: "Customer not found." };
 
   const db = createAdminClient();
 
@@ -225,7 +228,7 @@ export async function unlinkCustomerLogin(prevState, formData) {
     .update({ user_id: null })
     .eq("id", customerId);
 
-  if (error) return { error: `Kadhi na shakayu: ${error.message}` };
+  if (error) return { error: `Could not remove it: ${error.message}` };
 
   revalidatePath("/admin/customers");
   return { ok: true };
@@ -238,9 +241,9 @@ export async function resetCustomerPassword(prevState, formData) {
   const userId = String(formData.get("user_id") ?? "");
   const password = String(formData.get("password") ?? "");
 
-  if (!userId) return { error: "Login malyu nahi." };
+  if (!userId) return { error: "Login not found." };
   if (password.length < 8) {
-    return { error: "Password ochha ma ochho 8 akshar no hovo joiye." };
+    return { error: "The password must be at least 8 characters." };
   }
 
   const db = createAdminClient();
@@ -254,12 +257,13 @@ export async function resetCustomerPassword(prevState, formData) {
     .maybeSingle();
 
   if (!target || target.role !== "customer") {
-    return { error: "Aa login customer nu nathi." };
+    return { error: "This login does not belong to a customer." };
   }
 
   const { error } = await db.auth.admin.updateUserById(userId, { password });
 
-  if (error) return { error: `Password badlai na shakyo: ${error.message}` };
+  if (error)
+    return { error: `Could not change the password: ${error.message}` };
 
   revalidatePath("/admin/customers");
   return { ok: true };

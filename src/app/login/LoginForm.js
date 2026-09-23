@@ -28,7 +28,7 @@ function SubmitButton() {
       fullWidth
       disabled={pending}
     >
-      {pending ? "Login thai rahyu chhe..." : "Login"}
+      {pending ? "Signing in..." : "Login"}
     </Button>
   );
 }
@@ -58,7 +58,7 @@ export default function LoginForm({ initialError }) {
           name="email"
           type="email"
           label="Email"
-          placeholder="tamaru@email.com"
+          placeholder="you@example.com"
           autoComplete="email"
           required
           fullWidth
@@ -83,7 +83,7 @@ export default function LoginForm({ initialError }) {
                     edge="end"
                     size="small"
                     aria-label={
-                      showPassword ? "Password chhupavo" : "Password batavo"
+                      showPassword ? "Hide password" : "Show password"
                     }
                     // Keeps the button out of the tab order: tabbing from the
                     // password field should land on Login, not here.
@@ -107,7 +107,7 @@ export default function LoginForm({ initialError }) {
             variant="caption"
             underline="hover"
           >
-            Password bhulai gayo?
+            Forgot your password?
           </MuiLink>
         </Box>
 
@@ -116,7 +116,7 @@ export default function LoginForm({ initialError }) {
 
       <Divider>
         <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          athva
+          or
         </Typography>
       </Divider>
 

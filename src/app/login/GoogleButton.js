@@ -49,7 +49,7 @@ function Inner() {
         "&:hover": { borderColor: "grey.400", bgcolor: "grey.50" },
       }}
     >
-      {pending ? "Google par lai jai rahyu chhe..." : "Google thi login karo"}
+      {pending ? "Taking you to Google..." : "Sign in with Google"}
     </Button>
   );
 }

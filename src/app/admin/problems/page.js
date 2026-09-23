@@ -62,12 +62,12 @@ export default async function ProblemsPage({ searchParams }) {
     <>
       <PageHeader
         title="Problems"
-        subtitle={open > 0 ? `${label} — ${open} fariyad baki chhe` : label}
+        subtitle={open > 0 ? `${label} — ${open} complaints still open` : label}
       />
 
       {error ? (
         <Alert severity="error">
-          Fariyado load na thai shakya: {error.message}
+          Could not load complaints: {error.message}
         </Alert>
       ) : (
         <ProblemsView

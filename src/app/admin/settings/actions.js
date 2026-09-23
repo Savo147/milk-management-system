@@ -21,9 +21,9 @@ export async function saveBusinessSettings(prevState, formData) {
   const phone = String(formData.get("phone") ?? "").trim();
   const threshold = Number(formData.get("low_stock_threshold"));
 
-  if (!dairyName) return { error: "Dairy nu naam nakho." };
+  if (!dairyName) return { error: "Enter the dairy name." };
   if (!Number.isFinite(threshold) || threshold < 0) {
-    return { error: "Low-stock threshold 0 ke tethi vadhu hovu joiye." };
+    return { error: "The low-stock threshold must be 0 or more." };
   }
 
   const supabase = await createClient();
@@ -39,7 +39,7 @@ export async function saveBusinessSettings(prevState, formData) {
     })
     .eq("id", true);
 
-  if (error) return { error: `Save na thai shakyu: ${error.message}` };
+  if (error) return { error: `Could not save: ${error.message}` };
 
   // The name and logo are cached for everyone, signed in or not. Without this
   // a rename would keep showing the old one for the next five minutes.
@@ -57,9 +57,9 @@ export async function updateProfile(prevState, formData) {
   const mobile = String(formData.get("mobile") ?? "").trim();
   const photo = String(formData.get("profile_photo") ?? "").trim();
 
-  if (!name) return { error: "Naam nakho." };
+  if (!name) return { error: "Enter a name." };
   if (mobile && !/^\d{10}$/.test(mobile)) {
-    return { error: "Mobile 10 aank no hovo joiye." };
+    return { error: "The mobile number must be 10 digits." };
   }
 
   const supabase = await createClient();
@@ -75,7 +75,7 @@ export async function updateProfile(prevState, formData) {
     })
     .eq("id", admin.id);
 
-  if (error) return { error: `Save na thai shakyu: ${error.message}` };
+  if (error) return { error: `Could not save: ${error.message}` };
 
   refresh();
   return { ok: true };
@@ -88,14 +88,15 @@ export async function changePassword(prevState, formData) {
   const confirm = String(formData.get("confirm") ?? "");
 
   if (password.length < 8) {
-    return { error: "Password ochha ma ochho 8 akshar no hovo joiye." };
+    return { error: "The password must be at least 8 characters." };
   }
-  if (password !== confirm) return { error: "Bunne password sarkha nathi." };
+  if (password !== confirm) return { error: "The two passwords do not match." };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
 
-  if (error) return { error: `Password badlai na shakyo: ${error.message}` };
+  if (error)
+    return { error: `Could not change the password: ${error.message}` };
 
   return { ok: true };
 }
@@ -114,15 +115,15 @@ export async function updateStaff(prevState, formData) {
   const role = String(formData.get("role") ?? "");
   const status = String(formData.get("status") ?? "");
 
-  if (!id) return { error: "User malyo nahi." };
+  if (!id) return { error: "User not found." };
   if (id === admin.id) {
-    return { error: "Tame tamaro potano role ke status badli na shako." };
+    return { error: "You cannot change your own role or status." };
   }
   if (!["admin", "customer"].includes(role)) {
-    return { error: "Role barabar nathi." };
+    return { error: "That role is not valid." };
   }
   if (!["active", "inactive"].includes(status)) {
-    return { error: "Status barabar nathi." };
+    return { error: "That status is not valid." };
   }
 
   const db = createAdminClient();
@@ -131,7 +132,7 @@ export async function updateStaff(prevState, formData) {
     .update({ role, status })
     .eq("id", id);
 
-  if (error) return { error: `Save na thai shakyu: ${error.message}` };
+  if (error) return { error: `Could not save: ${error.message}` };
 
   refresh();
   return { ok: true };
@@ -152,13 +153,14 @@ export async function addStaff(prevState, formData) {
   const mobile = String(formData.get("mobile") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
-  if (!name) return { error: "Naam nakho." };
-  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Email barabar nathi." };
+  if (!name) return { error: "Enter a name." };
+  if (!/^\S+@\S+\.\S+$/.test(email))
+    return { error: "That email is not valid." };
   if (mobile && !/^\d{10}$/.test(mobile)) {
-    return { error: "Mobile 10 aank no hovo joiye." };
+    return { error: "The mobile number must be 10 digits." };
   }
   if (password.length < 8) {
-    return { error: "Password ochha ma ochho 8 akshar no hovo joiye." };
+    return { error: "The password must be at least 8 characters." };
   }
 
   const db = createAdminClient();
@@ -170,7 +172,7 @@ export async function addStaff(prevState, formData) {
     user_metadata: { name, mobile },
   });
 
-  if (error) return { error: `Banavi na shakayu: ${error.message}` };
+  if (error) return { error: `Could not create the account: ${error.message}` };
 
   // The trigger has already inserted the profile as a customer; promote it.
   const { error: upErr } = await db
@@ -178,7 +180,7 @@ export async function addStaff(prevState, formData) {
     .update({ name, mobile: mobile || null, role: "admin", status: "active" })
     .eq("id", data.user.id);
 
-  if (upErr) return { error: `Profile update na thayu: ${upErr.message}` };
+  if (upErr) return { error: `Profile not updated: ${upErr.message}` };
 
   refresh();
   return { ok: true };

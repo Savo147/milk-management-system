@@ -4,10 +4,10 @@ import AuthCard from "@/components/AuthCard";
 import ForgotForm from "./ForgotForm";
 
 const ERRORS = {
-  link: "Aa link ni mudat puri thai gai chhe ke e vaparai chuki chhe. Navi link mangavo.",
+  link: "This link has expired or has already been used. Request a new one.",
 };
 
-export const metadata = { title: "Password bhulai gayo — Krishna Dairy" };
+export const metadata = { title: "Forgot password — Krishna Dairy" };
 
 export default async function ForgotPasswordPage({ searchParams }) {
   // Already signed in? Then the Profile page is the place to change it, and
@@ -22,8 +22,8 @@ export default async function ForgotPasswordPage({ searchParams }) {
     <AuthCard
       dairyName={settings.dairy_name}
       logoUrl={settings.logo_url}
-      title="Password bhulai gayo?"
-      subtitle="Tamaru email nakho — password badalvani link tya mokalishu."
+      title="Forgot your password?"
+      subtitle="Enter your email — we will send a password reset link there."
     >
       <ForgotForm initialError={ERRORS[error] ?? null} />
     </AuthCard>
