@@ -4,6 +4,7 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -12,6 +13,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import { createClient } from "@/lib/supabase/server";
+import { tableOnly, cardsOnly } from "@/lib/responsive";
 import PageHeader from "@/components/PageHeader";
 import { formatAmount, formatDate, formatLiters } from "@/lib/format";
 import DayPicker from "./DayPicker";
@@ -153,9 +155,78 @@ export default async function StockPage({ searchParams }) {
           <Box sx={{ mt: 4 }}>
             <SectionLabel>Last 30 days</SectionLabel>
 
+            {/* Written out here rather than through DataCards: this is a
+                Server Component, and DataCards takes its columns as
+                callbacks, which cannot cross that boundary. */}
+            <Stack sx={{ ...cardsOnly, gap: 1.25 }}>
+              {history.length === 0 && (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 4,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    No entries in the last 30 days.
+                  </Typography>
+                </Paper>
+              )}
+
+              {history.map(([d, t]) => (
+                <Paper
+                  key={d}
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    border: 1,
+                    borderColor: d === date ? "primary.main" : "divider",
+                    borderRadius: 2.5,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    {formatDate(d)}
+                  </Typography>
+                  <Stack sx={{ gap: 0.4, mt: 1.5 }}>
+                    {[
+                      ["Milk", formatLiters(t.liters)],
+                      ["Amount", formatAmount(t.amount)],
+                      ["Customers", t.count],
+                    ].map(([label, value]) => (
+                      <Stack
+                        key={label}
+                        direction="row"
+                        sx={{
+                          justifyContent: "space-between",
+                          alignItems: "baseline",
+                          gap: 2,
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          {label}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            fontVariantNumeric: "tabular-nums",
+                          }}
+                        >
+                          {value}
+                        </Typography>
+                      </Stack>
+                    ))}
+                  </Stack>
+                </Paper>
+              ))}
+            </Stack>
+
             <TableContainer
               component={Paper}
-              sx={{ border: 1, borderColor: "divider" }}
+              sx={{ border: 1, borderColor: "divider", ...tableOnly }}
             >
               <Table size="small" sx={{ minWidth: 520 }}>
                 <TableHead>

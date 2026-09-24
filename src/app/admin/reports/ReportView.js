@@ -23,6 +23,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import DownloadIcon from "@mui/icons-material/Download";
 import PrintIcon from "@mui/icons-material/Print";
 import { formatAmount, formatLiters } from "@/lib/format";
+import { tableOnly, cardsOnly } from "@/lib/responsive";
+import DataCards from "@/components/DataCards";
 import RangePicker from "@/components/RangePicker";
 
 function Summary({ label, value }) {
@@ -158,27 +160,108 @@ export default function ReportView({
 
         <Box sx={{ flexGrow: 1 }} />
 
-        <Button
-          size="small"
-          startIcon={<DownloadIcon sx={{ fontSize: 17 }} />}
-          onClick={download}
-          disabled={rows.length === 0}
-        >
-          Excel
-        </Button>
-        <Button
-          size="small"
-          startIcon={<PrintIcon sx={{ fontSize: 17 }} />}
-          onClick={() => window.print()}
-          disabled={rows.length === 0}
-        >
-          PDF / Print
-        </Button>
+        {/* Their own row, so on a phone they sit side by side instead of
+            becoming two full-width blocks in the column stack. */}
+        <Stack direction="row" spacing={1}>
+          <Button
+            size="small"
+            startIcon={<DownloadIcon sx={{ fontSize: 17 }} />}
+            onClick={download}
+            disabled={rows.length === 0}
+          >
+            Excel
+          </Button>
+          <Button
+            size="small"
+            startIcon={<PrintIcon sx={{ fontSize: 17 }} />}
+            onClick={() => window.print()}
+            disabled={rows.length === 0}
+          >
+            PDF / Print
+          </Button>
+        </Stack>
       </Stack>
+
+      <Box sx={cardsOnly} className="no-print">
+        <DataCards
+          sx={{ width: "100%" }}
+          items={rows}
+          getKey={(r) => r.key}
+          title={(r) => r.label}
+          subtitle={(r) => r.sub}
+          fields={(r) => [
+            ["Milk", formatLiters(r.liters)],
+            ["Amount", formatAmount(r.amount)],
+            ["Received", formatAmount(r.paid)],
+            ["Due", formatAmount(r.baki)],
+          ]}
+          empty="No records in this period."
+        />
+
+        {/* The table's footer row, which has nowhere to live among cards.
+            Without it the phone would be missing the received and due
+            totals altogether. */}
+        {rows.length > 0 && (
+          <Paper
+            elevation={0}
+            sx={{
+              mt: 1.25,
+              p: 2,
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 2.5,
+              bgcolor: "grey.50",
+            }}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+              Total ({rows.length})
+            </Typography>
+            <Stack sx={{ gap: 0.4, mt: 1.5 }}>
+              {[
+                ["Milk", formatLiters(totals.liters)],
+                ["Amount", formatAmount(totals.amount)],
+                ["Received", formatAmount(totals.paid)],
+                ["Due", formatAmount(totals.baki)],
+              ].map(([label, value]) => (
+                <Stack
+                  key={label}
+                  direction="row"
+                  sx={{
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    gap: 2,
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    {label}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 700,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {value}
+                  </Typography>
+                </Stack>
+              ))}
+            </Stack>
+          </Paper>
+        )}
+      </Box>
 
       <TableContainer
         component={Paper}
-        sx={{ border: 1, borderColor: "divider" }}
+        sx={{
+          border: 1,
+          borderColor: "divider",
+          ...tableOnly,
+          // Printing from a phone would otherwise produce a blank page: the
+          // cards carry no-print, and the table is hidden at that width.
+          // Paper is one size, so the table is what goes on it.
+          "@media print": { display: "block" },
+        }}
       >
         <Table size="small" sx={{ minWidth: 720 }}>
           <TableHead>

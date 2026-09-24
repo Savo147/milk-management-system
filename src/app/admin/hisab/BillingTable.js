@@ -21,6 +21,8 @@ import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import EditIcon from "@mui/icons-material/Edit";
 import { BILL_STATUS, STATUS_COLOR } from "@/lib/constants";
 import { formatAmount, formatDate, formatLiters } from "@/lib/format";
+import { tableOnly, cardsOnly } from "@/lib/responsive";
+import DataCards from "@/components/DataCards";
 import RangePicker from "@/components/RangePicker";
 import PaymentDialog from "./PaymentDialog";
 
@@ -103,9 +105,64 @@ export default function BillingTable({
         </TextField>
       </Stack>
 
+      <DataCards
+        sx={cardsOnly}
+        items={rows}
+        getKey={(r) => r.id}
+        title={(r) => r.customer_name}
+        subtitle={(r) => r.customer_mobile}
+        badge={(r) => {
+          const status = statusOf(r);
+          return (
+            <Chip
+              size="small"
+              label={BILL_STATUS[status]}
+              color={STATUS_COLOR[status]}
+              variant={status === "done" ? "filled" : "outlined"}
+            />
+          );
+        }}
+        fields={(r) => [
+          ["Milk", formatLiters(r.total_liters)],
+          ["Total amount", formatAmount(r.total_amount)],
+          [
+            "Last payment",
+            r.last_paid_on ? formatDate(r.last_paid_on) : "None yet",
+          ],
+        ]}
+        actions={(r) =>
+          statusOf(r) === "done" ? (
+            <Button
+              size="small"
+              color="inherit"
+              startIcon={<EditIcon sx={{ fontSize: 16 }} />}
+              onClick={() => setPaying(r)}
+              sx={{ color: "text.secondary" }}
+            >
+              Change
+            </Button>
+          ) : (
+            <Button
+              size="small"
+              variant="outlined"
+              fullWidth
+              startIcon={<CurrencyRupeeIcon sx={{ fontSize: 16 }} />}
+              onClick={() => setPaying(r)}
+            >
+              Take payment
+            </Button>
+          )
+        }
+        empty={
+          allRows.length === 0
+            ? "No records in this period."
+            : "Nothing matches this search."
+        }
+      />
+
       <TableContainer
         component={Paper}
-        sx={{ border: 1, borderColor: "divider" }}
+        sx={{ border: 1, borderColor: "divider", ...tableOnly }}
       >
         <Table size="small" sx={{ minWidth: 720 }}>
           <TableHead>
@@ -194,7 +251,7 @@ export default function BillingTable({
                         onClick={() => setPaying(r)}
                         sx={{ color: "text.secondary" }}
                       >
-                        Sudharo
+                        Change
                       </Button>
                     ) : (
                       <Button

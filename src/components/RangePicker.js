@@ -138,7 +138,10 @@ export default function RangePicker({
           borderRadius: 2.25,
           bgcolor: "background.paper",
           justifyContent: "flex-start",
-          minWidth: 235,
+          // Full width on a phone, where it sits in a stacked column and a
+          // fixed 235px would leave a ragged edge beside the fields under it.
+          width: { xs: "100%", sm: "auto" },
+          minWidth: { sm: 235 },
           "&:hover": { borderColor: "grey.400", bgcolor: "grey.50" },
         }}
       >
@@ -162,7 +165,18 @@ export default function RangePicker({
         onClose={close}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
-        slotProps={{ paper: { sx: { mt: 1, borderRadius: 3, width: 330 } } }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 1,
+              borderRadius: 3,
+              // 330 would overhang a 360px screen once the popover's own
+              // offset is counted.
+              width: { xs: "calc(100vw - 32px)", sm: 330 },
+              maxWidth: 330,
+            },
+          },
+        }}
       >
         <Box sx={{ p: 1.5, pb: 1 }}>
           <ToggleButtonGroup

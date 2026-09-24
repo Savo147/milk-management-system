@@ -10,13 +10,26 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import { formatDate } from "@/lib/format";
+import { tableOnly, cardsOnly } from "@/lib/responsive";
+import DataCards from "@/components/DataCards";
 
 export default function AuditTable({ logs }) {
   return (
     <>
+      <DataCards
+        sx={cardsOnly}
+        items={logs}
+        getKey={(l) => l.id}
+        title={(l) => l.user_name}
+        subtitle={(l) => formatDate(l.created_at)}
+        badge={(l) => <Chip size="small" label={l.action} variant="outlined" />}
+        fields={(l) => [["Where", l.module]]}
+        empty="No records yet."
+      />
+
       <TableContainer
         component={Paper}
-        sx={{ border: 1, borderColor: "divider" }}
+        sx={{ border: 1, borderColor: "divider", ...tableOnly }}
       >
         <Table size="small" sx={{ minWidth: 640 }}>
           <TableHead>
@@ -28,7 +41,7 @@ export default function AuditTable({ logs }) {
               <TableCell align="center" sx={{ width: "18%" }}>
                 What was done
               </TableCell>
-              <TableCell>Kya</TableCell>
+              <TableCell>Where</TableCell>
             </TableRow>
           </TableHead>
 

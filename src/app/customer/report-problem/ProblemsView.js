@@ -25,7 +25,9 @@ import {
   problemState,
 } from "@/lib/constants";
 import { formatDate, formatLiters } from "@/lib/format";
+import { tableOnly, cardsOnly } from "@/lib/responsive";
 import RangePicker from "@/components/RangePicker";
+import DataCards from "@/components/DataCards";
 import NewProblemDialog from "./NewProblemDialog";
 import ThreadDialog from "./ThreadDialog";
 
@@ -100,10 +102,42 @@ export default function ProblemsView({
         </Button>
       </Stack>
 
+      <DataCards
+        sx={cardsOnly}
+        items={rows}
+        getKey={(p) => p.id}
+        onClick={(p) => setOpenId(p.id)}
+        title={(p) => p.message || "—"}
+        badge={(p) => (
+          <Chip
+            size="small"
+            label={PROBLEM_STATE[problemState(p.status)]}
+            color={STATUS_COLOR[problemState(p.status)]}
+            variant={problemState(p.status) === "done" ? "filled" : "outlined"}
+          />
+        )}
+        fields={(p) => [
+          ["Issue", ISSUE_TYPE[p.issue_type] ?? p.issue_type],
+          [
+            "Expected / Got",
+            `${formatLiters(p.expected_quantity)} / ${formatLiters(
+              p.received_quantity,
+            )}`,
+          ],
+          ["Date", formatDate(p.created_at)],
+          ["Replies", (repliesByReport[p.id] ?? []).length],
+        ]}
+        empty={
+          problems.length === 0
+            ? 'You have not raised any complaints in this period. Click "New complaint".'
+            : "No complaints with this status."
+        }
+      />
+
       <TableContainer
         component={Paper}
         elevation={0}
-        sx={{ border: 1, borderColor: "divider" }}
+        sx={{ border: 1, borderColor: "divider", ...tableOnly }}
       >
         <Table size="small" sx={{ minWidth: 680 }}>
           <TableHead>

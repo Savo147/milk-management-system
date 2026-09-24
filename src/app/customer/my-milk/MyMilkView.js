@@ -18,7 +18,9 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { formatAmount, formatDate, formatLiters } from "@/lib/format";
 import { DELIVERY_STATUS, STATUS_COLOR } from "@/lib/constants";
+import { tableOnly, cardsOnly } from "@/lib/responsive";
 import RangePicker from "@/components/RangePicker";
+import DataCards from "@/components/DataCards";
 import StatCard from "@/components/StatCard";
 
 export default function MyMilkView({
@@ -106,10 +108,35 @@ export default function MyMilkView({
         </TextField>
       </Stack>
 
+      <DataCards
+        sx={cardsOnly}
+        items={rows}
+        getKey={(e) => e.id}
+        title={(e) => formatDate(e.date)}
+        badge={(e) => (
+          <Chip
+            size="small"
+            label={DELIVERY_STATUS[e.delivery_status]}
+            color={STATUS_COLOR[e.delivery_status]}
+            variant={e.delivery_status === "delivered" ? "filled" : "outlined"}
+          />
+        )}
+        fields={(e) => [
+          ["Delivered", formatLiters(e.actual_quantity)],
+          ["Rate", `${formatAmount(e.rate_per_liter)} / L`],
+          ["Amount", formatAmount(e.total_amount)],
+        ]}
+        empty={
+          entries.length === 0
+            ? "No entries in this period."
+            : "No days with this status."
+        }
+      />
+
       <TableContainer
         component={Paper}
         elevation={0}
-        sx={{ border: 1, borderColor: "divider" }}
+        sx={{ border: 1, borderColor: "divider", ...tableOnly }}
       >
         <Table size="small" sx={{ minWidth: 560 }}>
           <TableHead>

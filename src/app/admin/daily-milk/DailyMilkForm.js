@@ -31,6 +31,8 @@ import {
   STATUS_COLOR,
 } from "@/lib/constants";
 import { formatAmount, formatLiters } from "@/lib/format";
+import { tableOnly, cardsOnly } from "@/lib/responsive";
+import DataCards from "@/components/DataCards";
 import { saveOneEntry } from "./actions";
 
 /**
@@ -289,16 +291,88 @@ export default function DailyMilkForm({ date, customers }) {
 
         {/* Totals sit with the controls rather than in a sticky footer: the
             numbers are a summary of what is on screen, not an action. */}
-        <Stack direction="row" spacing={3} sx={{ pr: 0.5 }}>
+        <Stack
+          direction="row"
+          sx={{
+            pr: 0.5,
+            gap: { xs: 2.5, sm: 3 },
+            flexWrap: "wrap",
+            // On a phone these sit under the controls rather than beside
+            // them, so they need their own breathing room.
+            pt: { xs: 0.5, sm: 0 },
+          }}
+        >
           <Total label="Entries" value={totals.count} />
           <Total label="Total milk" value={formatLiters(totals.liters)} />
           <Total label="Total amount" value={formatAmount(totals.amount)} />
         </Stack>
       </Stack>
 
+      {/* One card per customer on a phone; the table below takes over from
+          md up. Both walk the same `visible` rows. */}
+      <DataCards
+        sx={cardsOnly}
+        items={visible}
+        getKey={(c) => c.id}
+        title={(c) => c.name}
+        subtitle={(c) => c.mobile}
+        badge={(c) => {
+          const status = c.entry ? c.entry.delivery_status : "pending";
+          return (
+            <Chip
+              size="small"
+              label={DAILY_ROW_STATUS[status]}
+              color={STATUS_COLOR[status]}
+              variant={
+                status === "pending" || status === "missed"
+                  ? "outlined"
+                  : "filled"
+              }
+            />
+          );
+        }}
+        fields={(c) => {
+          const qty = values[c.id] ?? "";
+          const amount =
+            qty === "" ? null : Number(qty) * Number(c.rate_per_liter);
+          return [
+            ["Rate", `${formatAmount(c.rate_per_liter)} / L`],
+            ["Amount", amount === null ? "—" : formatAmount(amount)],
+          ];
+        }}
+        actions={(c) => {
+          const qty = values[c.id] ?? "";
+          const storedQty = c.entry
+            ? String(c.entry.actual_quantity)
+            : String(c.daily_quantity);
+          return (
+            <>
+              <QuantityPicker
+                value={qty}
+                changed={qty !== storedQty}
+                onChange={(v) => setQty(c.id, v)}
+              />
+              <RowSave
+                date={date}
+                customerId={c.id}
+                qty={qty}
+                saved={Boolean(c.entry) && qty === storedQty}
+              />
+            </>
+          );
+        }}
+        empty={
+          customers.length === 0
+            ? "There are no active customers. Add them on the Customers page first."
+            : statusFilter === "pending" && !query
+              ? "All done — every customer for this date has been saved."
+              : "No customer matches this search or filter."
+        }
+      />
+
       <TableContainer
         component={Paper}
-        sx={{ border: 1, borderColor: "divider" }}
+        sx={{ border: 1, borderColor: "divider", ...tableOnly }}
       >
         <Table size="small" sx={{ minWidth: 820 }}>
           <TableHead>

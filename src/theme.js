@@ -86,6 +86,22 @@ const theme = createTheme({
       },
     },
 
+    // MUI leaves 32px of margin on every side of a dialog. On a 360px phone
+    // that spends a fifth of the screen on nothing, and the forms inside are
+    // already tight. Halved below sm, applied once here rather than at each
+    // of the dozen call sites.
+    MuiDialog: {
+      styleOverrides: {
+        paper: ({ theme }) => ({
+          [theme.breakpoints.down("sm")]: {
+            margin: 16,
+            width: "calc(100% - 32px)",
+            maxHeight: "calc(100% - 32px)",
+          },
+        }),
+      },
+    },
+
     MuiButton: {
       defaultProps: { disableElevation: true },
       styleOverrides: {

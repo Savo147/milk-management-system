@@ -25,6 +25,8 @@ import KeyIcon from "@mui/icons-material/Key";
 import KeyOffIcon from "@mui/icons-material/KeyOff";
 import { formatAmount, formatLiters } from "@/lib/format";
 import { STATUS_COLOR, ACCOUNT_STATUS } from "@/lib/constants";
+import { tableOnly, cardsOnly } from "@/lib/responsive";
+import DataCards from "@/components/DataCards";
 import CustomerDialog from "./CustomerDialog";
 import LoginDialog from "./LoginDialog";
 
@@ -91,10 +93,63 @@ export default function CustomersTable({ customers, unlinkedLogins = [] }) {
         </Button>
       </Stack>
 
+      {/* One card per customer on a phone; the table below takes over from
+          md up. Both walk the same filtered rows. */}
+      <DataCards
+        sx={cardsOnly}
+        items={rows}
+        getKey={(c) => c.id}
+        title={(c) => c.name}
+        subtitle={(c) => c.mobile}
+        badge={(c) => (
+          <Chip
+            size="small"
+            label={ACCOUNT_STATUS[c.status]}
+            color={STATUS_COLOR[c.status]}
+            variant={c.status === "active" ? "filled" : "outlined"}
+          />
+        )}
+        fields={(c) => [
+          ["Daily milk", formatLiters(c.daily_quantity)],
+          ["Rate", `${formatAmount(c.rate_per_liter)} / L`],
+          c.address && ["Address", c.address],
+          c.login_email && ["Login", c.login_email],
+        ]}
+        actions={(c) => (
+          <>
+            <Button
+              size="small"
+              startIcon={
+                c.user_id ? (
+                  <KeyIcon sx={{ fontSize: 17 }} />
+                ) : (
+                  <KeyOffIcon sx={{ fontSize: 17 }} />
+                )
+              }
+              onClick={() => setLogin(c)}
+            >
+              {c.user_id ? "Password" : "Give login"}
+            </Button>
+            <Button
+              size="small"
+              startIcon={<EditIcon sx={{ fontSize: 17 }} />}
+              onClick={() => setEditing(c)}
+            >
+              Edit
+            </Button>
+          </>
+        )}
+        empty={
+          customers.length === 0
+            ? 'No customers yet. Click "New customer".'
+            : "No customer matches this search."
+        }
+      />
+
       <TableContainer
         component={Paper}
         elevation={0}
-        sx={{ border: 1, borderColor: "divider" }}
+        sx={{ border: 1, borderColor: "divider", ...tableOnly }}
       >
         <Table size="small" sx={{ minWidth: 720 }}>
           <TableHead>
@@ -130,7 +185,11 @@ export default function CustomersTable({ customers, unlinkedLogins = [] }) {
                     {c.name}
                   </Typography>
                   {c.address && (
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: "block" }}
+                    >
                       {c.address}
                     </Typography>
                   )}

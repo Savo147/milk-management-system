@@ -19,6 +19,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireCustomerAccount } from "@/lib/auth";
 import { formatAmount, formatDate, formatLiters } from "@/lib/format";
 import { monthStart, todayLocal } from "@/lib/range";
+import { tableOnly, cardsOnly } from "@/lib/responsive";
 import {
   DAILY_ROW_STATUS,
   STATUS_COLOR,
@@ -125,7 +126,7 @@ export default async function CustomerDashboard() {
 
       <SectionLabel>Today</SectionLabel>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="Today's milk"
             value={formatLiters(today.data?.actual_quantity ?? 0)}
@@ -140,7 +141,7 @@ export default async function CustomerDashboard() {
             }
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="Today's amount"
             value={formatAmount(today.data?.total_amount ?? 0)}
@@ -148,7 +149,7 @@ export default async function CustomerDashboard() {
             color="success"
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="My rate"
             value={`${formatAmount(customer.rate_per_liter)} / L`}
@@ -157,7 +158,7 @@ export default async function CustomerDashboard() {
             color="info"
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="Amount due"
             value={formatAmount(baki)}
@@ -175,7 +176,7 @@ export default async function CustomerDashboard() {
       <Box sx={{ mt: 4 }} />
       <SectionLabel>This month</SectionLabel>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="This month's milk"
             value={formatLiters(sum(month.data, "actual_quantity"))}
@@ -183,7 +184,7 @@ export default async function CustomerDashboard() {
             icon={LocalDrinkIcon}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="This month's amount"
             value={formatAmount(sum(month.data, "total_amount"))}
@@ -191,7 +192,7 @@ export default async function CustomerDashboard() {
             color="success"
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="My complaints"
             value={openProblems}
@@ -204,10 +205,91 @@ export default async function CustomerDashboard() {
 
       <Box sx={{ mt: 4 }} />
       <SectionLabel>Last 7 days</SectionLabel>
+      {/* Written out here rather than through DataCards: this is a Server
+          Component, and DataCards takes its columns as callbacks, which
+          cannot cross that boundary. */}
+      <Stack sx={{ ...cardsOnly, gap: 1.25 }}>
+        {(recent.data ?? []).length === 0 && (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 2,
+              textAlign: "center",
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              No entries in the last 7 days.
+            </Typography>
+          </Paper>
+        )}
+
+        {(recent.data ?? []).map((e) => (
+          <Paper
+            key={e.date}
+            elevation={0}
+            sx={{
+              p: 2,
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 2.5,
+            }}
+          >
+            <Stack
+              direction="row"
+              sx={{ alignItems: "center", justifyContent: "space-between" }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                {formatDate(e.date)}
+              </Typography>
+              <Chip
+                size="small"
+                label={DAILY_ROW_STATUS[e.delivery_status]}
+                color={STATUS_COLOR[e.delivery_status]}
+                variant={
+                  e.delivery_status === "delivered" ? "filled" : "outlined"
+                }
+              />
+            </Stack>
+            <Stack sx={{ gap: 0.4, mt: 1.5 }}>
+              {[
+                ["Delivered", formatLiters(e.actual_quantity)],
+                ["Amount", formatAmount(e.total_amount)],
+              ].map(([label, value]) => (
+                <Stack
+                  key={label}
+                  direction="row"
+                  sx={{
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    gap: 2,
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    {label}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {value}
+                  </Typography>
+                </Stack>
+              ))}
+            </Stack>
+          </Paper>
+        ))}
+      </Stack>
+
       <TableContainer
         component={Paper}
         elevation={0}
-        sx={{ border: 1, borderColor: "divider" }}
+        sx={{ border: 1, borderColor: "divider", ...tableOnly }}
       >
         <Table size="small">
           <TableHead>

@@ -18,7 +18,9 @@ import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { formatAmount, formatDate, formatLiters } from "@/lib/format";
+import { tableOnly, cardsOnly } from "@/lib/responsive";
 import RangePicker from "@/components/RangePicker";
+import DataCards from "@/components/DataCards";
 import StatCard, { SectionLabel } from "@/components/StatCard";
 
 export default function MyBillingView({
@@ -114,10 +116,22 @@ export default function MyBillingView({
       </Alert>
 
       <SectionLabel>Payments made</SectionLabel>
+      <DataCards
+        sx={cardsOnly}
+        items={payments}
+        getKey={(p) => p.id}
+        title={(p) => formatDate(p.paid_on)}
+        fields={(p) => [
+          ["Amount", formatAmount(p.amount)],
+          p.note && ["Note", p.note],
+        ]}
+        empty="No payments recorded in this period."
+      />
+
       <TableContainer
         component={Paper}
         elevation={0}
-        sx={{ border: 1, borderColor: "divider" }}
+        sx={{ border: 1, borderColor: "divider", ...tableOnly }}
       >
         <Table size="small" sx={{ minWidth: 420 }}>
           <TableHead>

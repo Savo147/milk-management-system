@@ -10,13 +10,33 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import { formatAmount, formatDate } from "@/lib/format";
+import { tableOnly, cardsOnly } from "@/lib/responsive";
+import DataCards from "@/components/DataCards";
 
 export default function RatesTable({ rates }) {
   return (
     <>
+      <DataCards
+        sx={cardsOnly}
+        items={rates}
+        getKey={(r) => r.id}
+        title={(r) => r.customer_name}
+        badge={(r) =>
+          r.effective_to ? null : (
+            <Chip size="small" label="Current" color="success" />
+          )
+        }
+        fields={(r) => [
+          ["Rate", `${formatAmount(r.rate_per_liter)} / L`],
+          ["From", formatDate(r.effective_from)],
+          ["Until", r.effective_to ? formatDate(r.effective_to) : "Now"],
+        ]}
+        empty="No rate history yet."
+      />
+
       <TableContainer
         component={Paper}
-        sx={{ border: 1, borderColor: "divider" }}
+        sx={{ border: 1, borderColor: "divider", ...tableOnly }}
       >
         <Table size="small" sx={{ minWidth: 700 }}>
           <TableHead>
@@ -32,7 +52,7 @@ export default function RatesTable({ rates }) {
                 Until
               </TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
-                Chalu
+                Current
               </TableCell>
             </TableRow>
           </TableHead>
@@ -81,7 +101,7 @@ export default function RatesTable({ rates }) {
 
                   <TableCell align="center">
                     {current && (
-                      <Chip size="small" label="Chalu" color="success" />
+                      <Chip size="small" label="Current" color="success" />
                     )}
                   </TableCell>
                 </TableRow>

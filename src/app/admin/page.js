@@ -90,7 +90,7 @@ export default async function AdminDashboard() {
 
       <SectionLabel>Today</SectionLabel>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="Today's milk"
             value={formatLiters(todayMilk)}
@@ -98,7 +98,7 @@ export default async function AdminDashboard() {
             icon={LocalDrinkIcon}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="Today's amount"
             value={formatAmount(todayAmount)}
@@ -107,7 +107,7 @@ export default async function AdminDashboard() {
             color="success"
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="Active customers"
             value={activeCustomers ?? 0}
@@ -115,7 +115,7 @@ export default async function AdminDashboard() {
             color="info"
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="Missed delivery"
             value={missed}
@@ -129,14 +129,14 @@ export default async function AdminDashboard() {
       <Box sx={{ mt: 4 }} />
       <SectionLabel>This month</SectionLabel>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="This month's milk"
             value={formatLiters(monthMilk)}
             icon={LocalDrinkIcon}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="This month's amount"
             value={formatAmount(monthAmount)}
@@ -144,7 +144,7 @@ export default async function AdminDashboard() {
             color="success"
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="Unpaid bills"
             value={pendingBills ?? 0}
@@ -153,7 +153,7 @@ export default async function AdminDashboard() {
             color="warning"
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="Stock left"
             value={formatLiters(stock?.remaining_stock ?? 0)}

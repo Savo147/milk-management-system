@@ -24,6 +24,8 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { ACCOUNT_STATUS, STATUS_COLOR } from "@/lib/constants";
+import { tableOnly, cardsOnly } from "@/lib/responsive";
+import DataCards from "@/components/DataCards";
 import { formatDate } from "@/lib/format";
 import { updateStaff, addStaff } from "./actions";
 
@@ -178,9 +180,33 @@ export default function StaffSection({ staff, currentUserId }) {
         </Button>
       </Stack>
 
+      <DataCards
+        sx={cardsOnly}
+        items={staff}
+        getKey={(m) => m.id}
+        title={(m) => m.name}
+        subtitle={(m) => m.email}
+        badge={(m) => (
+          <Chip
+            size="small"
+            label={ACCOUNT_STATUS[m.status]}
+            color={STATUS_COLOR[m.status]}
+            variant={m.status === "active" ? "filled" : "outlined"}
+          />
+        )}
+        fields={(m) => [
+          m.mobile && ["Mobile", m.mobile],
+          ["Joined", formatDate(m.created_at)],
+        ]}
+        actions={(m) => (
+          <StaffControls member={m} isSelf={m.id === currentUserId} />
+        )}
+        empty="No users."
+      />
+
       <TableContainer
         component={Paper}
-        sx={{ border: 1, borderColor: "divider" }}
+        sx={{ border: 1, borderColor: "divider", ...tableOnly }}
       >
         <Table size="small" sx={{ minWidth: 720 }}>
           <TableHead>
@@ -190,10 +216,10 @@ export default function StaffSection({ staff, currentUserId }) {
                 Mobile
               </TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
-                Joyu
+                Joined
               </TableCell>
               <TableCell align="center" sx={{ width: "12%" }}>
-                Atyare
+                Status
               </TableCell>
               <TableCell align="center" sx={{ width: "28%" }}>
                 Role and status

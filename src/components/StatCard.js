@@ -77,7 +77,13 @@ export default function StatCard({
 
         <Typography
           variant="h4"
-          sx={{ mt: 1, fontSize: "1.6rem", fontVariantNumeric: "tabular-nums" }}
+          sx={{
+            mt: 1,
+            // Two of these sit side by side on a phone, so a figure like
+            // ₹1,23,456.00 has about 150px to live in.
+            fontSize: { xs: "1.25rem", sm: "1.6rem" },
+            fontVariantNumeric: "tabular-nums",
+          }}
         >
           {value}
         </Typography>

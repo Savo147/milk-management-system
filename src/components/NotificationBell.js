@@ -44,7 +44,17 @@ export default function NotificationBell({ notifications = [], unread = 0 }) {
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
         slotProps={{
-          paper: { sx: { mt: 1, borderRadius: 3, width: 340, maxHeight: 420 } },
+          paper: {
+            sx: {
+              mt: 1,
+              borderRadius: 3,
+              // 340 overhangs a 360px screen once the popover's own offset
+              // from the edge is counted.
+              width: { xs: "calc(100vw - 32px)", sm: 340 },
+              maxWidth: 340,
+              maxHeight: 420,
+            },
+          },
         }}
       >
         <Stack
