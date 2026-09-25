@@ -7,7 +7,7 @@ import PageHeader from "@/components/PageHeader";
 import NotLinked from "@/components/NotLinked";
 import ProblemsView from "./ProblemsView";
 
-export const metadata = { title: "Report Problem — Krishna Dairy" };
+export const metadata = { title: "Report Problem" };
 
 export default async function ReportProblemPage({ searchParams }) {
   const { customer } = await requireCustomerAccount();

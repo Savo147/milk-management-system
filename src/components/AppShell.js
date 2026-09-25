@@ -95,7 +95,18 @@ export default function AppShell({
           component="img"
           src={logoUrl ?? "/logo.png"}
           alt={dairyName}
-          sx={{ width: 38, height: 38, objectFit: "contain", flexShrink: 0 }}
+          sx={{
+            width: 38,
+            height: 38,
+            flexShrink: 0,
+            borderRadius: "50%",
+            // cover, not contain: a logo letterboxed inside a round frame
+            // leaves gaps at the sides and stops reading as a circle.
+            objectFit: "cover",
+            border: 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+          }}
         />
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="subtitle2" noWrap sx={{ lineHeight: 1.3 }}>

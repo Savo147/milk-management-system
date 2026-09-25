@@ -6,7 +6,7 @@ import PageHeader from "@/components/PageHeader";
 import NotLinked from "@/components/NotLinked";
 import MyMilkView from "./MyMilkView";
 
-export const metadata = { title: "My Milk — Krishna Dairy" };
+export const metadata = { title: "My Milk" };
 
 export default async function MyMilkPage({ searchParams }) {
   const { customer } = await requireCustomerAccount();

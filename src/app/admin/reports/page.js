@@ -4,7 +4,7 @@ import PageHeader from "@/components/PageHeader";
 import { resolveRange } from "@/lib/range";
 import ReportView from "./ReportView";
 
-export const metadata = { title: "Reports — Krishna Dairy" };
+export const metadata = { title: "Reports" };
 
 /** Milk out and money in, per customer, for the period. */
 async function buildReport(supabase, from, to) {

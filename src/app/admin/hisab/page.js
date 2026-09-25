@@ -9,7 +9,7 @@ import { formatAmount, formatLiters } from "@/lib/format";
 import { resolveRange, todayLocal } from "@/lib/range";
 import BillingTable from "./BillingTable";
 
-export const metadata = { title: "Billing — Krishna Dairy" };
+export const metadata = { title: "Billing" };
 
 /**
  * Milk delivered and money received, per customer, for one span of days.

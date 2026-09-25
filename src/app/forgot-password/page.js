@@ -7,7 +7,7 @@ const ERRORS = {
   link: "This link has expired or has already been used. Request a new one.",
 };
 
-export const metadata = { title: "Forgot password — Krishna Dairy" };
+export const metadata = { title: "Forgot password" };
 
 export default async function ForgotPasswordPage({ searchParams }) {
   // Already signed in? Then the Profile page is the place to change it, and

@@ -6,7 +6,7 @@ import PageHeader from "@/components/PageHeader";
 import NotLinked from "@/components/NotLinked";
 import MyBillingView from "./MyBillingView";
 
-export const metadata = { title: "My Billing — Krishna Dairy" };
+export const metadata = { title: "My Billing" };
 
 const sum = (rows, key) =>
   (rows ?? []).reduce((t, r) => t + Number(r[key] ?? 0), 0);

@@ -4,7 +4,7 @@ import PageHeader from "@/components/PageHeader";
 import { formatDate } from "@/lib/format";
 import DailyMilkForm from "./DailyMilkForm";
 
-export const metadata = { title: "Daily Milk — Krishna Dairy" };
+export const metadata = { title: "Daily Milk" };
 
 /** Local YYYY-MM-DD. toISOString() would roll back a day in IST. */
 function todayLocal() {

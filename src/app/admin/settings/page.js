@@ -4,7 +4,7 @@ import { requireAdmin, getBusinessSettings } from "@/lib/auth";
 import PageHeader from "@/components/PageHeader";
 import SettingsTabs from "./SettingsTabs";
 
-export const metadata = { title: "Settings — Krishna Dairy" };
+export const metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
   const user = await requireAdmin();

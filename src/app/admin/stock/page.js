@@ -19,7 +19,7 @@ import { formatAmount, formatDate, formatLiters } from "@/lib/format";
 import DayPicker from "./DayPicker";
 import DayTable from "./DayTable";
 
-export const metadata = { title: "Stock — Krishna Dairy" };
+export const metadata = { title: "Stock" };
 
 /** Local YYYY-MM-DD. toISOString() would roll back a day in IST. */
 function ymd(d) {

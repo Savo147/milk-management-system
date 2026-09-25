@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
 import CustomersTable from "./CustomersTable";
 
-export const metadata = { title: "Customers — Krishna Dairy" };
+export const metadata = { title: "Customers" };
 
 export default async function CustomersPage() {
   const supabase = await createClient();

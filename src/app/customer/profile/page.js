@@ -2,7 +2,7 @@ import { requireCustomerAccount, getBusinessSettings } from "@/lib/auth";
 import PageHeader from "@/components/PageHeader";
 import ProfileView from "./ProfileView";
 
-export const metadata = { title: "Profile — Krishna Dairy" };
+export const metadata = { title: "Profile" };
 
 export default async function ProfilePage() {
   const { user, customer } = await requireCustomerAccount();

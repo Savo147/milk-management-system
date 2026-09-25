@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { fetchWithRetry } from "@/lib/supabase/fetch";
 import { BRANDING_TAG } from "@/lib/cache-tags";
 
 /**
@@ -136,30 +134,6 @@ const loadSettings = unstable_cache(
   CACHE,
 );
 
-const loadBranding = unstable_cache(
-  async () => {
-    // Anon, and only the two columns it is granted — this one answers for
-    // visitors who are not signed in at all.
-    const db = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-      {
-        auth: { persistSession: false },
-        global: { fetch: fetchWithRetry },
-      },
-    );
-
-    const { data } = await db
-      .from("business_settings")
-      .select("dairy_name, logo_url")
-      .maybeSingle();
-
-    return data ?? { dairy_name: FALLBACK_SETTINGS.dairy_name, logo_url: null };
-  },
-  ["public-branding"],
-  CACHE,
-);
-
 /** Full settings row. Signed-in users only. */
 export async function getBusinessSettings() {
   try {
@@ -172,10 +146,23 @@ export async function getBusinessSettings() {
   }
 }
 
-/** Just the name and logo, for pages a signed-out visitor can reach. */
+/**
+ * Just the name and logo, for pages a signed-out visitor can reach — the
+ * login screen, the password-reset screens, and the browser tab's icon.
+ *
+ * This used to ask Supabase with the anon key, on the belief that anon had
+ * been granted these two columns. It had not: every such request came back
+ * 42501 and silently fell through to the defaults below, so those screens
+ * showed the stock logo no matter what Settings said.
+ *
+ * It reads the same cached row the rest of the app does and picks the two
+ * fields out. That row is fetched with the service key, which never leaves
+ * the server; what is handed out here is the shop sign, not the settings.
+ */
 export async function getPublicBranding() {
   try {
-    return await loadBranding();
+    const { dairy_name, logo_url } = await loadSettings();
+    return { dairy_name, logo_url: logo_url ?? null };
   } catch (err) {
     // The login screen has to render even when nothing else can: somebody
     // staring at a crash cannot tell a flaky connection from a broken app.

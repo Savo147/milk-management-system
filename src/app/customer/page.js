@@ -30,7 +30,7 @@ import PageHeader from "@/components/PageHeader";
 import StatCard, { SectionLabel } from "@/components/StatCard";
 import NotLinked from "@/components/NotLinked";
 
-export const metadata = { title: "Dashboard — Krishna Dairy" };
+export const metadata = { title: "Dashboard" };
 
 const sum = (rows, key) =>
   (rows ?? []).reduce((t, r) => t + Number(r[key] ?? 0), 0);

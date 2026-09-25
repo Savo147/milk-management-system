@@ -3,7 +3,7 @@ import { getCurrentUser, getPublicBranding } from "@/lib/auth";
 import AuthCard from "@/components/AuthCard";
 import ResetForm from "./ResetForm";
 
-export const metadata = { title: "New password — Krishna Dairy" };
+export const metadata = { title: "New password" };
 
 export default async function ResetPasswordPage() {
   // Reaching this page means /auth/reset has already turned the emailed link

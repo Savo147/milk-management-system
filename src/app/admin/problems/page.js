@@ -5,7 +5,7 @@ import { problemState } from "@/lib/constants";
 import { resolveRange } from "@/lib/range";
 import ProblemsView from "./ProblemsView";
 
-export const metadata = { title: "Problems — Krishna Dairy" };
+export const metadata = { title: "Problems" };
 
 export default async function ProblemsPage({ searchParams }) {
   const params = await searchParams;

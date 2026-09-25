@@ -9,7 +9,7 @@ const ERRORS = {
   nosetup: "This account has not been set up. Contact the admin.",
 };
 
-export const metadata = { title: "Login — Krishna Dairy" };
+export const metadata = { title: "Login" };
 
 export default async function LoginPage({ searchParams }) {
   const user = await getCurrentUser();

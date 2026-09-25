@@ -45,7 +45,19 @@ export default function AuthCard({
             component="img"
             src={logoUrl ?? "/logo.png"}
             alt={dairyName}
-            sx={{ width: 110, height: 110, objectFit: "contain", mx: "auto" }}
+            sx={{
+              width: 110,
+              height: 110,
+              mx: "auto",
+              display: "block",
+              borderRadius: "50%",
+              // Matches the round mark in the sidebar, so the app looks the
+              // same before and after signing in.
+              objectFit: "cover",
+              border: 1,
+              borderColor: "divider",
+              bgcolor: "background.paper",
+            }}
           />
           {/* The dairy name is already part of the logo artwork, so printing
               it again underneath just repeats itself. */}
