@@ -8,11 +8,11 @@ import DairyForm from "./DairyForm";
 import ProfileForm from "./ProfileForm";
 import StaffSection from "./StaffSection";
 import RatesTable from "./RatesTable";
-import AuditTable from "./AuditTable";
+import PasswordForm from "./PasswordForm";
 
-const TABS = ["Dairy", "My details", "Users", "Rates", "Audit logs"];
+const TABS = ["Dairy", "My details", "Password", "Users", "Rates"];
 
-export default function SettingsTabs({ settings, user, staff, rates, logs }) {
+export default function SettingsTabs({ settings, user, staff, rates }) {
   const [tab, setTab] = useState(0);
 
   return (
@@ -31,9 +31,9 @@ export default function SettingsTabs({ settings, user, staff, rates, logs }) {
 
       {tab === 0 && <DairyForm settings={settings} />}
       {tab === 1 && <ProfileForm user={user} />}
-      {tab === 2 && <StaffSection staff={staff} currentUserId={user.id} />}
-      {tab === 3 && <RatesTable rates={rates} />}
-      {tab === 4 && <AuditTable logs={logs} />}
+      {tab === 2 && <PasswordForm />}
+      {tab === 3 && <StaffSection staff={staff} currentUserId={user.id} />}
+      {tab === 4 && <RatesTable rates={rates} />}
     </Box>
   );
 }

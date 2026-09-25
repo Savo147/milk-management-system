@@ -2,14 +2,12 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import Link from "next/link";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
-import MuiLink from "@mui/material/Link";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -100,16 +98,6 @@ export default function LoginForm({ initialError }) {
             },
           }}
         />
-        <Box sx={{ textAlign: "right", mt: -1 }}>
-          <MuiLink
-            component={Link}
-            href="/forgot-password"
-            variant="caption"
-            underline="hover"
-          >
-            Forgot your password?
-          </MuiLink>
-        </Box>
 
         <SubmitButton />
       </Box>

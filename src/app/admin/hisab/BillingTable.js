@@ -149,7 +149,7 @@ export default function BillingTable({
               startIcon={<CurrencyRupeeIcon sx={{ fontSize: 16 }} />}
               onClick={() => setPaying(r)}
             >
-              Take payment
+              Payment
             </Button>
           )
         }
@@ -260,7 +260,7 @@ export default function BillingTable({
                         startIcon={<CurrencyRupeeIcon sx={{ fontSize: 16 }} />}
                         onClick={() => setPaying(r)}
                       >
-                        Take payment
+                        Payment
                       </Button>
                     )}
                   </TableCell>

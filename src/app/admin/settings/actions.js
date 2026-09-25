@@ -19,12 +19,8 @@ export async function saveBusinessSettings(prevState, formData) {
   const logoUrl = String(formData.get("logo_url") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
-  const threshold = Number(formData.get("low_stock_threshold"));
 
   if (!dairyName) return { error: "Enter the dairy name." };
-  if (!Number.isFinite(threshold) || threshold < 0) {
-    return { error: "The low-stock threshold must be 0 or more." };
-  }
 
   const supabase = await createClient();
 
@@ -35,7 +31,6 @@ export async function saveBusinessSettings(prevState, formData) {
       logo_url: logoUrl || null,
       address: address || null,
       phone: phone || null,
-      low_stock_threshold: threshold,
     })
     .eq("id", true);
 
@@ -81,6 +76,14 @@ export async function updateProfile(prevState, formData) {
   return { ok: true };
 }
 
+/**
+ * A new password, typed twice.
+ *
+ * The second box is there to catch a typo, not an intruder: it does not ask
+ * for the current password, so anyone who finds this screen already open can
+ * change it. That was a deliberate call — the dairy is one person at one
+ * desk.
+ */
 export async function changePassword(prevState, formData) {
   await requireAdmin();
 
@@ -95,9 +98,49 @@ export async function changePassword(prevState, formData) {
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
 
-  if (error)
+  if (error) {
     return { error: `Could not change the password: ${error.message}` };
+  }
 
+  return { ok: true };
+}
+
+/**
+ * A customer's rate, changed from the Rates tab.
+ *
+ * Writes customers.rate_per_liter — the same column the Customers page
+ * writes, and the only place a rate actually lives. The milk_rates rows this
+ * screen lists are history the database keeps for itself: a trigger closes
+ * the old one and opens a new one on every change.
+ *
+ * Which is why the two screens cannot disagree. Editing a milk_rates row
+ * directly would give the rate two homes and they would drift apart; this
+ * deliberately does not.
+ */
+export async function updateCustomerRate(prevState, formData) {
+  // A Server Action is a public endpoint; the page guard does not cover it.
+  await requireAdmin();
+
+  const customerId = String(formData.get("customer_id") ?? "");
+  const rate = Number(formData.get("rate_per_liter"));
+
+  if (!customerId) return { error: "Customer not found." };
+  if (!Number.isFinite(rate) || rate <= 0) {
+    return { error: "The rate must be greater than 0." };
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("customers")
+    .update({ rate_per_liter: rate })
+    .eq("id", customerId);
+
+  if (error) return { error: `Could not save: ${error.message}` };
+
+  // Both screens read the same column, so both have to be refreshed.
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin/customers");
   return { ok: true };
 }
 
@@ -135,6 +178,56 @@ export async function updateStaff(prevState, formData) {
   if (error) return { error: `Could not save: ${error.message}` };
 
   refresh();
+  return { ok: true };
+}
+
+/**
+ * Removes a login for good.
+ *
+ * The customer's milk, billing and complaints are all kept — those hang off
+ * the customers row, not this one, and the customer is simply unlinked. What
+ * does go with it is any reply the person wrote on a complaint thread, which
+ * the database removes along with them. The screen says so before asking.
+ *
+ * Guarded twice over: nobody can delete themselves, and the last admin
+ * standing cannot be deleted by anyone, or there would be no way back in.
+ */
+export async function deleteStaff(prevState, formData) {
+  const admin = await requireAdmin();
+
+  const id = String(formData.get("user_id") ?? "");
+
+  if (!id) return { error: "User not found." };
+  if (id === admin.id) return { error: "You cannot delete your own login." };
+
+  const db = createAdminClient();
+
+  const { data: target } = await db
+    .from("users")
+    .select("id, name, role")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!target) return { error: "User not found." };
+
+  if (target.role === "admin") {
+    const { count } = await db
+      .from("users")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "admin")
+      .eq("status", "active");
+
+    if ((count ?? 0) <= 1) {
+      return { error: "This is the only admin left. Make another one first." };
+    }
+  }
+
+  const { error } = await db.auth.admin.deleteUser(id);
+  if (error) return { error: `Could not delete: ${error.message}` };
+
+  // The Customers page lists unlinked logins in a banner, so it changes too.
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin/customers");
   return { ok: true };
 }
 

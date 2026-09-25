@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
+import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -8,12 +11,17 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { formatAmount, formatDate } from "@/lib/format";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
+import EditIcon from "@mui/icons-material/Edit";
 import DataCards from "@/components/DataCards";
+import RateDialog from "./RateDialog";
 
 export default function RatesTable({ rates }) {
+  const [editing, setEditing] = useState(null);
+
   return (
     <>
       <DataCards
@@ -31,6 +39,17 @@ export default function RatesTable({ rates }) {
           ["From", formatDate(r.effective_from)],
           ["Until", r.effective_to ? formatDate(r.effective_to) : "Now"],
         ]}
+        actions={(r) =>
+          r.effective_to ? null : (
+            <Button
+              size="small"
+              startIcon={<EditIcon sx={{ fontSize: 17 }} />}
+              onClick={() => setEditing(r)}
+            >
+              Change rate
+            </Button>
+          )
+        }
         empty="No rate history yet."
       />
 
@@ -54,13 +73,16 @@ export default function RatesTable({ rates }) {
               <TableCell align="center" sx={{ width: "14%" }}>
                 Current
               </TableCell>
+              <TableCell align="right" sx={{ width: "8%" }}>
+                Action
+              </TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {rates.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     No rate history yet.
                   </Typography>
@@ -104,6 +126,18 @@ export default function RatesTable({ rates }) {
                       <Chip size="small" label="Current" color="success" />
                     )}
                   </TableCell>
+
+                  <TableCell align="right">
+                    {/* Only the rate in force can be changed. The closed rows
+                        are what customers were already billed at. */}
+                    {current && (
+                      <Tooltip title="Change rate">
+                        <IconButton size="small" onClick={() => setEditing(r)}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </TableCell>
                 </TableRow>
               );
             })}
@@ -115,9 +149,12 @@ export default function RatesTable({ rates }) {
         variant="caption"
         sx={{ mt: 1.5, display: "block", color: "text.secondary" }}
       >
-        Rates are not changed here — change a customer&rsquo;s rate on the
-        Customers page, and the old row closes itself as a new one starts.
+        Changing a rate here changes it on the Customers page too — there is one
+        rate per customer, and both screens show it. The old row closes itself
+        as the new one starts.
       </Typography>
+
+      <RateDialog rate={editing} onClose={() => setEditing(null)} />
     </>
   );
 }

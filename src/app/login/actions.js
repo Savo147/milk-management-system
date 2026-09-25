@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { siteOrigin } from "@/lib/site";
+import { ensureCustomerRecord } from "@/lib/customer-account";
 
 /** Matches the rule the admin's own login screens enforce. */
 const MIN_PASSWORD = 8;
@@ -118,7 +119,7 @@ export async function signIn(prevState, formData) {
 
   const { data: profile } = await supabase
     .from("users")
-    .select("role, status")
+    .select("id, name, email, role, status")
     .eq("id", data.user.id)
     .maybeSingle();
 
@@ -131,6 +132,10 @@ export async function signIn(prevState, formData) {
     await supabase.auth.signOut();
     return { error: "Your account is disabled. Contact the admin." };
   }
+
+  // A customer signing in for the first time gets their record here, so
+  // they appear on the Customers page and not only in Settings → Users.
+  await ensureCustomerRecord(profile);
 
   revalidatePath("/", "layout");
 

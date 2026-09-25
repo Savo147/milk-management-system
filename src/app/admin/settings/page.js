@@ -11,7 +11,7 @@ export default async function SettingsPage() {
   const settings = await getBusinessSettings();
   const supabase = await createClient();
 
-  const [staff, rates, logs] = await Promise.all([
+  const [staff, rates] = await Promise.all([
     supabase
       .from("users")
       .select("id, name, email, mobile, role, status, created_at")
@@ -19,20 +19,42 @@ export default async function SettingsPage() {
     supabase
       .from("milk_rates")
       .select(
-        "id, rate_per_liter, effective_from, effective_to, customers(name)",
+        "id, customer_id, rate_per_liter, effective_from, effective_to, customers(name)",
       )
       .order("effective_from", { ascending: false })
-      .limit(100),
-    supabase
-      .from("audit_logs")
-      .select("id, action, module, created_at, users(name)")
-      .order("created_at", { ascending: false })
       .limit(100),
   ]);
 
   // A missing table or a blocked read should not take the whole page down —
   // the other tabs are still worth showing.
   const error = staff.error;
+
+  // What deleting a login would take with it, so the confirmation can say so
+  // rather than leave the admin to find out afterwards.
+  const ids = (staff.data ?? []).map((m) => m.id);
+  const [linked, replies] = ids.length
+    ? await Promise.all([
+        supabase.from("customers").select("name, user_id").in("user_id", ids),
+        supabase
+          .from("report_replies")
+          .select("sender_id")
+          .in("sender_id", ids),
+      ])
+    : [{ data: [] }, { data: [] }];
+
+  const linkedTo = Object.fromEntries(
+    (linked.data ?? []).map((c) => [c.user_id, c.name]),
+  );
+  const replyCount = {};
+  for (const r of replies.data ?? []) {
+    replyCount[r.sender_id] = (replyCount[r.sender_id] ?? 0) + 1;
+  }
+
+  const staffRows = (staff.data ?? []).map((m) => ({
+    ...m,
+    linked_customer: linkedTo[m.id] ?? null,
+    reply_count: replyCount[m.id] ?? 0,
+  }));
 
   const rateRows = (rates.data ?? [])
     .map((r) => ({ ...r, customer_name: r.customers?.name ?? "—" }))
@@ -42,16 +64,11 @@ export default async function SettingsPage() {
         b.effective_from.localeCompare(a.effective_from),
     );
 
-  const logRows = (logs.data ?? []).map((l) => ({
-    ...l,
-    user_name: l.users?.name ?? "—",
-  }));
-
   return (
     <>
       <PageHeader
         title="Settings"
-        subtitle="Dairy, your details, users, rates and audit logs"
+        subtitle="Dairy, your details, users and rates"
       />
 
       {error ? (
@@ -60,9 +77,8 @@ export default async function SettingsPage() {
         <SettingsTabs
           settings={settings}
           user={user}
-          staff={staff.data ?? []}
+          staff={staffRows}
           rates={rateRows}
-          logs={logRows}
         />
       )}
     </>

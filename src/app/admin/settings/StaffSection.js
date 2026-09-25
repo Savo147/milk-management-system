@@ -22,12 +22,16 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import { ACCOUNT_STATUS, STATUS_COLOR } from "@/lib/constants";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import DataCards from "@/components/DataCards";
 import { formatDate } from "@/lib/format";
 import { updateStaff, addStaff } from "./actions";
+import DeleteStaffDialog from "./DeleteStaffDialog";
 
 /** Role and status for one row, saved the moment either dropdown changes. */
 function StaffControls({ member, isSelf }) {
@@ -167,6 +171,7 @@ function AddStaffDialog({ open, onClose }) {
 
 export default function StaffSection({ staff, currentUserId }) {
   const [adding, setAdding] = useState(false);
+  const [deleting, setDeleting] = useState(null);
 
   return (
     <>
@@ -199,7 +204,19 @@ export default function StaffSection({ staff, currentUserId }) {
           ["Joined", formatDate(m.created_at)],
         ]}
         actions={(m) => (
-          <StaffControls member={m} isSelf={m.id === currentUserId} />
+          <>
+            <StaffControls member={m} isSelf={m.id === currentUserId} />
+            {m.id !== currentUserId && (
+              <Button
+                size="small"
+                color="error"
+                startIcon={<DeleteOutlineIcon sx={{ fontSize: 17 }} />}
+                onClick={() => setDeleting(m)}
+              >
+                Delete
+              </Button>
+            )}
+          </>
         )}
         empty="No users."
       />
@@ -224,13 +241,16 @@ export default function StaffSection({ staff, currentUserId }) {
               <TableCell align="center" sx={{ width: "28%" }}>
                 Role and status
               </TableCell>
+              <TableCell align="right" sx={{ width: "8%" }}>
+                Action
+              </TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {staff.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     No users.
                   </Typography>
@@ -265,21 +285,31 @@ export default function StaffSection({ staff, currentUserId }) {
                 <TableCell align="center">
                   <StaffControls member={m} isSelf={m.id === currentUserId} />
                 </TableCell>
+
+                <TableCell align="right">
+                  {/* Not on your own row: deleting the login you are sitting
+                      in would leave nobody holding the door. */}
+                  {m.id !== currentUserId && (
+                    <Tooltip title="Delete this login">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => setDeleting(m)}
+                      >
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
 
-      <Typography
-        variant="caption"
-        sx={{ mt: 1.5, display: "block", color: "text.secondary" }}
-      >
-        You cannot change your own role or status here — if the last admin
-        locked themselves out there would be no way back in.
-      </Typography>
-
       <AddStaffDialog open={adding} onClose={() => setAdding(false)} />
+
+      <DeleteStaffDialog member={deleting} onClose={() => setDeleting(null)} />
     </>
   );
 }

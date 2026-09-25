@@ -104,7 +104,7 @@ export async function requireCustomerAccount() {
  *
  * Cached, because every single page asks for it and it changes perhaps twice
  * a year — it was costing a round trip to Supabase on every navigation, which
- * is most of what made moving between login and forgot-password feel slow.
+ * is most of what made moving between pages feel slow.
  * Saving on the Settings page clears it through the "branding" tag.
  *
  * unstable_cache cannot see request state, so neither of these may use the
@@ -113,7 +113,6 @@ export async function requireCustomerAccount() {
 const FALLBACK_SETTINGS = {
   dairy_name: "Krishna Dairy",
   logo_url: null,
-  low_stock_threshold: 20,
 };
 
 const CACHE = { revalidate: 300, tags: [BRANDING_TAG] };

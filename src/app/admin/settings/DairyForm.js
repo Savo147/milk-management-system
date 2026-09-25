@@ -8,7 +8,6 @@ import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Grid";
-import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import SaveIcon from "@mui/icons-material/Save";
@@ -46,7 +45,7 @@ export default function DairyForm({ settings }) {
             </Alert>
           )}
 
-          <Grid container spacing={2}>
+          <Grid container spacing={2} sx={{ alignItems: "flex-start" }}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="dairy_name"
@@ -65,7 +64,7 @@ export default function DairyForm({ settings }) {
               />
             </Grid>
 
-            <Grid size={12}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="address"
                 label="Address"
@@ -76,7 +75,7 @@ export default function DairyForm({ settings }) {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 8 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="logo_url"
                 label="Logo URL"
@@ -86,45 +85,42 @@ export default function DairyForm({ settings }) {
                 helperText="Leave it empty and public/logo.png is used"
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextField
-                name="low_stock_threshold"
-                label="Low-stock threshold"
-                type="number"
-                defaultValue={settings.low_stock_threshold ?? 20}
-                required
-                fullWidth
-                slotProps={{
-                  htmlInput: { min: 0, step: 0.5 },
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">L</InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </Grid>
           </Grid>
 
+          {/* The logo preview sits on the left and Save on the right, where
+              a form's confirming action belongs. */}
           <Box
             sx={{
               mt: 3,
               display: "flex",
               alignItems: "center",
+              justifyContent: "space-between",
               gap: 2,
               flexWrap: "wrap",
             }}
           >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                component="img"
+                src={settings.logo_url || "/logo.png"}
+                alt="Logo"
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  // Matches the round mark in the sidebar and the browser tab.
+                  objectFit: "cover",
+                  border: 1,
+                  borderColor: "divider",
+                  bgcolor: "background.paper",
+                }}
+              />
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                This is the logo in use
+              </Typography>
+            </Box>
+
             <SubmitButton />
-            <Box
-              component="img"
-              src={settings.logo_url || "/logo.png"}
-              alt="Logo"
-              sx={{ width: 44, height: 44, objectFit: "contain" }}
-            />
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              This is the logo in use
-            </Typography>
           </Box>
         </Box>
       </CardContent>

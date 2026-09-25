@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { ensureCustomerRecord } from "@/lib/customer-account";
 
 /**
  * Where Google sends the browser back to.
@@ -45,7 +46,7 @@ export async function GET(request) {
 
   const { data: profile } = await supabase
     .from("users")
-    .select("role, status, profile_photo")
+    .select("id, name, email, role, status, profile_photo")
     .eq("id", data.user.id)
     .maybeSingle();
 
@@ -60,6 +61,10 @@ export async function GET(request) {
     await supabase.auth.signOut();
     return back(request, "inactive");
   }
+
+  // A customer signing in for the first time gets their record here, so
+  // they appear on the Customers page and not only in Settings → Users.
+  await ensureCustomerRecord(profile);
 
   // The trigger copies the name across but not the picture. Filled in once,
   // and never overwritten — somebody who has set their own photo should keep

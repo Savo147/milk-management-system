@@ -2,10 +2,7 @@ import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 
-/**
- * The centred card every signed-out screen sits in — login, forgot password,
- * and setting a new one. Shared so the three cannot drift apart.
- */
+/** The centred card the login screen sits in. */
 export default function AuthCard({
   dairyName,
   logoUrl,
@@ -22,12 +19,17 @@ export default function AuthCard({
         justifyContent: "center",
         p: 2,
         bgcolor: "grey.100",
+        // 100vh on a phone counts the browser's own address bar, so the page
+        // ends up taller than the screen and scrolls for no reason. dvh is
+        // the height actually available; vh stays as the fallback for
+        // anything that does not know it.
         minHeight: "100vh",
+        "@supports (height: 100dvh)": { minHeight: "100dvh" },
       }}
     >
       <Paper
         sx={{
-          p: { xs: 3, sm: 4.5 },
+          p: { xs: 2.5, sm: 4.5 },
           width: "100%",
           maxWidth: 410,
           border: 1,
@@ -37,7 +39,7 @@ export default function AuthCard({
             "0 1px 2px rgba(21,26,32,.04), 0 8px 24px rgba(21,26,32,.06)",
         }}
       >
-        <Box sx={{ textAlign: "center", mb: 3 }}>
+        <Box sx={{ textAlign: "center", mb: { xs: 2.5, sm: 3 } }}>
           {/* Prefer the uploaded logo; fall back to the copy shipped in
               /public so the page still brands correctly before an admin has
               set one (and for signed-out visitors). */}
@@ -46,8 +48,8 @@ export default function AuthCard({
             src={logoUrl ?? "/logo.png"}
             alt={dairyName}
             sx={{
-              width: 110,
-              height: 110,
+              width: { xs: 84, sm: 110 },
+              height: { xs: 84, sm: 110 },
               mx: "auto",
               display: "block",
               borderRadius: "50%",
