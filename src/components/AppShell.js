@@ -8,6 +8,7 @@ import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
@@ -21,10 +22,14 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import { alpha } from "@mui/material/styles";
 import NotificationBell from "@/components/NotificationBell";
 import { signOut } from "@/app/login/actions";
 
@@ -65,6 +70,19 @@ function LogoutActions({ onCancel }) {
   );
 }
 
+/** The small grey heading above each group of links. */
+const sectionSx = {
+  display: "block",
+  px: 3,
+  pt: 2,
+  pb: 0.5,
+  color: "text.secondary",
+  fontWeight: 700,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  fontSize: "0.68rem",
+};
+
 function isActive(pathname, href, rootHref) {
   // The section index must match exactly, or it stays lit on every child route.
   if (href === rootHref) return pathname === href;
@@ -74,6 +92,7 @@ function isActive(pathname, href, rootHref) {
 export default function AppShell({
   navItems,
   rootHref,
+  accountHref,
   dairyName,
   logoUrl,
   user,
@@ -86,7 +105,11 @@ export default function AppShell({
   const [anchorEl, setAnchorEl] = useState(null);
   const [confirmLogout, setConfirmLogout] = useState(false);
 
-  const current = navItems.find((i) => isActive(pathname, i.href, rootHref));
+  // The header title only cares which page is open, not which group it sits
+  // in, so the groups are flattened for the lookup.
+  const current = navItems
+    .flatMap((group) => group.items)
+    .find((i) => isActive(pathname, i.href, rootHref));
 
   const drawer = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -123,42 +146,38 @@ export default function AppShell({
       </Toolbar>
       <Divider />
 
-      <Typography
-        variant="caption"
-        sx={{
-          px: 3,
-          pt: 2,
-          pb: 0.5,
-          color: "text.secondary",
-          fontWeight: 700,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          fontSize: "0.68rem",
-        }}
-      >
-        Menu
-      </Typography>
+      {/* One heading per group. The whole column scrolls on a short screen
+          rather than pushing the last group out of reach. */}
+      <Box sx={{ flexGrow: 1, overflowY: "auto", pb: 2 }}>
+        {navItems.map(({ section, items }) => (
+          <Box key={section}>
+            <Typography variant="caption" sx={sectionSx}>
+              {section}
+            </Typography>
 
-      <List sx={{ px: 1.5, pb: 2, flexGrow: 1 }}>
-        {navItems.map(({ href, label, icon: Icon }) => (
-          <ListItemButton
-            key={href}
-            component={Link}
-            href={href}
-            selected={isActive(pathname, href, rootHref)}
-            onClick={() => setMobileOpen(false)}
-            sx={{ mb: 0.25, py: 0.9 }}
-          >
-            <ListItemIcon sx={{ minWidth: 36, color: "text.secondary" }}>
-              <Icon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText
-              primary={label}
-              slotProps={{ primary: { variant: "body2" } }}
-            />
-          </ListItemButton>
+            <List sx={{ px: 1.5, py: 0 }}>
+              {items.map(({ href, label, icon: Icon }) => (
+                <ListItemButton
+                  key={href}
+                  component={Link}
+                  href={href}
+                  selected={isActive(pathname, href, rootHref)}
+                  onClick={() => setMobileOpen(false)}
+                  sx={{ mb: 0.25, py: 0.9 }}
+                >
+                  <ListItemIcon sx={{ minWidth: 36, color: "text.secondary" }}>
+                    <Icon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={label}
+                    slotProps={{ primary: { variant: "body2" } }}
+                  />
+                </ListItemButton>
+              ))}
+            </List>
+          </Box>
         ))}
-      </List>
+      </Box>
     </Box>
   );
 
@@ -196,18 +215,30 @@ export default function AppShell({
 
           <NotificationBell notifications={notifications} unread={unread} />
 
-          <IconButton
-            onClick={(e) => setAnchorEl(e.currentTarget)}
-            aria-label="Account"
-            sx={{ ml: 0.5 }}
-          >
-            <Avatar
-              src={user.profile_photo ?? undefined}
-              sx={{ width: 32, height: 32, bgcolor: "primary.main" }}
+          <Tooltip title="Account">
+            <IconButton
+              onClick={(e) => setAnchorEl(e.currentTarget)}
+              aria-label="Account"
+              sx={{ ml: 0.5, p: 0.5 }}
             >
-              {user.name?.[0]?.toUpperCase()}
-            </Avatar>
-          </IconButton>
+              <Avatar
+                src={user.profile_photo ?? undefined}
+                sx={{
+                  width: 34,
+                  height: 34,
+                  bgcolor: "primary.main",
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
+                  // A pale ring so the avatar reads as a button, not as a
+                  // stray coloured dot in the corner.
+                  border: 2,
+                  borderColor: "primary.light",
+                }}
+              >
+                {user.name?.[0]?.toUpperCase()}
+              </Avatar>
+            </IconButton>
+          </Tooltip>
 
           <Menu
             anchorEl={anchorEl}
@@ -215,16 +246,79 @@ export default function AppShell({
             onClose={() => setAnchorEl(null)}
             anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             transformOrigin={{ vertical: "top", horizontal: "right" }}
+            slotProps={{
+              paper: {
+                elevation: 0,
+                sx: {
+                  mt: 1,
+                  minWidth: 248,
+                  borderRadius: 2.5,
+                  border: 1,
+                  borderColor: "divider",
+                  boxShadow: "0 8px 28px rgba(15, 23, 42, 0.12)",
+                  overflow: "visible",
+                },
+              },
+            }}
           >
-            <Box sx={{ px: 2, py: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {user.name}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
+            {/* Who you are signed in as: the same avatar, the name, the role
+                and the email the session actually belongs to. */}
+            <Box sx={{ px: 2, pt: 1.75, pb: 1.5 }}>
+              <Stack direction="row" sx={{ gap: 1.5, alignItems: "center" }}>
+                <Avatar
+                  src={user.profile_photo ?? undefined}
+                  sx={{
+                    width: 42,
+                    height: 42,
+                    bgcolor: "primary.main",
+                    fontWeight: 600,
+                  }}
+                >
+                  {user.name?.[0]?.toUpperCase()}
+                </Avatar>
+
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    variant="body2"
+                    noWrap
+                    sx={{ fontWeight: 700, textTransform: "capitalize" }}
+                  >
+                    {user.name}
+                  </Typography>
+                  <Chip
+                    size="small"
+                    label={user.role === "admin" ? "Admin" : "Customer"}
+                    color={user.role === "admin" ? "primary" : "default"}
+                    variant="outlined"
+                    sx={{ mt: 0.4, height: 20, fontSize: "0.68rem" }}
+                  />
+                </Box>
+              </Stack>
+
+              <Typography
+                variant="caption"
+                noWrap
+                sx={{ display: "block", mt: 1.25, color: "text.secondary" }}
+                title={user.email}
+              >
                 {user.email}
               </Typography>
             </Box>
+
             <Divider />
+
+            <MenuItem
+              component={Link}
+              href={accountHref}
+              onClick={() => setAnchorEl(null)}
+              sx={{ gap: 1.5, py: 1.1, mx: 1, mt: 0.75, borderRadius: 1.5 }}
+            >
+              <ManageAccountsIcon fontSize="small" color="action" />
+              <Typography variant="body2">
+                {user.role === "admin" ? "Settings" : "My profile"}
+              </Typography>
+            </MenuItem>
+
             {/*
               A plain item, not a <form>. MUI focuses the first item when the
               menu opens; with a submit button sitting inside it, the opening
@@ -235,7 +329,17 @@ export default function AppShell({
                 setAnchorEl(null);
                 setConfirmLogout(true);
               }}
-              sx={{ gap: 1.5 }}
+              sx={{
+                gap: 1.5,
+                py: 1.1,
+                mx: 1,
+                mb: 0.75,
+                borderRadius: 1.5,
+                color: "error.main",
+                "&:hover": {
+                  bgcolor: (t) => alpha(t.palette.error.main, 0.08),
+                },
+              }}
             >
               <LogoutIcon fontSize="small" />
               <Typography variant="body2">Logout</Typography>

@@ -50,7 +50,6 @@ async function buildReport(supabase, from, to) {
 
   for (const row of byCustomer.values()) {
     row.paid = paidBy.get(row.key) ?? 0;
-    row.baki = Math.max(0, row.amount - row.paid);
   }
 
   const rows = [...byCustomer.values()].sort((a, b) =>

@@ -81,24 +81,16 @@ export default function ReportView({
           liters: t.liters + Number(r.liters),
           amount: t.amount + Number(r.amount),
           paid: t.paid + Number(r.paid),
-          baki: t.baki + Number(r.baki),
         }),
-        { liters: 0, amount: 0, paid: 0, baki: 0 },
+        { liters: 0, amount: 0, paid: 0 },
       ),
     [rows],
   );
 
   const download = () => {
-    const header = [
-      "Customer",
-      "Mobile",
-      "Milk (L)",
-      "Amount",
-      "Received",
-      "Due",
-    ];
+    const header = ["Customer", "Mobile", "Milk (L)", "Amount", "Received"];
     const body = rows.map((r) =>
-      [r.label, r.sub, r.liters, r.amount, r.paid, r.baki].map(csvCell),
+      [r.label, r.sub, r.liters, r.amount, r.paid].map(csvCell),
     );
 
     // A BOM so Excel opens rupee signs and Gujarati text as UTF-8.
@@ -193,7 +185,6 @@ export default function ReportView({
             ["Milk", formatLiters(r.liters)],
             ["Amount", formatAmount(r.amount)],
             ["Received", formatAmount(r.paid)],
-            ["Due", formatAmount(r.baki)],
           ]}
           empty="No records in this period."
         />
@@ -221,7 +212,6 @@ export default function ReportView({
                 ["Milk", formatLiters(totals.liters)],
                 ["Amount", formatAmount(totals.amount)],
                 ["Received", formatAmount(totals.paid)],
-                ["Due", formatAmount(totals.baki)],
               ].map(([label, value]) => (
                 <Stack
                   key={label}
@@ -276,9 +266,6 @@ export default function ReportView({
               <TableCell align="center" sx={{ width: "18%" }}>
                 Received
               </TableCell>
-              <TableCell align="center" sx={{ width: "18%" }}>
-                Due
-              </TableCell>
             </TableRow>
           </TableHead>
 
@@ -311,16 +298,6 @@ export default function ReportView({
                 </TableCell>
 
                 <TableCell align="center">{formatAmount(r.paid)}</TableCell>
-
-                <TableCell
-                  align="center"
-                  sx={{
-                    fontWeight: 600,
-                    color: r.baki > 0 ? "warning.dark" : "text.secondary",
-                  }}
-                >
-                  {formatAmount(r.baki)}
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -339,9 +316,6 @@ export default function ReportView({
                 </TableCell>
                 <TableCell align="center">
                   {formatAmount(totals.paid)}
-                </TableCell>
-                <TableCell align="center">
-                  {formatAmount(totals.baki)}
                 </TableCell>
               </TableRow>
             </TableFooter>

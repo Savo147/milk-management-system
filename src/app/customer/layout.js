@@ -7,17 +7,34 @@ import { requireCustomer, getBusinessSettings } from "@/lib/auth";
 import { getNotifications } from "@/lib/notifications";
 import AppShell from "@/components/AppShell";
 
-/** Customer — 5 main pages. */
+/** Customer — 5 main pages, in the same grouped shape the admin nav uses. */
 const customerNav = [
-  { href: "/customer", label: "Dashboard", icon: DashboardIcon },
-  { href: "/customer/my-milk", label: "My Milk", icon: LocalDrinkIcon },
-  { href: "/customer/my-hisab", label: "My Billing", icon: ReceiptLongIcon },
   {
-    href: "/customer/report-problem",
-    label: "Report Problem",
-    icon: ReportProblemIcon,
+    section: "Overview",
+    items: [{ href: "/customer", label: "Dashboard", icon: DashboardIcon }],
   },
-  { href: "/customer/profile", label: "Profile", icon: PersonIcon },
+  {
+    section: "My dairy",
+    items: [
+      { href: "/customer/my-milk", label: "My Milk", icon: LocalDrinkIcon },
+      {
+        href: "/customer/my-hisab",
+        label: "My Billing",
+        icon: ReceiptLongIcon,
+      },
+    ],
+  },
+  {
+    section: "Account",
+    items: [
+      {
+        href: "/customer/report-problem",
+        label: "Report Problem",
+        icon: ReportProblemIcon,
+      },
+      { href: "/customer/profile", label: "Profile", icon: PersonIcon },
+    ],
+  },
 ];
 
 export default async function CustomerLayout({ children }) {
@@ -28,6 +45,7 @@ export default async function CustomerLayout({ children }) {
   return (
     <AppShell
       navItems={customerNav}
+      accountHref="/customer/profile"
       rootHref="/customer"
       dairyName={settings.dairy_name}
       logoUrl={settings.logo_url}

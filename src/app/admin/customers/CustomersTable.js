@@ -21,20 +21,16 @@ import Typography from "@mui/material/Typography";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
-import KeyIcon from "@mui/icons-material/Key";
-import KeyOffIcon from "@mui/icons-material/KeyOff";
 import { formatAmount, formatLiters } from "@/lib/format";
 import { STATUS_COLOR, ACCOUNT_STATUS } from "@/lib/constants";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import DataCards from "@/components/DataCards";
 import CustomerDialog from "./CustomerDialog";
-import LoginDialog from "./LoginDialog";
 
-export default function CustomersTable({ customers, unlinkedLogins = [] }) {
+export default function CustomersTable({ customers }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [editing, setEditing] = useState(undefined); // undefined = closed
-  const [login, setLogin] = useState(null);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -116,28 +112,13 @@ export default function CustomersTable({ customers, unlinkedLogins = [] }) {
           c.login_email && ["Login", c.login_email],
         ]}
         actions={(c) => (
-          <>
-            <Button
-              size="small"
-              startIcon={
-                c.user_id ? (
-                  <KeyIcon sx={{ fontSize: 17 }} />
-                ) : (
-                  <KeyOffIcon sx={{ fontSize: 17 }} />
-                )
-              }
-              onClick={() => setLogin(c)}
-            >
-              {c.user_id ? "Password" : "Give login"}
-            </Button>
-            <Button
-              size="small"
-              startIcon={<EditIcon sx={{ fontSize: 17 }} />}
-              onClick={() => setEditing(c)}
-            >
-              Edit
-            </Button>
-          </>
+          <Button
+            size="small"
+            startIcon={<EditIcon sx={{ fontSize: 17 }} />}
+            onClick={() => setEditing(c)}
+          >
+            Edit
+          </Button>
         )}
         empty={
           customers.length === 0
@@ -161,14 +142,13 @@ export default function CustomersTable({ customers, unlinkedLogins = [] }) {
               <TableCell align="right">Daily milk</TableCell>
               <TableCell align="right">Rate</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell align="center">Login</TableCell>
               <TableCell align="right">Edit</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     {customers.length === 0
                       ? 'No customers yet. Click "New customer".'
@@ -209,28 +189,6 @@ export default function CustomersTable({ customers, unlinkedLogins = [] }) {
                     variant={c.status === "active" ? "filled" : "outlined"}
                   />
                 </TableCell>
-                <TableCell align="center">
-                  <Tooltip
-                    title={
-                      c.user_id
-                        ? `${c.login_email} — change password`
-                        : "Create login"
-                    }
-                  >
-                    <IconButton
-                      size="small"
-                      onClick={() => setLogin(c)}
-                      color={c.user_id ? "primary" : "default"}
-                    >
-                      {c.user_id ? (
-                        <KeyIcon fontSize="small" />
-                      ) : (
-                        <KeyOffIcon fontSize="small" sx={{ opacity: 0.55 }} />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-
                 <TableCell align="right">
                   <Tooltip title="Edit">
                     <IconButton size="small" onClick={() => setEditing(c)}>
@@ -256,12 +214,6 @@ export default function CustomersTable({ customers, unlinkedLogins = [] }) {
         open={editing !== undefined}
         customer={editing ?? null}
         onClose={() => setEditing(undefined)}
-      />
-
-      <LoginDialog
-        customer={login}
-        unlinkedLogins={unlinkedLogins}
-        onClose={() => setLogin(null)}
       />
     </>
   );

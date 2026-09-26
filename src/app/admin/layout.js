@@ -13,6 +13,7 @@ export default async function AdminLayout({ children }) {
   return (
     <AppShell
       navItems={adminNav}
+      accountHref="/admin/settings"
       rootHref="/admin"
       dairyName={settings.dairy_name}
       logoUrl={settings.logo_url}

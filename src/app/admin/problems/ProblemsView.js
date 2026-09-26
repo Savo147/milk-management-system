@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import InputAdornment from "@mui/material/InputAdornment";
 import MenuItem from "@mui/material/MenuItem";
@@ -18,35 +17,18 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
-import {
-  ISSUE_TYPE,
-  PROBLEM_STATE,
-  STATUS_COLOR,
-  problemState,
-} from "@/lib/constants";
-import { formatDate, formatLiters } from "@/lib/format";
+import { PROBLEM_STATE, STATUS_COLOR, problemState } from "@/lib/constants";
+import { formatDate } from "@/lib/format";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import DataCards from "@/components/DataCards";
-import RangePicker from "@/components/RangePicker";
 import ProblemDialog from "./ProblemDialog";
 
-export default function ProblemsView({
-  problems,
-  repliesByReport,
-  mode,
-  from,
-  to,
-  monthFrom,
-  monthTo,
-}) {
+export default function ProblemsView({ problems, repliesByReport, date }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   // Defaults to what still needs work; closed ones are just history.
   const [statusFilter, setStatusFilter] = useState("pending");
   const [openId, setOpenId] = useState(null);
-
-  const go = (nextMode, a, b) =>
-    router.push(`/admin/problems?mode=${nextMode}&from=${a}&to=${b}`);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -58,7 +40,8 @@ export default function ProblemsView({
       return (
         p.customer_name.toLowerCase().includes(q) ||
         (p.customer_mobile ?? "").includes(q) ||
-        (p.message ?? "").toLowerCase().includes(q)
+        (p.message ?? "").toLowerCase().includes(q) ||
+        (p.last_message ?? "").toLowerCase().includes(q)
       );
     });
   }, [problems, query, statusFilter]);
@@ -72,13 +55,15 @@ export default function ProblemsView({
         spacing={2}
         sx={{ mb: 2, alignItems: { sm: "center" } }}
       >
-        <RangePicker
-          mode={mode}
-          monthFrom={monthFrom}
-          monthTo={monthTo}
-          dateFrom={from}
-          dateTo={to}
-          onChange={go}
+        <TextField
+          type="date"
+          label="Date"
+          size="small"
+          value={date}
+          onChange={(e) =>
+            router.push(`/admin/problems?date=${e.target.value}`)
+          }
+          sx={{ minWidth: 180 }}
         />
 
         <TextField
@@ -120,7 +105,7 @@ export default function ProblemsView({
         getKey={(p) => p.id}
         onClick={(p) => setOpenId(p.id)}
         title={(p) => p.customer_name}
-        subtitle={(p) => p.message || p.customer_mobile}
+        subtitle={(p) => p.customer_mobile}
         badge={(p) => (
           <Chip
             size="small"
@@ -130,13 +115,7 @@ export default function ProblemsView({
           />
         )}
         fields={(p) => [
-          ["Issue", ISSUE_TYPE[p.issue_type] ?? p.issue_type],
-          [
-            "Expected / Got",
-            `${formatLiters(p.expected_quantity)} / ${formatLiters(
-              p.received_quantity,
-            )}`,
-          ],
+          ["Last message", p.last_message || "—"],
           ["Date", formatDate(p.created_at)],
           ["Replies", (repliesByReport[p.id] ?? []).length],
         ]}
@@ -157,12 +136,7 @@ export default function ProblemsView({
           <TableHead>
             <TableRow>
               <TableCell>Customer</TableCell>
-              <TableCell align="center" sx={{ width: "18%" }}>
-                Issue
-              </TableCell>
-              <TableCell align="center" sx={{ width: "14%" }}>
-                Expected / Got
-              </TableCell>
+              <TableCell sx={{ width: "30%" }}>Last message</TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
                 Date
               </TableCell>
@@ -178,7 +152,7 @@ export default function ProblemsView({
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     {problems.length === 0
                       ? "No complaints came in during this period."
@@ -204,20 +178,17 @@ export default function ProblemsView({
                       {p.customer_name}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {p.message
-                        ? p.message.slice(0, 60) +
-                          (p.message.length > 60 ? "…" : "")
-                        : p.customer_mobile}
+                      {p.customer_mobile}
                     </Typography>
                   </TableCell>
 
-                  <TableCell align="center">
-                    {ISSUE_TYPE[p.issue_type] ?? p.issue_type}
-                  </TableCell>
-
-                  <TableCell align="center">
-                    {formatLiters(p.expected_quantity)} /{" "}
-                    {formatLiters(p.received_quantity)}
+                  <TableCell>
+                    <Typography variant="body2">
+                      {p.last_message
+                        ? p.last_message.slice(0, 80) +
+                          (p.last_message.length > 80 ? "…" : "")
+                        : "—"}
+                    </Typography>
                   </TableCell>
 
                   <TableCell align="center">
@@ -269,12 +240,6 @@ export default function ProblemsView({
           </TableBody>
         </Table>
       </TableContainer>
-
-      <Box sx={{ mt: 1.5 }}>
-        <Typography variant="caption" color="text.secondary">
-          Click a row to open the details, the conversation and the status.
-        </Typography>
-      </Box>
 
       <ProblemDialog
         problem={open}

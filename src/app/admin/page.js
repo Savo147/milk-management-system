@@ -119,7 +119,7 @@ export default async function AdminDashboard() {
           <StatCard
             label="Missed delivery"
             value={missed}
-            sub="aaj"
+            sub="today"
             icon={LocalShippingIcon}
             color={missed > 0 ? "error" : "success"}
           />
@@ -157,7 +157,7 @@ export default async function AdminDashboard() {
           <StatCard
             label="Stock left"
             value={formatLiters(stock?.remaining_stock ?? 0)}
-            sub="aaj"
+            sub="today"
             icon={InventoryIcon}
             color="info"
           />
