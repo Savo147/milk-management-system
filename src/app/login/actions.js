@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { withDeadline } from "@/lib/deadline";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { siteOrigin } from "@/lib/site";
 import { ensureCustomerRecord } from "@/lib/customer-account";
@@ -64,6 +65,9 @@ async function registerFirstTime(email, password) {
   return { ok: true };
 }
 
+/** How long a sign-in gets before it is called unreachable. */
+const LOGIN_DEADLINE_MS = 8_000;
+
 export async function signIn(prevState, formData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
@@ -73,10 +77,17 @@ export async function signIn(prevState, formData) {
   }
 
   const supabase = await createClient();
-  let { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+
+  // Capped on purpose. Our own fetch retries three times over twelve seconds,
+  // and the auth client retries on top of that — a sign-in against a dead
+  // connection was taking twenty-two seconds to say it had failed. Eight is
+  // far longer than a working one has ever needed, and short enough that
+  // somebody watching the button learns something.
+  let { data, error } = await withDeadline(
+    supabase.auth.signInWithPassword({ email, password }),
+    LOGIN_DEADLINE_MS,
+    { data: null, error: { status: 0, message: "timed out" } },
+  );
 
   if (error) {
     // Only a genuine credential rejection should read as one. Anything else —
@@ -89,7 +100,10 @@ export async function signIn(prevState, formData) {
     if (!credentialsRejected) {
       console.error("[login] sign-in failed:", error);
       return {
-        error: `Could not sign in — the server cannot be reached. (${error.message})`,
+        error:
+          error.message === "timed out"
+            ? "Could not reach the server. Check the connection and try again."
+            : `Could not sign in — the server cannot be reached. (${error.message})`,
       };
     }
 

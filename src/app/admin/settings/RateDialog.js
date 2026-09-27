@@ -13,7 +13,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import SaveIcon from "@mui/icons-material/Save";
-import { formatAmount } from "@/lib/format";
+import { formatRate } from "@/lib/format";
 import { updateCustomerRate } from "./actions";
 
 function SaveButton() {
@@ -52,7 +52,7 @@ export default function RateDialog({ rate, onClose }) {
           <DialogTitle sx={{ pb: 1 }}>
             Change rate
             <Typography variant="body2" color="text.secondary">
-              {rate.customer_name} — now {formatAmount(rate.rate_per_liter)} / L
+              {rate.customer_name} — now {formatRate(rate.rate_per_liter)} / L
             </Typography>
           </DialogTitle>
 

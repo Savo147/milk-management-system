@@ -93,9 +93,9 @@ export async function updateMyMilkPlan(prevState, formData) {
   if (
     !Number.isFinite(dailyQuantity) ||
     dailyQuantity < 0.25 ||
-    dailyQuantity > 100
+    dailyQuantity > 99
   ) {
-    return { error: "Daily milk must be between 0.25 and 100 liters." };
+    return { error: "Daily milk must be between 0.25 and 99 liters." };
   }
 
   if (!Number.isFinite(rate) || rate <= 0) {

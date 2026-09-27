@@ -13,7 +13,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { formatAmount, formatDate } from "@/lib/format";
+import { formatDate, formatRate } from "@/lib/format";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import EditIcon from "@mui/icons-material/Edit";
 import DataCards from "@/components/DataCards";
@@ -35,7 +35,7 @@ export default function RatesTable({ rates }) {
           )
         }
         fields={(r) => [
-          ["Rate", `${formatAmount(r.rate_per_liter)} / L`],
+          ["Rate", `${formatRate(r.rate_per_liter)} / L`],
           ["From", formatDate(r.effective_from)],
           ["Until", r.effective_to ? formatDate(r.effective_to) : "Now"],
         ]}
@@ -101,7 +101,7 @@ export default function RatesTable({ rates }) {
                   </TableCell>
 
                   <TableCell align="center" sx={{ fontWeight: 600 }}>
-                    {formatAmount(r.rate_per_liter)}
+                    {formatRate(r.rate_per_liter)}
                   </TableCell>
 
                   <TableCell align="center">

@@ -43,7 +43,13 @@ export async function ensureCustomerRecord(user) {
       mobile: "",
       daily_quantity: 1,
       rate_per_liter: 1,
-      status: "inactive",
+      // Active from the moment they sign in. They are a real customer who has
+      // just walked in the door; leaving them inactive kept them out of the
+      // delivery round until somebody noticed and turned them on.
+      //
+      // The dairy still has to set their rate: it starts at 1 a litre, and
+      // until it is changed that is what their milk will be billed at.
+      status: "active",
     });
 
     if (error) {

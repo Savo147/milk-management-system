@@ -490,6 +490,11 @@ export default function AppShell({
         sx={{
           flexGrow: 1,
           width: { md: `calc(100% - ${RAIL_WIDTH}px)` },
+          // A flex item will not go narrower than its content unless it is
+          // told it may. Without this, one wide thing inside — a tab strip, a
+          // long URL in a field — stretches the whole page past the edge of a
+          // phone and the entire layout slides sideways.
+          minWidth: 0,
           bgcolor: "background.default",
           minHeight: "100vh",
           ...(fullBleed && { overflow: "hidden" }),

@@ -12,7 +12,7 @@ import Typography from "@mui/material/Typography";
 import { DAILY_ROW_STATUS, STATUS_COLOR } from "@/lib/constants";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import DataCards from "@/components/DataCards";
-import { formatAmount, formatLiters } from "@/lib/format";
+import { formatAmount, formatLiters, formatRate } from "@/lib/format";
 
 /** Who got how much on the selected date. */
 export default function DayTable({ rows }) {
@@ -34,7 +34,7 @@ export default function DayTable({ rows }) {
         )}
         fields={(r) => [
           ["Delivered", formatLiters(r.actual_quantity)],
-          ["Rate", `${formatAmount(r.rate_per_liter)} / L`],
+          ["Rate", `${formatRate(r.rate_per_liter)} / L`],
           ["Amount", formatAmount(r.total_amount)],
         ]}
         empty="No milk has been recorded for this date. Add entries on the Daily Milk page."
@@ -89,7 +89,7 @@ export default function DayTable({ rows }) {
                   {formatLiters(r.actual_quantity)}
                 </TableCell>
                 <TableCell align="center">
-                  {formatAmount(r.rate_per_liter)}
+                  {formatRate(r.rate_per_liter)}
                 </TableCell>
                 <TableCell align="center">
                   {formatAmount(r.total_amount)}

@@ -22,6 +22,29 @@ export function formatAmount(value) {
   return rupees.format(Number(value));
 }
 
+/**
+ * A rate, without the pennies nobody wrote: 55 reads as ₹55, 62.50 still
+ * reads as ₹62.50.
+ *
+ * Only for a rate. A total keeps its two decimals — money owed is money
+ * owed, and a bill that says ₹1,250 where the sum was ₹1,250.50 is wrong in
+ * a way nobody would notice until it mattered.
+ */
+export function formatRate(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) {
+    return "—";
+  }
+
+  const n = Number(value);
+
+  return n.toLocaleString("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export function formatLiters(value) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {
     return "—";

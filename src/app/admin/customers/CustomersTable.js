@@ -22,7 +22,7 @@ import Typography from "@mui/material/Typography";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
-import { formatAmount, formatLiters } from "@/lib/format";
+import { formatLiters, formatRate } from "@/lib/format";
 import { STATUS_COLOR, ACCOUNT_STATUS } from "@/lib/constants";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import DataCards from "@/components/DataCards";
@@ -113,7 +113,7 @@ export default function CustomersTable({ customers }) {
         )}
         fields={(c) => [
           ["Daily milk", formatLiters(c.daily_quantity)],
-          ["Rate", `${formatAmount(c.rate_per_liter)} / L`],
+          ["Rate", `${formatRate(c.rate_per_liter)} / L`],
           c.address && ["Address", c.address],
           c.login_email && ["Login", c.login_email],
         ]}
@@ -205,7 +205,7 @@ export default function CustomersTable({ customers }) {
                   {formatLiters(c.daily_quantity)}
                 </TableCell>
                 <TableCell align="right">
-                  {formatAmount(c.rate_per_liter)}
+                  {formatRate(c.rate_per_liter)}
                 </TableCell>
                 <TableCell>
                   <Chip

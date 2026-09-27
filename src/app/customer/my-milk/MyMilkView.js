@@ -16,7 +16,12 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { formatAmount, formatDate, formatLiters } from "@/lib/format";
+import {
+  formatAmount,
+  formatDate,
+  formatLiters,
+  formatRate,
+} from "@/lib/format";
 import { DELIVERY_STATUS, STATUS_COLOR } from "@/lib/constants";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import RangePicker from "@/components/RangePicker";
@@ -123,7 +128,7 @@ export default function MyMilkView({
         )}
         fields={(e) => [
           ["Delivered", formatLiters(e.actual_quantity)],
-          ["Rate", `${formatAmount(e.rate_per_liter)} / L`],
+          ["Rate", `${formatRate(e.rate_per_liter)} / L`],
           ["Amount", formatAmount(e.total_amount)],
         ]}
         empty={
@@ -177,7 +182,7 @@ export default function MyMilkView({
                   align="right"
                   sx={{ fontVariantNumeric: "tabular-nums" }}
                 >
-                  {formatAmount(e.rate_per_liter)}
+                  {formatRate(e.rate_per_liter)}
                 </TableCell>
                 <TableCell
                   align="right"

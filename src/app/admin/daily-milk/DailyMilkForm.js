@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import ButtonBase from "@mui/material/ButtonBase";
 import Chip from "@mui/material/Chip";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -30,7 +31,7 @@ import {
   MILK_QUANTITIES,
   STATUS_COLOR,
 } from "@/lib/constants";
-import { formatAmount, formatLiters } from "@/lib/format";
+import { formatAmount, formatLiters, formatRate } from "@/lib/format";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import DataCards from "@/components/DataCards";
 import { saveOneEntry } from "./actions";
@@ -160,15 +161,17 @@ function RowSubmitButton({ saved }) {
       color={saved ? "success" : "primary"}
       disabled={pending}
       startIcon={
-        pending ? null : saved ? (
+        pending ? (
+          <CircularProgress size={14} color="inherit" />
+        ) : saved ? (
           <CheckCircleIcon fontSize="small" />
         ) : (
           <SaveIcon fontSize="small" />
         )
       }
-      sx={{ minWidth: 100 }}
+      sx={{ minWidth: 104 }}
     >
-      {pending ? "..." : saved ? "Saved" : "Save"}
+      {pending ? "Saving..." : saved ? "Saved" : "Save"}
     </Button>
   );
 }
@@ -342,7 +345,7 @@ export default function DailyMilkForm({ date, customers }) {
           const amount =
             qty === "" ? null : Number(qty) * Number(c.rate_per_liter);
           return [
-            ["Rate", `${formatAmount(c.rate_per_liter)} / L`],
+            ["Rate", `${formatRate(c.rate_per_liter)} / L`],
             ["Amount", amount === null ? "—" : formatAmount(amount)],
           ];
         }}
@@ -453,7 +456,7 @@ export default function DailyMilkForm({ date, customers }) {
                   </TableCell>
 
                   <TableCell align="center">
-                    {formatAmount(c.rate_per_liter)}
+                    {formatRate(c.rate_per_liter)}
                   </TableCell>
 
                   <TableCell align="center">

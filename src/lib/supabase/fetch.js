@@ -60,6 +60,39 @@ function attemptSignal(outer) {
   return outer ? AbortSignal.any([outer, mine]) : mine;
 }
 
+/**
+ * Says the connection is down — once, not thirty times.
+ *
+ * When the network goes, every query on every page fails, and a line each
+ * filled the terminal with the same sentence until nothing else could be
+ * read. One line, then silence, then one more line a minute later carrying
+ * the count of everything that failed quietly in between.
+ */
+const QUIET_MS = 60_000;
+let lastReportedAt = 0;
+let suppressed = 0;
+
+function reportFailure(err, elapsed) {
+  const now = Date.now();
+
+  if (now - lastReportedAt < QUIET_MS) {
+    suppressed += 1;
+    return;
+  }
+
+  const also = suppressed > 0 ? ` (and ${suppressed} more since)` : "";
+  lastReportedAt = now;
+  suppressed = 0;
+
+  // warn, not error: a flaky connection is worth knowing about, but Next's
+  // dev overlay turns console.error into a full-screen report, which makes a
+  // two-second hiccup look like the app has fallen over.
+  console.warn(
+    `[supabase] unreachable after ${Math.round(elapsed / 1000)}s${also}:`,
+    err?.cause?.code ?? err?.message,
+  );
+}
+
 export async function fetchWithRetry(input, init) {
   const method = (init?.method ?? "GET").toUpperCase();
   const safe = SAFE_METHODS.has(method);
@@ -94,12 +127,6 @@ export async function fetchWithRetry(input, init) {
     }
   }
 
-  // warn, not error: a flaky connection is worth knowing about, but Next's
-  // dev overlay turns console.error into a full-screen report, which makes a
-  // two-second hiccup look like the app has fallen over.
-  console.warn(
-    `[supabase] unreachable after ${Math.round((Date.now() - startedAt) / 1000)}s:`,
-    last?.cause?.code ?? last?.message,
-  );
+  reportFailure(last, Date.now() - startedAt);
   throw last;
 }

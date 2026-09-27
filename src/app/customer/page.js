@@ -17,7 +17,13 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import { createClient } from "@/lib/supabase/server";
 import { requireCustomerAccount } from "@/lib/auth";
-import { DAIRY_TZ, formatAmount, formatDate, formatLiters } from "@/lib/format";
+import {
+  DAIRY_TZ,
+  formatAmount,
+  formatDate,
+  formatLiters,
+  formatRate,
+} from "@/lib/format";
 import { monthStart, todayLocal } from "@/lib/range";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import {
@@ -177,7 +183,7 @@ export default async function CustomerDashboard() {
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
             label="My rate"
-            value={`${formatAmount(customer.rate_per_liter)} / L`}
+            value={`${formatRate(customer.rate_per_liter)} / L`}
             sub={`${formatLiters(customer.daily_quantity)} a day`}
             icon={SellIcon}
             color="info"

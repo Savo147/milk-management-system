@@ -2,13 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { after } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 /**
  * What a day's entry may be. A range, not a list: a customer on 6 L has to
  * be recordable, and the quarter-litre step is only there to keep a slipped
  * keystroke like 2.37 out of the books.
  */
-const MAX_LITERS = 100;
+const MAX_LITERS = 99;
 const STEP = 0.25;
 
 function isAllowed(n) {
@@ -38,8 +39,6 @@ function deliveryStatus(actual, expected) {
  * row is fragile, and got every row saved at once.
  */
 export async function saveOneEntry(prevState, formData) {
-  await requireAdmin();
-
   const date = String(formData.get("date") ?? "");
   const customerId = String(formData.get("customer_id") ?? "");
   const raw = String(formData.get("qty") ?? "");
@@ -57,14 +56,21 @@ export async function saveOneEntry(prevState, formData) {
 
   const supabase = await createClient();
 
-  // The rate is read here, never taken from the form — it becomes the
+  // The guard and the customer read go together. The read is the caller's
+  // own — RLS applies to it either way — so starting it before the guard has
+  // finished gives nothing away, and saves a round trip on every single save.
+  //
+  // The rate is read here, never taken from the form: it becomes the
   // permanent snapshot this delivery is billed at.
-  const { data: customer, error: cErr } = await supabase
-    .from("customers")
-    .select("id, daily_quantity, rate_per_liter")
-    .eq("id", customerId)
-    .eq("status", "active")
-    .maybeSingle();
+  const [, { data: customer, error: cErr }] = await Promise.all([
+    requireAdmin(),
+    supabase
+      .from("customers")
+      .select("id, daily_quantity, rate_per_liter")
+      .eq("id", customerId)
+      .eq("status", "active")
+      .maybeSingle(),
+  ]);
 
   if (cErr || !customer) return { error: "Customer not found." };
 
@@ -84,10 +90,18 @@ export async function saveOneEntry(prevState, formData) {
 
   if (error) return { error: `Could not save: ${error.message}` };
 
-  await syncStock(supabase, date);
-
   revalidatePath("/admin/daily-milk");
   revalidatePath("/admin");
+
+  // The day's stock total follows from the entries; nothing on the screen
+  // that just saved is waiting for it. Running it after the response means
+  // the button stops spinning two round trips sooner.
+  after(async () => {
+    await syncStock(supabase, date);
+    revalidatePath("/admin/stock");
+    revalidatePath("/admin");
+  });
+
   return { ok: true };
 }
 
@@ -106,21 +120,11 @@ async function syncStock(supabase, date) {
     0,
   );
 
-  const { data: existing } = await supabase
+  // One upsert rather than look-then-branch: the date is unique, so the
+  // database can decide for itself whether this is the day's first entry.
+  // Opening and added are left alone — on a new row they take their defaults,
+  // on an existing one they keep whatever the Stock page put there.
+  await supabase
     .from("milk_stock")
-    .select("id")
-    .eq("date", date)
-    .maybeSingle();
-
-  if (existing) {
-    await supabase
-      .from("milk_stock")
-      .update({ delivered_stock: delivered })
-      .eq("id", existing.id);
-  } else {
-    // Opening and added stay 0 until someone fills them in on the Stock page.
-    await supabase
-      .from("milk_stock")
-      .insert({ date, delivered_stock: delivered });
-  }
+    .upsert({ date, delivered_stock: delivered }, { onConflict: "date" });
 }

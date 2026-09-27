@@ -114,7 +114,7 @@ export default function CustomerDialog({ open, onClose, customer }) {
                 defaultValue={customer?.daily_quantity ?? 1}
                 required
                 fullWidth
-                slotProps={{ htmlInput: { min: 0.25, max: 100, step: 0.25 } }}
+                slotProps={{ htmlInput: { min: 0.25, max: 99, step: 0.25 } }}
                 helperText="Any amount, in quarter-liter steps"
               />
             </Grid>

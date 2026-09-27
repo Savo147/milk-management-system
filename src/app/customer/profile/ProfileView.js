@@ -14,7 +14,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import SaveIcon from "@mui/icons-material/Save";
 import LockResetIcon from "@mui/icons-material/LockReset";
-import { formatAmount, formatLiters } from "@/lib/format";
+import { formatLiters, formatRate } from "@/lib/format";
 import { ACCOUNT_STATUS, STATUS_COLOR } from "@/lib/constants";
 import AvatarPicker from "@/components/AvatarPicker";
 import EditIcon from "@mui/icons-material/Edit";
@@ -183,7 +183,7 @@ export default function ProfileView({ user, customer, settings }) {
                 <Divider />
                 <Row
                   label="My rate"
-                  value={`${formatAmount(customer.rate_per_liter)} / L`}
+                  value={`${formatRate(customer.rate_per_liter)} / L`}
                 />
                 <Divider />
                 <Row

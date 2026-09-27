@@ -6,6 +6,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import { requireCustomer, getBusinessSettings } from "@/lib/auth";
 import { getNotifications } from "@/lib/notifications";
 import { getChat } from "@/lib/chat";
+import { withDeadline, HEADER_DEADLINE_MS } from "@/lib/deadline";
 import AppShell from "@/components/AppShell";
 
 /** Customer — 5 main pages, in the same grouped shape the admin nav uses. */
@@ -40,13 +41,25 @@ const customerNav = [
 
 export default async function CustomerLayout({ children }) {
   const user = await requireCustomer();
-  // Together, not one after the other. None of the three needs anything from
-  // the others, and the database is a few hundred milliseconds away — run in
-  // turn they cost three of those on every single navigation.
+  // Together, not one after the other: none of the three needs anything from
+  // the others, and the database is a few hundred milliseconds away.
+  //
+  // The bell and the chat preview are decoration; they get a short
+  // deadline of their own. A connection that has dropped costs a missing
+  // badge for one page load instead of holding back a page whose real data
+  // is already here.
   const [settings, { notifications, unread }, chat] = await Promise.all([
     getBusinessSettings(),
-    getNotifications(user.id),
-    getChat(user),
+    withDeadline(getNotifications(user.id), HEADER_DEADLINE_MS, {
+      notifications: [],
+      unread: 0,
+    }),
+    withDeadline(getChat(user), HEADER_DEADLINE_MS, {
+      isAdmin: false,
+      customerId: null,
+      threads: [],
+      channels: [],
+    }),
   ]);
 
   return (
