@@ -130,7 +130,7 @@ async function complaintItems(supabase, customerId, user) {
 }
 
 /** Every message in one direct thread or channel, oldest first. */
-export async function loadMessages(kind, id) {
+export async function loadMessages(kind, id, withComplaints = false) {
   const user = await getCurrentUser();
   if (!user) return { error: "Please sign in." };
 
@@ -178,9 +178,11 @@ export async function loadMessages(kind, id) {
     showSender: isChannel,
   }));
 
-  // A channel has no complaints behind it; a direct thread does, and they
-  // belong in time order with everything else that was said.
-  if (isChannel) return { messages };
+  // Complaints are a separate conversation, and the sidebar toggle is what
+  // says which one is being read: off is the ordinary back-and-forth, on is
+  // what was complained about. A channel has no complaints behind it either
+  // way.
+  if (isChannel || !withComplaints) return { messages };
 
   const complaints = await complaintItems(supabase, target, user);
   if (complaints.length === 0) return { messages };

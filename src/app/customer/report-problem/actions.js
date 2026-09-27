@@ -100,9 +100,12 @@ export async function raiseProblem(prevState, formData) {
 
   if (error) return { error: `Complaint not saved: ${error.message}` };
 
+  // What they said, not only what they ticked: a bell reading "Wrong
+  // Quantity" tells the dairy to go and look, while one carrying the sentence
+  // often tells them what to do without opening anything.
   await notifyAdmins(
-    "New complaint",
-    `${customer.name}: ${ISSUE_TYPE[issueType]}`,
+    `New complaint — ${customer.name}`,
+    `${ISSUE_TYPE[issueType]}: ${message}`,
     made?.id ?? null,
   );
 

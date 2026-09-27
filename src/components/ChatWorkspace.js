@@ -494,7 +494,7 @@ export default function ChatWorkspace({
       <Divider />
 
       <ChatThread
-        key={`${selected.kind}:${selected.id}`}
+        key={`${selected.kind}:${selected.id}:${onlyProblems}`}
         kind={selected.kind}
         targetId={selected.id}
         meName={meName}
@@ -502,6 +502,7 @@ export default function ChatWorkspace({
         mePhoto={mePhoto}
         themPhoto={selected.photo}
         canManage={isAdmin}
+        withComplaints={onlyProblems}
         hasUnread={selected.unread > 0}
         canPost={canPost}
         readOnlyNote={`Only ${dairyName} can post here.`}

@@ -121,10 +121,7 @@ export default function MyBillingView({
         items={payments}
         getKey={(p) => p.id}
         title={(p) => formatDate(p.paid_on)}
-        fields={(p) => [
-          ["Amount", formatAmount(p.amount)],
-          p.note && ["Note", p.note],
-        ]}
+        fields={(p) => [["Amount", formatAmount(p.amount)]]}
         empty="No payments recorded in this period."
       />
 
@@ -140,13 +137,12 @@ export default function MyBillingView({
             >
               <TableCell>Date</TableCell>
               <TableCell align="right">Amount</TableCell>
-              <TableCell>Note</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {payments.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={2} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     No payments recorded in this period.
                   </Typography>
@@ -162,11 +158,6 @@ export default function MyBillingView({
                   sx={{ fontVariantNumeric: "tabular-nums", fontWeight: 600 }}
                 >
                   {formatAmount(p.amount)}
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" color="text.secondary">
-                    {p.note || "—"}
-                  </Typography>
                 </TableCell>
               </TableRow>
             ))}

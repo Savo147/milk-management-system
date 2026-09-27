@@ -91,9 +91,21 @@ export default function PaymentDialog({ row, from, to, today, onClose }) {
               <Row label="Total" value={formatAmount(total)} strong />
             </Stack>
 
-            {/* Payments are dated so any span can be totalled, but the date is
-                always today in practice — no need to ask for it. */}
-            <input type="hidden" name="paid_on" value={today} />
+            {/* The date has to sit inside the span being billed, or
+                re-opening that span would not find the payment again. Today
+                when today is in it, the last day of it otherwise — which is
+                what a bill settled after the period closed actually means. */}
+            <TextField
+              name="paid_on"
+              label="Paid on"
+              type="date"
+              defaultValue={today >= from && today <= to ? today : to}
+              required
+              fullWidth
+              sx={{ mb: 2 }}
+              slotProps={{ htmlInput: { min: from, max: to } }}
+              helperText={`Anywhere between ${formatDate(from)} and ${formatDate(to)}`}
+            />
 
             <TextField
               name="amount"

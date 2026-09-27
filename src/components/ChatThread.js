@@ -190,6 +190,7 @@ export default function ChatThread({
   mePhoto,
   themPhoto,
   canManage = false,
+  withComplaints = false,
   hasUnread = false,
   canPost = true,
   readOnlyNote = "Only the dairy can post here.",
@@ -215,7 +216,7 @@ export default function ChatThread({
     // out empty again.
     let live = true;
 
-    loadMessages(kind, targetId).then((res) => {
+    loadMessages(kind, targetId, withComplaints).then((res) => {
       if (!live) return;
       if (res.error) {
         setError(res.error);
@@ -232,7 +233,7 @@ export default function ChatThread({
     return () => {
       live = false;
     };
-  }, [kind, targetId, hasUnread]);
+  }, [kind, targetId, hasUnread, withComplaints]);
 
   // Every new message drops the view to the bottom, where the talk is.
   useEffect(() => {
@@ -278,7 +279,7 @@ export default function ChatThread({
         return;
       }
 
-      const fresh = await loadMessages(kind, targetId);
+      const fresh = await loadMessages(kind, targetId, withComplaints);
       setMessages(fresh.messages ?? []);
       onSent?.();
     });
@@ -308,7 +309,7 @@ export default function ChatThread({
         return;
       }
 
-      const fresh = await loadMessages(kind, targetId);
+      const fresh = await loadMessages(kind, targetId, withComplaints);
       setMessages(fresh.messages ?? []);
       onSent?.();
     });
@@ -345,7 +346,7 @@ export default function ChatThread({
       setPending(null);
       setError(null);
 
-      const fresh = await loadMessages(kind, targetId);
+      const fresh = await loadMessages(kind, targetId, withComplaints);
       setMessages(fresh.messages ?? []);
       onSent?.();
     });

@@ -38,7 +38,7 @@ export default async function MyBillingPage({ searchParams }) {
       .lte("date", to),
     supabase
       .from("payments")
-      .select("id, amount, paid_on, note")
+      .select("id, amount, paid_on")
       .eq("customer_id", customer.id)
       .gte("paid_on", from)
       .lte("paid_on", to)
