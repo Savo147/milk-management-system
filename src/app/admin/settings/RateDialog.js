@@ -80,7 +80,7 @@ export default function RateDialog({ rate, onClose }) {
                 autoFocus
                 sx={{ mt: 1 }}
                 slotProps={{
-                  htmlInput: { min: 0.5, step: 0.5 },
+                  htmlInput: { min: 0.01, step: "any" },
                   input: {
                     startAdornment: (
                       <InputAdornment position="start">₹</InputAdornment>

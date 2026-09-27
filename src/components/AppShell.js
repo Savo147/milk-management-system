@@ -30,10 +30,14 @@ import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import { alpha } from "@mui/material/styles";
+import ChatButton from "@/components/ChatButton";
 import NotificationBell from "@/components/NotificationBell";
 import { signOut } from "@/app/login/actions";
 
 const DRAWER_WIDTH = 250;
+
+/** What the desktop sidebar sits at until the cursor arrives: icons only. */
+const RAIL_WIDTH = 76;
 
 /**
  * The confirmation dialog's two buttons.
@@ -93,27 +97,49 @@ export default function AppShell({
   navItems,
   rootHref,
   accountHref,
+  chatHref,
   dairyName,
   logoUrl,
   user,
   notifications = [],
   unread = 0,
+  chat = null,
   children,
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [railOpen, setRailOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   // The header title only cares which page is open, not which group it sits
   // in, so the groups are flattened for the lookup.
+  // The chat page runs to the edges: it is a two-pane workspace with its
+  // own scrollers, so the usual page padding and 1400px cap would only box
+  // it in and give it a second scrollbar.
+  const fullBleed = Boolean(chatHref) && pathname === chatHref;
+
   const current = navItems
     .flatMap((group) => group.items)
     .find((i) => isActive(pathname, i.href, rootHref));
 
-  const drawer = (
+  // Chat is reached from the header rather than the sidebar, so it is not in
+  // navItems and the lookup above will not name it.
+  const title = current?.label ?? (pathname === chatHref ? "Chat" : "");
+
+  // `expanded` is false for the narrow rail the desktop sits at until the
+  // cursor arrives. The phone's drawer is always handed true: it slides in
+  // over the page, so there is nothing to save room for.
+  const drawerContent = (expanded) => (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <Toolbar sx={{ gap: 1.5, minHeight: { xs: 64, md: 68 } }}>
+      <Toolbar
+        sx={{
+          gap: 1.5,
+          minHeight: { xs: 64, md: 68 },
+          justifyContent: expanded ? "flex-start" : "center",
+          px: expanded ? undefined : 0,
+        }}
+      >
         <Box
           component="img"
           src={logoUrl ?? "/logo.png"}
@@ -131,29 +157,38 @@ export default function AppShell({
             bgcolor: "background.paper",
           }}
         />
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="subtitle2" noWrap sx={{ lineHeight: 1.3 }}>
-            {dairyName}
-          </Typography>
-          <Typography
-            variant="caption"
-            noWrap
-            sx={{ color: "text.secondary", letterSpacing: "0.03em" }}
-          >
-            {user.role === "admin" ? "Admin Panel" : "Customer"}
-          </Typography>
-        </Box>
+        {expanded && (
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="subtitle2" noWrap sx={{ lineHeight: 1.3 }}>
+              {dairyName}
+            </Typography>
+            <Typography
+              variant="caption"
+              noWrap
+              sx={{ color: "text.secondary", letterSpacing: "0.03em" }}
+            >
+              {user.role === "admin" ? "Admin Panel" : "Customer"}
+            </Typography>
+          </Box>
+        )}
       </Toolbar>
       <Divider />
 
       {/* One heading per group. The whole column scrolls on a short screen
-          rather than pushing the last group out of reach. */}
-      <Box sx={{ flexGrow: 1, overflowY: "auto", pb: 2 }}>
-        {navItems.map(({ section, items }) => (
+          rather than pushing the last group out of reach. On the rail the
+          headings have nowhere to fit, so a rule stands in for each one. */}
+      <Box sx={{ flexGrow: 1, overflowY: "auto", overflowX: "hidden", pb: 2 }}>
+        {navItems.map(({ section, items }, groupIndex) => (
           <Box key={section}>
-            <Typography variant="caption" sx={sectionSx}>
-              {section}
-            </Typography>
+            {expanded ? (
+              <Typography variant="caption" sx={sectionSx}>
+                {section}
+              </Typography>
+            ) : groupIndex > 0 ? (
+              <Divider sx={{ mx: 2, my: 1.25 }} />
+            ) : (
+              <Box sx={{ height: 12 }} />
+            )}
 
             <List sx={{ px: 1.5, py: 0 }}>
               {items.map(({ href, label, icon: Icon }) => (
@@ -163,15 +198,31 @@ export default function AppShell({
                   href={href}
                   selected={isActive(pathname, href, rootHref)}
                   onClick={() => setMobileOpen(false)}
-                  sx={{ mb: 0.25, py: 0.9 }}
+                  sx={{
+                    mb: 0.25,
+                    py: 0.9,
+                    justifyContent: expanded ? "flex-start" : "center",
+                    px: expanded ? undefined : 1,
+                  }}
                 >
-                  <ListItemIcon sx={{ minWidth: 36, color: "text.secondary" }}>
+                  <ListItemIcon
+                    sx={{
+                      minWidth: expanded ? 36 : 0,
+                      justifyContent: "center",
+                      color: "text.secondary",
+                    }}
+                  >
                     <Icon fontSize="small" />
                   </ListItemIcon>
-                  <ListItemText
-                    primary={label}
-                    slotProps={{ primary: { variant: "body2" } }}
-                  />
+
+                  {expanded && (
+                    <ListItemText
+                      primary={label}
+                      slotProps={{
+                        primary: { variant: "body2", noWrap: true },
+                      }}
+                    />
+                  )}
                 </ListItemButton>
               ))}
             </List>
@@ -188,8 +239,8 @@ export default function AppShell({
         color="inherit"
         elevation={0}
         sx={{
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-          ml: { md: `${DRAWER_WIDTH}px` },
+          width: { md: `calc(100% - ${RAIL_WIDTH}px)` },
+          ml: { md: `${RAIL_WIDTH}px` },
           borderBottom: 1,
           borderColor: "divider",
         }}
@@ -210,8 +261,21 @@ export default function AppShell({
             noWrap
             sx={{ flexGrow: 1, color: "text.secondary" }}
           >
-            {current?.label ?? ""}
+            {title}
           </Typography>
+
+          {chat && (
+            <ChatButton
+              dairyName={dairyName}
+              logoUrl={logoUrl}
+              meName={user.name}
+              mePhoto={user.profile_photo}
+              isAdmin={chat.isAdmin}
+              threads={chat.threads}
+              channels={chat.channels}
+              chatHref={chatHref}
+            />
+          )}
 
           <NotificationBell notifications={notifications} unread={unread} />
 
@@ -379,7 +443,7 @@ export default function AppShell({
 
       <Box
         component="nav"
-        sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
+        sx={{ width: { md: RAIL_WIDTH }, flexShrink: { md: 0 } }}
       >
         <Drawer
           variant="temporary"
@@ -394,20 +458,30 @@ export default function AppShell({
             },
           }}
         >
-          {drawer}
+          {drawerContent(true)}
         </Drawer>
+
         <Drawer
           variant="permanent"
           open
+          onMouseEnter={() => setRailOpen(true)}
+          onMouseLeave={() => setRailOpen(false)}
           sx={{
             display: { xs: "none", md: "block" },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
-              width: DRAWER_WIDTH,
+              overflowX: "hidden",
+              width: railOpen ? DRAWER_WIDTH : RAIL_WIDTH,
+              transition: (t) =>
+                t.transitions.create("width", {
+                  easing: t.transitions.easing.easeInOut,
+                  duration: t.transitions.duration.shorter,
+                }),
+              boxShadow: railOpen ? "0 12px 32px rgba(15, 23, 42, 0.12)" : 0,
             },
           }}
         >
-          {drawer}
+          {drawerContent(railOpen)}
         </Drawer>
       </Box>
 
@@ -415,13 +489,25 @@ export default function AppShell({
         component="main"
         sx={{
           flexGrow: 1,
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
+          width: { md: `calc(100% - ${RAIL_WIDTH}px)` },
           bgcolor: "background.default",
           minHeight: "100vh",
+          ...(fullBleed && { overflow: "hidden" }),
         }}
       >
         <Toolbar sx={{ minHeight: { xs: 64, md: 68 } }} />
-        <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, mx: "auto" }}>
+        <Box
+          sx={
+            fullBleed
+              ? {
+                  height: {
+                    xs: "calc(100dvh - 64px)",
+                    md: "calc(100dvh - 68px)",
+                  },
+                }
+              : { p: { xs: 2, md: 3 }, maxWidth: 1400, mx: "auto" }
+          }
+        >
           {children}
         </Box>
       </Box>

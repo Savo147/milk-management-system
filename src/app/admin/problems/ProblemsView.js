@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import InputAdornment from "@mui/material/InputAdornment";
 import MenuItem from "@mui/material/MenuItem";
@@ -17,6 +18,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
+import Tooltip from "@mui/material/Tooltip";
 import { PROBLEM_STATE, STATUS_COLOR, problemState } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
@@ -29,6 +31,10 @@ export default function ProblemsView({ problems, repliesByReport, date }) {
   // Defaults to what still needs work; closed ones are just history.
   const [statusFilter, setStatusFilter] = useState("pending");
   const [openId, setOpenId] = useState(null);
+
+  // A complaint is the start of a conversation, so opening one goes to that
+  // customer's chat. The details and the reply thread stay one button away.
+  const openChat = (customerId) => router.push(`/admin/chat?c=${customerId}`);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -119,6 +125,19 @@ export default function ProblemsView({ problems, repliesByReport, date }) {
           ["Date", formatDate(p.created_at)],
           ["Replies", (repliesByReport[p.id] ?? []).length],
         ]}
+        actions={(p) => (
+          <Button
+            size="small"
+            startIcon={<ChatBubbleOutlineIcon sx={{ fontSize: 17 }} />}
+            onClick={(e) => {
+              // The card itself opens the details; this goes to the chat.
+              e.stopPropagation();
+              openChat(p.customer_id);
+            }}
+          >
+            Chat
+          </Button>
+        )}
         empty={
           problems.length === 0
             ? "No complaints came in during this period."
@@ -143,7 +162,7 @@ export default function ProblemsView({ problems, repliesByReport, date }) {
               <TableCell align="center" sx={{ width: "14%" }}>
                 Status
               </TableCell>
-              <TableCell align="center" sx={{ width: "10%" }}>
+              <TableCell align="center" sx={{ width: "12%" }}>
                 Replies
               </TableCell>
             </TableRow>
@@ -208,31 +227,30 @@ export default function ProblemsView({ problems, repliesByReport, date }) {
                     />
                   </TableCell>
 
+                  {/* Replies is the way through to the chat: a complaint is
+                      the start of a conversation, and the conversation lives
+                      over there, not in this table. */}
                   <TableCell align="center">
-                    <Stack
-                      direction="row"
-                      spacing={0.5}
-                      sx={{ justifyContent: "center", alignItems: "center" }}
-                    >
-                      <ChatBubbleOutlineIcon
+                    <Tooltip title={`Chat with ${p.customer_name}`}>
+                      <Button
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openChat(p.customer_id);
+                        }}
+                        startIcon={
+                          <ChatBubbleOutlineIcon sx={{ fontSize: 15 }} />
+                        }
                         sx={{
-                          fontSize: 15,
+                          minWidth: 0,
                           color: replies.length
                             ? "primary.main"
-                            : "text.disabled",
-                        }}
-                      />
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: replies.length
-                            ? "text.primary"
-                            : "text.disabled",
+                            : "text.secondary",
                         }}
                       >
                         {replies.length}
-                      </Typography>
-                    </Stack>
+                      </Button>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               );

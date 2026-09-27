@@ -1,5 +1,6 @@
 /**
- * fetch that survives a dead keep-alive socket.
+ * fetch that survives a dead keep-alive socket, and a connection that takes
+ * its time coming up.
  *
  * A dev server that has been sitting idle keeps pooled connections that the
  * other end has already dropped. The next request picks one up and dies before
@@ -28,25 +29,60 @@ const ATTEMPTS = 3;
 
 /**
  * Stop retrying once this much time has gone by, however many attempts are
- * left. A dropped socket fails instantly and is worth three goes; a connection
- * timeout takes ten seconds each, and three of those is half a minute of
- * somebody watching a button do nothing. Better to give up and say so.
+ * left. Better to give up and say so than to leave somebody watching a button
+ * do nothing for half a minute.
  */
 const DEADLINE_MS = 12_000;
+
+/**
+ * How long one attempt gets before it is abandoned and tried afresh.
+ *
+ * Node's own connect timeout is ten seconds. With a twelve-second deadline
+ * that left room for exactly one attempt, so on the failure this actually
+ * hits — a connection that never opens — the retry above was dead code. Four
+ * seconds gives all three attempts a real turn inside the same deadline, and
+ * a flaky path usually comes up on the second or third.
+ *
+ * Only for reads. An abort can land after the request reached Supabase, and
+ * sending a write twice is a worse outcome than a slow page.
+ */
+const ATTEMPT_MS = 4_000;
+
+const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
 function isRetryable(err) {
   return RETRYABLE.has(err?.cause?.code ?? err?.code);
 }
 
+/** The caller's signal, if any, plus our own deadline for this attempt. */
+function attemptSignal(outer) {
+  const mine = AbortSignal.timeout(ATTEMPT_MS);
+  return outer ? AbortSignal.any([outer, mine]) : mine;
+}
+
 export async function fetchWithRetry(input, init) {
+  const method = (init?.method ?? "GET").toUpperCase();
+  const safe = SAFE_METHODS.has(method);
+
   const startedAt = Date.now();
   let last;
 
   for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
     try {
-      return await fetch(input, init);
+      return await fetch(
+        input,
+        safe ? { ...init, signal: attemptSignal(init?.signal) } : init,
+      );
     } catch (err) {
-      if (!isRetryable(err)) throw err;
+      // Our own deadline for this attempt, not the caller giving up: that is
+      // worth another go. If the caller's signal is the one that fired, the
+      // answer is no longer wanted at all.
+      const timedOut =
+        safe &&
+        (err?.name === "TimeoutError" || err?.name === "AbortError") &&
+        !init?.signal?.aborted;
+
+      if (!isRetryable(err) && !timedOut) throw err;
       last = err;
 
       const spent = Date.now() - startedAt;

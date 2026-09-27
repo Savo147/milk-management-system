@@ -1,4 +1,4 @@
-import { formatDate, formatMonth } from "@/lib/format";
+import { DAIRY_TZ, formatDate, formatMonth } from "@/lib/format";
 
 /**
  * Turning ?mode/?from/?to into one span of days.
@@ -14,15 +14,24 @@ const pad = (n) => String(n).padStart(2, "0");
 const isMonth = (v) => /^\d{4}-\d{2}$/.test(v ?? "");
 const isDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v ?? "");
 
+/** YYYY-MM in the dairy's own timezone. */
 export function currentMonth() {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  return todayLocal().slice(0, 7);
 }
 
-/** Local YYYY-MM-DD. toISOString() would roll back a day in IST. */
+/**
+ * Today as YYYY-MM-DD, read off the dairy's clock rather than the server's.
+ *
+ * en-CA formats as YYYY-MM-DD, which is exactly the shape the date columns
+ * and the ?date= params want, so there is nothing to reassemble by hand.
+ */
 export function todayLocal() {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: DAIRY_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 }
 
 export function monthStart() {

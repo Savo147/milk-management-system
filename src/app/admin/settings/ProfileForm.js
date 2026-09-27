@@ -11,6 +11,7 @@ import Grid from "@mui/material/Grid";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import SaveIcon from "@mui/icons-material/Save";
+import AvatarPicker from "@/components/AvatarPicker";
 import { updateProfile } from "./actions";
 
 function SubmitButton({ label, icon }) {
@@ -50,6 +51,15 @@ export default function ProfileForm({ user }) {
               </Alert>
             )}
 
+            <Box sx={{ mb: 3 }}>
+              <AvatarPicker
+                name="profile_photo"
+                userId={user.id}
+                initialUrl={user.profile_photo}
+                label={user.name}
+              />
+            </Box>
+
             <Grid container spacing={2} sx={{ alignItems: "flex-start" }}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
@@ -69,15 +79,6 @@ export default function ProfileForm({ user }) {
                   slotProps={{
                     htmlInput: { inputMode: "numeric", maxLength: 10 },
                   }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  name="profile_photo"
-                  label="Photo URL"
-                  defaultValue={user.profile_photo ?? ""}
-                  fullWidth
-                  placeholder="https://..."
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>

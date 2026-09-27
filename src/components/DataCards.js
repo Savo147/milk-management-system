@@ -23,6 +23,7 @@ export default function DataCards({
   getKey,
   title,
   subtitle,
+  avatar,
   badge,
   fields,
   actions,
@@ -78,8 +79,11 @@ export default function DataCards({
             >
               <Stack
                 direction="row"
-                sx={{ alignItems: "flex-start", gap: 1.5 }}
+                sx={{ alignItems: avatar ? "center" : "flex-start", gap: 1.5 }}
               >
+                {/* Optional: a face beside the name, where there is one. */}
+                {avatar && <Box sx={{ flexShrink: 0 }}>{avatar(item)}</Box>}
+
                 <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                   <Typography
                     variant="body2"

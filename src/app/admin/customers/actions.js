@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
-import { MILK_QUANTITIES } from "@/lib/constants";
 
 function parseForm(formData) {
   const name = String(formData.get("name") ?? "").trim();
@@ -16,11 +15,21 @@ function parseForm(formData) {
   const status = formData.get("status") === "inactive" ? "inactive" : "active";
 
   if (!name) return { error: "Enter a name." };
-  if (!/^\d{10}$/.test(mobile))
+  // Optional: somebody who signed in with Google arrives without one, and the
+  // dairy should be able to save the rest of their details meanwhile. Typed
+  // wrong, though, is still worth catching.
+  if (mobile && !/^\d{10}$/.test(mobile)) {
     return { error: "The mobile number must be 10 digits." };
-  if (!MILK_QUANTITIES.includes(dailyQuantity)) {
+  }
+  // Any amount the dairy actually delivers, rather than a fixed list. The
+  // bounds are only there to catch a slipped decimal point or a negative.
+  if (
+    !Number.isFinite(dailyQuantity) ||
+    dailyQuantity < 0.25 ||
+    dailyQuantity > 100
+  ) {
     return {
-      error: "Daily quantity must be between 0.5 and 5 L, in steps of 0.5.",
+      error: "Daily milk must be between 0.25 and 100 liters.",
     };
   }
   if (!Number.isFinite(rate) || rate <= 0) {

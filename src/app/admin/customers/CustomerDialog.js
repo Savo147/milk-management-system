@@ -11,7 +11,6 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
-import { MILK_QUANTITIES } from "@/lib/constants";
 import { saveCustomer } from "./actions";
 
 function Actions({ onClose }) {
@@ -45,6 +44,19 @@ export default function CustomerDialog({ open, onClose, customer }) {
       // Remount on customer change, otherwise the fields keep the old
       // defaultValue when switching between Edit rows.
       key={customer?.id ?? "new"}
+      scroll="paper"
+      sx={{
+        // On a short window this form has to scroll; it does not need a
+        // scrollbar down the side to say so. Wheel, trackpad and keyboard
+        // all still work.
+        "& .MuiDialog-container, & .MuiDialog-paper, & .MuiDialogContent-root":
+          {
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            "&::-webkit-scrollbar": { display: "none" },
+          },
+      }}
+      slotProps={{ paper: { sx: { maxHeight: "calc(100dvh - 32px)" } } }}
     >
       <form action={formAction}>
         <DialogTitle>{customer ? "Edit customer" : "New customer"}</DialogTitle>
@@ -74,12 +86,11 @@ export default function CustomerDialog({ open, onClose, customer }) {
                 name="mobile"
                 label="Mobile"
                 defaultValue={customer?.mobile ?? ""}
-                required
                 fullWidth
                 slotProps={{
                   htmlInput: { inputMode: "numeric", maxLength: 10 },
                 }}
-                helperText="10 digits"
+                helperText="10 digits, or leave it for later"
               />
             </Grid>
             <Grid size={12}>
@@ -93,20 +104,19 @@ export default function CustomerDialog({ open, onClose, customer }) {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
+              {/* Typed, not picked from a list: a customer on 6 L or 1.25 L
+                  is the dairy's business, not something a dropdown written
+                  months ago gets to rule out. */}
               <TextField
                 name="daily_quantity"
-                label="Daily milk"
+                label="Daily milk (liters)"
+                type="number"
                 defaultValue={customer?.daily_quantity ?? 1}
-                select
                 required
                 fullWidth
-              >
-                {MILK_QUANTITIES.map((q) => (
-                  <MenuItem key={q} value={q}>
-                    {q} L
-                  </MenuItem>
-                ))}
-              </TextField>
+                slotProps={{ htmlInput: { min: 0.25, max: 100, step: 0.25 } }}
+                helperText="Any amount, in quarter-liter steps"
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
@@ -116,7 +126,7 @@ export default function CustomerDialog({ open, onClose, customer }) {
                 defaultValue={customer?.rate_per_liter ?? ""}
                 required
                 fullWidth
-                slotProps={{ htmlInput: { min: 0.01, step: 0.5 } }}
+                slotProps={{ htmlInput: { min: 0.01, step: "any" } }}
                 helperText={
                   customer
                     ? "Change it and the old rate is kept in history automatically"

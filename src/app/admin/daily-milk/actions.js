@@ -3,9 +3,22 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
-import { MILK_QUANTITIES } from "@/lib/constants";
+/**
+ * What a day's entry may be. A range, not a list: a customer on 6 L has to
+ * be recordable, and the quarter-litre step is only there to keep a slipped
+ * keystroke like 2.37 out of the books.
+ */
+const MAX_LITERS = 100;
+const STEP = 0.25;
 
-const ALLOWED = new Set([0, ...MILK_QUANTITIES]);
+function isAllowed(n) {
+  return (
+    Number.isFinite(n) &&
+    n >= 0 &&
+    n <= MAX_LITERS &&
+    Math.abs(n / STEP - Math.round(n / STEP)) < 1e-9
+  );
+}
 
 /**
  * Delivery status follows from the quantities, so it is derived here rather
@@ -36,8 +49,10 @@ export async function saveOneEntry(prevState, formData) {
   if (!customerId) return { error: "Customer not found." };
 
   const actual = Number(raw);
-  if (raw === "" || !ALLOWED.has(actual)) {
-    return { error: "Quantity must be 0 to 5 L, in steps of 0.5." };
+  if (raw === "" || !isAllowed(actual)) {
+    return {
+      error: `Quantity must be 0 to ${MAX_LITERS} L, in quarter-liter steps.`,
+    };
   }
 
   const supabase = await createClient();

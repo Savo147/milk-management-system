@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -20,8 +21,13 @@ import { BRANDING_TAG } from "@/lib/cache-tags";
  * What getUser() would add is catching an account deleted or banned inside the
  * token's lifetime. The profile read below already covers that: a disabled
  * account fails the status check, and a deleted one has no row left at all.
+ *
+ * Wrapped in React's cache(): a layout and the page inside it both guard
+ * themselves, and without this that is the same row fetched twice on every
+ * single navigation. The cache lasts one render and no longer, so it cannot
+ * serve one request's user to another.
  */
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async () => {
   const supabase = await createClient();
 
   // getClaims returns { error } for an expired or badly signed token, but
@@ -45,7 +51,7 @@ export async function getCurrentUser() {
     .maybeSingle();
 
   return profile ?? null;
-}
+});
 
 /**
  * Gate for every /admin route. Checked in the layout, on the server — a

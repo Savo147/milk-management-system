@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -97,6 +98,11 @@ export default function CustomersTable({ customers }) {
         getKey={(c) => c.id}
         title={(c) => c.name}
         subtitle={(c) => c.mobile}
+        avatar={(c) => (
+          <Avatar src={c.photo || undefined} sx={{ width: 40, height: 40 }}>
+            {c.name?.[0]?.toUpperCase()}
+          </Avatar>
+        )}
         badge={(c) => (
           <Chip
             size="small"
@@ -161,18 +167,38 @@ export default function CustomersTable({ customers }) {
             {rows.map((c) => (
               <TableRow key={c.id} hover>
                 <TableCell>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {c.name}
-                  </Typography>
-                  {c.address && (
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block" }}
+                  <Stack
+                    direction="row"
+                    sx={{ gap: 1.25, alignItems: "center" }}
+                  >
+                    <Avatar
+                      src={c.photo || undefined}
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        flexShrink: 0,
+                      }}
                     >
-                      {c.address}
-                    </Typography>
-                  )}
+                      {c.name?.[0]?.toUpperCase()}
+                    </Avatar>
+
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {c.name}
+                      </Typography>
+                      {c.address && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: "block" }}
+                        >
+                          {c.address}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Stack>
                 </TableCell>
                 <TableCell>{c.mobile}</TableCell>
                 <TableCell align="right">

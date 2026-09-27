@@ -20,7 +20,7 @@ export default async function ProblemsPage({ searchParams }) {
   const { data: reports, error } = await supabase
     .from("reports")
     .select(
-      "id, issue_type, expected_quantity, received_quantity, message, status, created_at, resolved_at, customers(name, mobile)",
+      "id, customer_id, issue_type, expected_quantity, received_quantity, message, status, created_at, resolved_at, customers(name, mobile)",
     )
     // created_at is a timestamp, so the day has to run to its last moment
     // rather than stopping at midnight.

@@ -1,9 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Alert from "@mui/material/Alert";
-import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -17,6 +16,9 @@ import SaveIcon from "@mui/icons-material/Save";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import { formatAmount, formatLiters } from "@/lib/format";
 import { ACCOUNT_STATUS, STATUS_COLOR } from "@/lib/constants";
+import AvatarPicker from "@/components/AvatarPicker";
+import EditIcon from "@mui/icons-material/Edit";
+import MilkPlanDialog from "./MilkPlanDialog";
 import { updateMyProfile, changeMyPassword } from "./actions";
 
 function SaveButton({ icon: Icon = SaveIcon, label, busy }) {
@@ -33,20 +35,25 @@ function SaveButton({ icon: Icon = SaveIcon, label, busy }) {
   );
 }
 
-function Section({ title, subtitle, children }) {
+function Section({ title, subtitle, action, children }) {
   return (
     <Paper
       elevation={0}
       sx={{ p: 3, border: 1, borderColor: "divider", height: "100%" }}
     >
-      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-        {title}
-      </Typography>
-      {subtitle && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-          {subtitle}
-        </Typography>
-      )}
+      <Stack direction="row" sx={{ alignItems: "flex-start", gap: 2 }}>
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+            {title}
+          </Typography>
+          {subtitle && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+              {subtitle}
+            </Typography>
+          )}
+        </Box>
+        {action}
+      </Stack>
       {children}
     </Paper>
   );
@@ -76,33 +83,24 @@ function Row({ label, value }) {
 export default function ProfileView({ user, customer, settings }) {
   const [profileState, saveProfile] = useActionState(updateMyProfile, null);
   const [passwordState, savePassword] = useActionState(changeMyPassword, null);
+  const [editingPlan, setEditingPlan] = useState(false);
 
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing={3} sx={{ alignItems: "flex-start" }}>
       <Grid size={{ xs: 12, md: 6 }}>
         <Section
           title="My details"
           subtitle="You can change your name, mobile and photo yourself."
         >
           <Box component="form" action={saveProfile}>
-            <Stack
-              direction="row"
-              spacing={2}
-              sx={{ alignItems: "center", mb: 2.5 }}
-            >
-              <Avatar
-                src={user.profile_photo ?? undefined}
-                sx={{ width: 56, height: 56, bgcolor: "primary.main" }}
-              >
-                {user.name?.[0]?.toUpperCase()}
-              </Avatar>
-              <Box sx={{ minWidth: 0 }}>
-                <Typography variant="subtitle2">{user.name}</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {user.email}
-                </Typography>
-              </Box>
-            </Stack>
+            <Box sx={{ mb: 2.5 }}>
+              <AvatarPicker
+                name="profile_photo"
+                userId={user.id}
+                initialUrl={user.profile_photo}
+                label={user.name}
+              />
+            </Box>
 
             {profileState?.error && (
               <Alert severity="error" sx={{ mb: 2 }}>
@@ -132,13 +130,6 @@ export default function ProfileView({ user, customer, settings }) {
                   htmlInput: { inputMode: "numeric", maxLength: 10 },
                 }}
               />
-              <TextField
-                name="profile_photo"
-                label="Photo link"
-                defaultValue={user.profile_photo ?? ""}
-                fullWidth
-                placeholder="https://..."
-              />
               {/* Email is what you sign in with, so it is shown but not
                   editable here — changing it needs the dairy. */}
               <TextField
@@ -161,7 +152,18 @@ export default function ProfileView({ user, customer, settings }) {
         <Stack spacing={3}>
           <Section
             title="My milk plan"
-            subtitle="The dairy sets these details."
+            subtitle="Your details and how much milk you want."
+            action={
+              customer && (
+                <Button
+                  size="small"
+                  startIcon={<EditIcon sx={{ fontSize: 17 }} />}
+                  onClick={() => setEditingPlan(true)}
+                >
+                  Edit
+                </Button>
+              )
+            }
           >
             {customer ? (
               <>
@@ -215,7 +217,7 @@ export default function ProfileView({ user, customer, settings }) {
                   color="text.secondary"
                   sx={{ display: "block", mt: 2 }}
                 >
-                  To change any of this, contact {settings.dairy_name}
+                  The rate and your status are set by {settings.dairy_name}
                   {settings.phone ? ` — ${settings.phone}` : ""}.
                 </Typography>
               </>
@@ -255,7 +257,7 @@ export default function ProfileView({ user, customer, settings }) {
                 <TextField
                   type="password"
                   name="confirm"
-                  label="Repeat it"
+                  label="Confirm password"
                   required
                   fullWidth
                   autoComplete="new-password"
@@ -272,6 +274,12 @@ export default function ProfileView({ user, customer, settings }) {
           </Section>
         </Stack>
       </Grid>
+
+      <MilkPlanDialog
+        open={editingPlan}
+        onClose={() => setEditingPlan(false)}
+        customer={customer}
+      />
     </Grid>
   );
 }

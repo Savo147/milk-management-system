@@ -36,13 +36,22 @@ import DataCards from "@/components/DataCards";
 import { saveOneEntry } from "./actions";
 
 /**
- * − 2.5 L + stepper. Half-litre steps are the only quantities the business
- * allows and the database rejects anything else, so free typing would only
- * invite errors.
+ * The quantity for one row, picked from a short list rather than typed: on a
+ * page where twenty of these sit in a column, a dropdown is quicker and has
+ * nothing to mistype.
+ *
+ * The customer's own daily amount is always in the list, whatever it is, so
+ * somebody on 6 L is never stuck choosing between 5 and nothing.
  */
-function QuantityPicker({ value, onChange, changed }) {
+function QuantityPicker({ value, onChange, changed, expected }) {
   const n = Number(value);
   const [anchorEl, setAnchorEl] = useState(null);
+
+  const options = [
+    ...new Set([0, ...MILK_QUANTITIES, Number(expected) || 0, n]),
+  ]
+    .filter((q) => Number.isFinite(q) && q >= 0)
+    .sort((a, b) => a - b);
 
   const choose = (q) => {
     onChange(String(q));
@@ -105,10 +114,7 @@ function QuantityPicker({ value, onChange, changed }) {
           },
         }}
       >
-        <MenuItem selected={n === 0} onClick={() => choose(0)}>
-          0 L
-        </MenuItem>
-        {MILK_QUANTITIES.map((q) => (
+        {options.map((q) => (
           <MenuItem key={q} selected={n === q} onClick={() => choose(q)}>
             {q} L
           </MenuItem>
@@ -350,6 +356,7 @@ export default function DailyMilkForm({ date, customers }) {
               <QuantityPicker
                 value={qty}
                 changed={qty !== storedQty}
+                expected={c.daily_quantity}
                 onChange={(v) => setQty(c.id, v)}
               />
               <RowSave
@@ -440,6 +447,7 @@ export default function DailyMilkForm({ date, customers }) {
                     <QuantityPicker
                       value={qty}
                       changed={dirty}
+                      expected={c.daily_quantity}
                       onChange={(v) => setQty(c.id, v)}
                     />
                   </TableCell>

@@ -11,7 +11,7 @@ export default async function CustomersPage() {
   const { data: customers, error } = await supabase
     .from("customers")
     .select(
-      "id, name, mobile, address, daily_quantity, rate_per_liter, delivery_time, status, user_id, users(email)",
+      "id, name, mobile, address, daily_quantity, rate_per_liter, delivery_time, status, user_id, users(email, profile_photo)",
     )
     .order("name");
 
@@ -20,6 +20,7 @@ export default async function CustomersPage() {
   const rows = (customers ?? []).map((c) => ({
     ...c,
     login_email: c.users?.email ?? null,
+    photo: c.users?.profile_photo ?? null,
   }));
 
   return (
