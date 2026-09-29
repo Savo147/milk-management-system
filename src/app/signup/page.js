@@ -17,7 +17,6 @@ export default async function SignupPage() {
       dairyName={settings.dairy_name}
       logoUrl={settings.logo_url}
       title="Create your account"
-      wide
     >
       <SignupForm />
     </AuthCard>

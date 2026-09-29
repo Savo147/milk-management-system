@@ -7,9 +7,6 @@ export default function AuthCard({
   dairyName,
   logoUrl,
   title,
-  // The sign-up form puts its fields two to a row and needs the room; the
-  // login form is one column and looks stranded in a wide card.
-  wide = false,
   subtitle,
   children,
 }) {
@@ -34,7 +31,7 @@ export default function AuthCard({
         sx={{
           p: { xs: 2.5, sm: 4.5 },
           width: "100%",
-          maxWidth: wide ? 560 : 410,
+          maxWidth: 410,
           border: 1,
           borderColor: "divider",
           borderRadius: 4,

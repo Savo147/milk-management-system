@@ -156,15 +156,9 @@ export async function signUp(prevState, formData) {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const confirm = String(formData.get("confirm") ?? "");
 
   if (!name) return { error: "Enter your name." };
   if (!email || !password) return { error: "Enter an email and a password." };
-
-  // Checked before the account is made, not after: a mistyped password that
-  // only surfaces at the next sign-in leaves somebody locked out of an
-  // account they just created.
-  if (password !== confirm) return { error: "The two passwords do not match." };
 
   const made = await createAccount(email, password, name);
   if (made.error) return { error: made.error };

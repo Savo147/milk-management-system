@@ -71,13 +71,12 @@ export default function SignupForm() {
 
       <Box component="form" action={formAction}>
         {/*
-          Two to a row from sm up, stacked on a phone. shrink is forced on
-          every field: browser autofill writes a value without firing an
-          event MUI can see, so the label otherwise sits on top of the
-          filled-in text.
+          shrink is forced on every field: browser autofill writes a value
+          without firing an event MUI can see, so the label otherwise sits on
+          top of the filled-in text.
         */}
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={12}>
             <TextField
               name="name"
               label="Your name"
@@ -90,7 +89,7 @@ export default function SignupForm() {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={12}>
             <TextField
               name="email"
               type="email"
@@ -103,7 +102,7 @@ export default function SignupForm() {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={12}>
             <TextField
               name="password"
               type={shown ? "text" : "password"}
@@ -113,22 +112,6 @@ export default function SignupForm() {
               required
               fullWidth
               helperText="At least 8 characters"
-              slotProps={{
-                inputLabel: { shrink: true },
-                input: eyeAdornment(shown, () => setShown((on) => !on)),
-              }}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              name="confirm"
-              type={shown ? "text" : "password"}
-              label="Confirm password"
-              placeholder="••••••••"
-              autoComplete="new-password"
-              required
-              fullWidth
               slotProps={{
                 inputLabel: { shrink: true },
                 input: eyeAdornment(shown, () => setShown((on) => !on)),
