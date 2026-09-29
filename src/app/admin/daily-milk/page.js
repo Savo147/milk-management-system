@@ -1,7 +1,7 @@
 import Alert from "@mui/material/Alert";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
-import { formatDate } from "@/lib/format";
+import { formatDate, errorText } from "@/lib/format";
 import DailyMilkForm from "./DailyMilkForm";
 
 export const metadata = { title: "Daily Milk" };
@@ -50,7 +50,7 @@ export default async function DailyMilkPage({ searchParams }) {
 
       {error ? (
         <Alert severity="error">
-          Could not load customers: {error.message}
+          Could not load customers: {errorText(error)}
         </Alert>
       ) : (
         <DailyMilkForm date={date} customers={rows} />

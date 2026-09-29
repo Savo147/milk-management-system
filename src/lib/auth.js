@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BRANDING_TAG } from "@/lib/cache-tags";
+import { withDeadline } from "@/lib/deadline";
 
 /**
  * The signed-in user's profile row, or null.
@@ -142,7 +143,10 @@ const loadSettings = unstable_cache(
 /** Full settings row. Signed-in users only. */
 export async function getBusinessSettings() {
   try {
-    return await loadSettings();
+    // Capped as well as caught. Branding is decoration, and on a dead
+    // connection waiting the full retry budget for it added seconds to a page
+    // that was going to show the default name anyway.
+    return await withDeadline(loadSettings(), 2_000, FALLBACK_SETTINGS);
   } catch (err) {
     // Branding is decoration. A dropped connection here must not take down a
     // page that would otherwise work — it just gets the default name.

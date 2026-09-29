@@ -6,6 +6,7 @@ import { problemState } from "@/lib/constants";
 import PageHeader from "@/components/PageHeader";
 import NotLinked from "@/components/NotLinked";
 import ProblemsView from "./ProblemsView";
+import { errorText } from "@/lib/format";
 
 export const metadata = { title: "Report Problem" };
 
@@ -80,7 +81,7 @@ export default async function ReportProblemPage({ searchParams }) {
 
       {error ? (
         <Alert severity="error">
-          Could not load complaints: {error.message}
+          Could not load complaints: {errorText(error)}
         </Alert>
       ) : (
         <ProblemsView

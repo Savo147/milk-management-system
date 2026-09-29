@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -52,11 +52,23 @@ function Actions({ onClose }) {
 export default function PaymentDialog({ row, from, to, today, onClose }) {
   const [state, formAction] = useActionState(recordPayment, null);
 
+  // Closed once per save, not once per render. useActionState keeps the
+  // last result for the life of the component, so "ok" stays true after a
+  // payment goes through — and the next time the dialog was opened this
+  // effect saw it again and shut it before anybody could type. Remembering
+  // which result has been acted on is what stops that.
+  const handled = useRef(null);
+
   useEffect(() => {
-    if (state?.ok) onClose();
+    if (state?.ok && handled.current !== state) {
+      handled.current = state;
+      onClose();
+    }
   }, [state, onClose]);
 
   const total = Number(row?.total_amount ?? 0);
+  const received = Number(row?.received_amount ?? 0);
+  const remaining = Math.max(0, total - received);
 
   return (
     <Dialog
@@ -88,7 +100,11 @@ export default function PaymentDialog({ row, from, to, today, onClose }) {
 
             <Stack spacing={1} sx={{ mb: 3 }}>
               <Row label="Milk" value={formatLiters(row.total_liters)} />
-              <Row label="Total" value={formatAmount(total)} strong />
+              <Row label="Total" value={formatAmount(total)} />
+              {received > 0 && (
+                <Row label="Already paid" value={formatAmount(received)} />
+              )}
+              <Row label="Remaining" value={formatAmount(remaining)} strong />
             </Stack>
 
             {/* The date has to sit inside the span being billed, or
@@ -111,15 +127,16 @@ export default function PaymentDialog({ row, from, to, today, onClose }) {
               name="amount"
               label="Amount"
               type="number"
-              // The span's own total, so what the box says matches the Total
-              // right above it. The action treats it as the running total for
-              // the span, not an extra payment on top.
-              defaultValue={total}
+              // What is left, not the whole bill. Somebody paying the rest
+              // of what they owe should not have to work out the difference,
+              // and the total was being handed to them as if nothing had been
+              // paid yet.
+              defaultValue={remaining > 0 ? remaining : ""}
               required
               fullWidth
               autoFocus
               slotProps={{
-                htmlInput: { min: 0, step: 0.5 },
+                htmlInput: { min: 0.5, step: "any" },
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">₹</InputAdornment>

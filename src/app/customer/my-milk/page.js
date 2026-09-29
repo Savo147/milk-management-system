@@ -5,6 +5,7 @@ import { resolveRange } from "@/lib/range";
 import PageHeader from "@/components/PageHeader";
 import NotLinked from "@/components/NotLinked";
 import MyMilkView from "./MyMilkView";
+import { errorText } from "@/lib/format";
 
 export const metadata = { title: "My Milk" };
 
@@ -43,7 +44,7 @@ export default async function MyMilkPage({ searchParams }) {
 
       {error ? (
         <Alert severity="error">
-          Could not load your milk records: {error.message}
+          Could not load your milk records: {errorText(error)}
         </Alert>
       ) : (
         <MyMilkView

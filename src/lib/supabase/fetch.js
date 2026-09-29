@@ -29,10 +29,10 @@ const ATTEMPTS = 3;
 
 /**
  * Stop retrying once this much time has gone by, however many attempts are
- * left. Better to give up and say so than to leave somebody watching a button
- * do nothing for half a minute.
+ * left. A page runs three or four of these one after another, so every second
+ * here is three or four on the screen.
  */
-const DEADLINE_MS = 12_000;
+const DEADLINE_MS = 6_000;
 
 /**
  * How long one attempt gets before it is abandoned and tried afresh.
@@ -40,13 +40,16 @@ const DEADLINE_MS = 12_000;
  * Node's own connect timeout is ten seconds. With a twelve-second deadline
  * that left room for exactly one attempt, so on the failure this actually
  * hits — a connection that never opens — the retry above was dead code. Four
- * seconds gives all three attempts a real turn inside the same deadline, and
- * a flaky path usually comes up on the second or third.
+ * Two seconds gives all three attempts a real turn inside the same deadline,
+ * and a flaky path usually comes up on the second or third. A query that is
+ * working answers in a fifth of a second, so this is ten times the room it
+ * has ever needed — while a dead one costs six seconds instead of twelve,
+ * and a page makes several of these in a row.
  *
  * Only for reads. An abort can land after the request reached Supabase, and
  * sending a write twice is a worse outcome than a slow page.
  */
-const ATTEMPT_MS = 4_000;
+const ATTEMPT_MS = 2_000;
 
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
 

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdmin, getBusinessSettings } from "@/lib/auth";
 import PageHeader from "@/components/PageHeader";
 import SettingsTabs from "./SettingsTabs";
+import { errorText } from "@/lib/format";
 
 export const metadata = { title: "Settings" };
 
@@ -72,7 +73,9 @@ export default async function SettingsPage() {
       />
 
       {error ? (
-        <Alert severity="error">Could not load settings: {error.message}</Alert>
+        <Alert severity="error">
+          Could not load settings: {errorText(error)}
+        </Alert>
       ) : (
         <SettingsTabs
           settings={settings}

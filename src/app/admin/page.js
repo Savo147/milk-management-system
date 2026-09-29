@@ -3,7 +3,6 @@ import Grid from "@mui/material/Grid";
 import PeopleIcon from "@mui/icons-material/People";
 import LocalDrinkIcon from "@mui/icons-material/LocalDrink";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
-import InventoryIcon from "@mui/icons-material/Inventory";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import { createClient } from "@/lib/supabase/server";
@@ -31,7 +30,6 @@ export default async function AdminDashboard() {
     { count: activeCustomers },
     { data: todayEntries },
     { data: monthEntries },
-    { data: stock },
     { count: pendingBills },
     { count: doneBills },
   ] = await Promise.all([
@@ -47,11 +45,6 @@ export default async function AdminDashboard() {
       .from("milk_entries")
       .select("actual_quantity, total_amount")
       .gte("date", month),
-    supabase
-      .from("milk_stock")
-      .select("remaining_stock")
-      .eq("date", day)
-      .maybeSingle(),
     supabase
       .from("monthly_bills")
       .select("id", { count: "exact", head: true })
@@ -151,15 +144,6 @@ export default async function AdminDashboard() {
             sub={`${doneBills ?? 0} settled`}
             icon={PendingActionsIcon}
             color="warning"
-          />
-        </Grid>
-        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
-          <StatCard
-            label="Stock left"
-            value={formatLiters(stock?.remaining_stock ?? 0)}
-            sub="today"
-            icon={InventoryIcon}
-            color="info"
           />
         </Grid>
       </Grid>

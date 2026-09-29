@@ -6,6 +6,7 @@ import { requireAdmin, getBusinessSettings } from "@/lib/auth";
 import { getChat } from "@/lib/chat";
 import { problemState } from "@/lib/constants";
 import ChatWorkspace from "@/components/ChatWorkspace";
+import { errorText } from "@/lib/format";
 
 export const metadata = { title: "Chat" };
 
@@ -108,7 +109,7 @@ export default async function ChatPage({ searchParams }) {
     <Stack sx={{ height: "100%", minHeight: 0 }}>
       {error && (
         <Alert severity="error" square>
-          Could not load customers: {error.message}
+          Could not load customers: {errorText(error)}
         </Alert>
       )}
 

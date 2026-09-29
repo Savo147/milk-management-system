@@ -15,7 +15,12 @@ import Typography from "@mui/material/Typography";
 import { createClient } from "@/lib/supabase/server";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import PageHeader from "@/components/PageHeader";
-import { formatAmount, formatDate, formatLiters } from "@/lib/format";
+import {
+  formatAmount,
+  formatDate,
+  formatLiters,
+  errorText,
+} from "@/lib/format";
 import DayPicker from "./DayPicker";
 import DayTable from "./DayTable";
 
@@ -123,7 +128,7 @@ export default async function StockPage({ searchParams }) {
       />
 
       {error ? (
-        <Alert severity="error">Could not load: {error.message}</Alert>
+        <Alert severity="error">Could not load: {errorText(error)}</Alert>
       ) : (
         <>
           <Grid container spacing={2} sx={{ mb: 4 }}>

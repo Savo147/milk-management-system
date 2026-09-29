@@ -14,7 +14,6 @@ import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
-import TableFooter from "@mui/material/TableFooter";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
@@ -48,6 +47,29 @@ function Summary({ label, value }) {
   );
 }
 
+/**
+ * What is still owed for the period.
+ *
+ * Floored at zero: somebody who paid a whole span and is then looked at over
+ * a later one has more money in than milk out, and a negative here would
+ * only read as broken.
+ */
+const due = (r) => Math.max(0, Number(r.amount) - Number(r.paid));
+
+/**
+ * The same shortfall counted in litres.
+ *
+ * Worked out from the money rather than the days, because a span can hold
+ * more than one rate and a payment is never tied to particular days. Owing a
+ * fifteenth of the bill is owing a fifteenth of the milk, whatever the rate
+ * was on any given morning.
+ */
+const litersDue = (r) => {
+  const amount = Number(r.amount);
+  if (amount <= 0) return 0;
+  return (Number(r.liters) * due(r)) / amount;
+};
+
 /** Quotes a CSV field: commas, quotes and newlines all need escaping. */
 const csvCell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
@@ -57,7 +79,6 @@ export default function ReportView({
   to,
   monthFrom,
   monthTo,
-  label,
   rows: allRows = [],
 }) {
   const router = useRouter();
@@ -81,16 +102,28 @@ export default function ReportView({
           liters: t.liters + Number(r.liters),
           amount: t.amount + Number(r.amount),
           paid: t.paid + Number(r.paid),
+          due: t.due + due(r),
+          litersDue: t.litersDue + litersDue(r),
         }),
-        { liters: 0, amount: 0, paid: 0 },
+        { liters: 0, amount: 0, paid: 0, due: 0, litersDue: 0 },
       ),
     [rows],
   );
 
   const download = () => {
-    const header = ["Customer", "Mobile", "Milk (L)", "Amount", "Received"];
+    const header = [
+      "Customer",
+      "Mobile",
+      "Milk (L)",
+      "Amount",
+      "Received",
+      "Due",
+      "Due (L)",
+    ];
     const body = rows.map((r) =>
-      [r.label, r.sub, r.liters, r.amount, r.paid].map(csvCell),
+      [r.label, r.sub, r.liters, r.amount, r.paid, due(r), litersDue(r)].map(
+        csvCell,
+      ),
     );
 
     // A BOM so Excel opens rupee signs and Gujarati text as UTF-8.
@@ -185,6 +218,8 @@ export default function ReportView({
             ["Milk", formatLiters(r.liters)],
             ["Amount", formatAmount(r.amount)],
             ["Received", formatAmount(r.paid)],
+            ["Due", formatAmount(due(r))],
+            ["Due (milk)", formatLiters(litersDue(r))],
           ]}
           empty="No records in this period."
         />
@@ -212,6 +247,8 @@ export default function ReportView({
                 ["Milk", formatLiters(totals.liters)],
                 ["Amount", formatAmount(totals.amount)],
                 ["Received", formatAmount(totals.paid)],
+                ["Due", formatAmount(totals.due)],
+                ["Due (milk)", formatLiters(totals.litersDue)],
               ].map(([label, value]) => (
                 <Stack
                   key={label}
@@ -253,7 +290,7 @@ export default function ReportView({
           "@media print": { display: "block" },
         }}
       >
-        <Table size="small" sx={{ minWidth: 720 }}>
+        <Table size="small" sx={{ minWidth: 860 }}>
           <TableHead>
             <TableRow>
               <TableCell>Customer</TableCell>
@@ -266,13 +303,19 @@ export default function ReportView({
               <TableCell align="center" sx={{ width: "18%" }}>
                 Received
               </TableCell>
+              <TableCell align="center" sx={{ width: "16%" }}>
+                Due
+              </TableCell>
+              <TableCell align="center" sx={{ width: "14%" }}>
+                Due (milk)
+              </TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     No records in this period.
                   </Typography>
@@ -298,37 +341,28 @@ export default function ReportView({
                 </TableCell>
 
                 <TableCell align="center">{formatAmount(r.paid)}</TableCell>
+
+                <TableCell
+                  align="center"
+                  sx={{
+                    fontWeight: 600,
+                    color: due(r) > 0 ? "warning.dark" : "text.secondary",
+                  }}
+                >
+                  {formatAmount(due(r))}
+                </TableCell>
+
+                <TableCell
+                  align="center"
+                  sx={{ color: due(r) > 0 ? "warning.dark" : "text.secondary" }}
+                >
+                  {formatLiters(litersDue(r))}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
-
-          {rows.length > 0 && (
-            <TableFooter>
-              <TableRow
-                sx={{ "& td": { fontWeight: 700, color: "text.primary" } }}
-              >
-                <TableCell>Total ({rows.length})</TableCell>
-                <TableCell align="center">
-                  {formatLiters(totals.liters)}
-                </TableCell>
-                <TableCell align="center">
-                  {formatAmount(totals.amount)}
-                </TableCell>
-                <TableCell align="center">
-                  {formatAmount(totals.paid)}
-                </TableCell>
-              </TableRow>
-            </TableFooter>
-          )}
         </Table>
       </TableContainer>
-
-      <Typography
-        variant="caption"
-        sx={{ mt: 1.5, display: "block", color: "text.secondary" }}
-      >
-        {label}
-      </Typography>
     </Box>
   );
 }

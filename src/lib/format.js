@@ -71,3 +71,29 @@ export function formatMonth(value) {
     year: "numeric",
   });
 }
+
+/**
+ * A database error in words the dairy can act on.
+ *
+ * The raw ones are written for whoever wrote the driver: "TimeoutError: The
+ * operation was aborted due to timeout" says nothing about what to do, and on
+ * a connection that drops it is the message people see most. Anything not
+ * recognised is passed through — an unfamiliar fault is worth reading, even
+ * awkwardly worded.
+ */
+export function errorText(error) {
+  const message = error?.message ?? "";
+
+  if (
+    /timeout|aborted|fetch failed|network|ENOTFOUND|ECONNRESET/i.test(message)
+  ) {
+    return "the server could not be reached. Check the connection and reload.";
+  }
+  if (
+    /JWT|not authorized|permission denied|row-level security/i.test(message)
+  ) {
+    return "you are not allowed to see this. Try signing in again.";
+  }
+
+  return message;
+}

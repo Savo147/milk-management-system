@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { after } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 /**
  * What a day's entry may be. A range, not a list: a customer on 6 L has to
@@ -93,38 +92,5 @@ export async function saveOneEntry(prevState, formData) {
   revalidatePath("/admin/daily-milk");
   revalidatePath("/admin");
 
-  // The day's stock total follows from the entries; nothing on the screen
-  // that just saved is waiting for it. Running it after the response means
-  // the button stops spinning two round trips sooner.
-  after(async () => {
-    await syncStock(supabase, date);
-    revalidatePath("/admin/stock");
-    revalidatePath("/admin");
-  });
-
   return { ok: true };
-}
-
-/**
- * Keeps milk_stock.delivered_stock equal to what was actually handed out that
- * day. remaining_stock is a generated column, so it follows automatically.
- */
-async function syncStock(supabase, date) {
-  const { data: entries } = await supabase
-    .from("milk_entries")
-    .select("actual_quantity")
-    .eq("date", date);
-
-  const delivered = (entries ?? []).reduce(
-    (t, e) => t + Number(e.actual_quantity ?? 0),
-    0,
-  );
-
-  // One upsert rather than look-then-branch: the date is unique, so the
-  // database can decide for itself whether this is the day's first entry.
-  // Opening and added are left alone — on a new row they take their defaults,
-  // on an existing one they keep whatever the Stock page put there.
-  await supabase
-    .from("milk_stock")
-    .upsert({ date, delivered_stock: delivered }, { onConflict: "date" });
 }

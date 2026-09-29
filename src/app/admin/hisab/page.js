@@ -1,13 +1,9 @@
 import Alert from "@mui/material/Alert";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import Grid from "@mui/material/Grid";
-import Typography from "@mui/material/Typography";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
-import { formatAmount, formatLiters } from "@/lib/format";
 import { resolveRange, todayLocal } from "@/lib/range";
 import BillingTable from "./BillingTable";
+import { errorText } from "@/lib/format";
 
 export const metadata = { title: "Billing" };
 
@@ -81,27 +77,6 @@ async function fetchRange(supabase, from, to) {
   return { rows, paymentsMissing, error: null };
 }
 
-function Summary({ label, value, color = "text.primary" }) {
-  return (
-    <Card sx={{ height: "100%" }}>
-      <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-        <Typography
-          variant="caption"
-          sx={{ color: "text.secondary", fontWeight: 600 }}
-        >
-          {label}
-        </Typography>
-        <Typography
-          variant="h5"
-          sx={{ mt: 0.5, color, fontVariantNumeric: "tabular-nums" }}
-        >
-          {value}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-}
-
 export default async function BillingPage({ searchParams }) {
   const params = await searchParams;
 
@@ -112,14 +87,6 @@ export default async function BillingPage({ searchParams }) {
   const supabase = await createClient();
   const { rows, paymentsMissing, error } = await fetchRange(supabase, from, to);
 
-  const liters = rows.reduce((t, r) => t + Number(r.total_liters), 0);
-  const total = rows.reduce((t, r) => t + Number(r.total_amount), 0);
-  const received = rows.reduce((t, r) => t + Number(r.received_amount), 0);
-  // Paying a span in full and then looking at a later span leaves payments
-  // ahead of the milk. Nothing is owed then — a negative "Due" would just
-  // read as broken.
-  const baki = Math.max(0, total - received);
-
   return (
     <>
       <PageHeader
@@ -128,7 +95,7 @@ export default async function BillingPage({ searchParams }) {
       />
 
       {error ? (
-        <Alert severity="error">Could not load: {error.message}</Alert>
+        <Alert severity="error">Could not load: {errorText(error)}</Alert>
       ) : (
         <>
           {paymentsMissing && (
@@ -137,22 +104,6 @@ export default async function BillingPage({ searchParams }) {
               so payments cannot be recorded. The milk side is shown below.
             </Alert>
           )}
-
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 6, md: 4 }}>
-              <Summary label="Total amount" value={formatAmount(total)} />
-            </Grid>
-            <Grid size={{ xs: 6, md: 4 }}>
-              <Summary label="Total milk" value={formatLiters(liters)} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Summary
-                label="Due"
-                value={formatAmount(baki)}
-                color={baki > 0 ? "warning.dark" : "text.secondary"}
-              />
-            </Grid>
-          </Grid>
 
           <BillingTable
             mode={mode}

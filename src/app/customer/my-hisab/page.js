@@ -5,6 +5,7 @@ import { resolveRange } from "@/lib/range";
 import PageHeader from "@/components/PageHeader";
 import NotLinked from "@/components/NotLinked";
 import MyBillingView from "./MyBillingView";
+import { errorText } from "@/lib/format";
 
 export const metadata = { title: "My Billing" };
 
@@ -73,7 +74,7 @@ export default async function MyBillingPage({ searchParams }) {
 
       {error ? (
         <Alert severity="error">
-          Could not load your billing: {error.message}
+          Could not load your billing: {errorText(error)}
         </Alert>
       ) : (
         <MyBillingView

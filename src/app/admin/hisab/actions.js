@@ -36,34 +36,28 @@ export async function recordPayment(prevState, formData) {
   if (!isDate(from) || !isDate(to) || !isDate(paidOn)) {
     return { error: "That date is not valid." };
   }
-  if (!Number.isFinite(amount) || amount < 0) {
-    return { error: "The amount must be 0 or more." };
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { error: "Enter an amount greater than 0." };
   }
 
   const supabase = await createClient();
 
-  const { error: delErr } = await supabase
-    .from("payments")
-    .delete()
-    .eq("customer_id", customerId)
-    .gte("paid_on", from)
-    .lte("paid_on", to);
+  // Added to what is already there, not put in its place. A customer pays a
+  // bill in two or three goes; wiping the span and writing one row made the
+  // earlier instalments disappear, and the dialog then offered the whole bill
+  // again as though nothing had been paid.
+  //
+  // Dated inside the span, so re-opening the same span reads it back.
+  const on = paidOn >= from && paidOn <= to ? paidOn : to;
 
-  if (delErr) return { error: `Could not save: ${delErr.message}` };
+  const { error } = await supabase.from("payments").insert({
+    customer_id: customerId,
+    amount,
+    paid_on: on,
+    created_by: admin.id,
+  });
 
-  if (amount > 0) {
-    // Dated inside the span, so re-opening the same span reads it back.
-    const on = paidOn >= from && paidOn <= to ? paidOn : to;
-
-    const { error } = await supabase.from("payments").insert({
-      customer_id: customerId,
-      amount,
-      paid_on: on,
-      created_by: admin.id,
-    });
-
-    if (error) return { error: `Could not save: ${error.message}` };
-  }
+  if (error) return { error: `Could not save: ${error.message}` };
 
   refresh();
   return { ok: true };

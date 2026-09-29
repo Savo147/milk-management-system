@@ -2,6 +2,7 @@ import Alert from "@mui/material/Alert";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
 import CustomersTable from "./CustomersTable";
+import { errorText } from "@/lib/format";
 
 export const metadata = { title: "Customers" };
 
@@ -32,7 +33,7 @@ export default async function CustomersPage() {
 
       {error ? (
         <Alert severity="error">
-          Could not load customers: {error.message}
+          Could not load customers: {errorText(error)}
         </Alert>
       ) : (
         <>

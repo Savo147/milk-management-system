@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
 import { resolveRange } from "@/lib/range";
 import ReportView from "./ReportView";
+import { errorText } from "@/lib/format";
 
 export const metadata = { title: "Reports" };
 
@@ -72,7 +73,7 @@ export default async function ReportsPage({ searchParams }) {
 
       {report.error ? (
         <Alert severity="error">
-          Could not build the report: {report.error.message}
+          Could not build the report: {errorText(report.error)}
         </Alert>
       ) : (
         <ReportView
@@ -81,7 +82,6 @@ export default async function ReportsPage({ searchParams }) {
           to={to}
           monthFrom={monthFrom}
           monthTo={monthTo}
-          label={label}
           rows={report.rows}
         />
       )}

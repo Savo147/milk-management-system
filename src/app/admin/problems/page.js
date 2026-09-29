@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
 import { problemState } from "@/lib/constants";
 import { todayLocal } from "@/lib/range";
-import { formatDate } from "@/lib/format";
+import { formatDate, errorText } from "@/lib/format";
 import ProblemsView from "./ProblemsView";
 
 export const metadata = { title: "Problems" };
@@ -89,7 +89,7 @@ export default async function ProblemsPage({ searchParams }) {
 
       {error ? (
         <Alert severity="error">
-          Could not load complaints: {error.message}
+          Could not load complaints: {errorText(error)}
         </Alert>
       ) : (
         <ProblemsView

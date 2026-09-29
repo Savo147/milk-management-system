@@ -3,7 +3,10 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
+import Grid from "@mui/material/Grid";
 import InputAdornment from "@mui/material/InputAdornment";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
@@ -29,6 +32,27 @@ import PaymentDialog from "./PaymentDialog";
 /** Settled once the money in matches the milk out for the shown span. */
 const statusOf = (row) =>
   Number(row.received_amount) >= Number(row.total_amount) ? "done" : "pending";
+
+function Summary({ label, value, color = "text.primary" }) {
+  return (
+    <Card sx={{ height: "100%" }}>
+      <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+        <Typography
+          variant="caption"
+          sx={{ color: "text.secondary", fontWeight: 600 }}
+        >
+          {label}
+        </Typography>
+        <Typography
+          variant="h5"
+          sx={{ mt: 0.5, color, fontVariantNumeric: "tabular-nums" }}
+        >
+          {value}
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function BillingTable({
   mode,
@@ -58,6 +82,20 @@ export default function BillingTable({
       );
     });
   }, [allRows, query, statusFilter]);
+
+  // Totalled from what is on screen, not from everyone. Search one customer
+  // and these say what that customer owes — which is the question being asked
+  // when somebody types a name into the box.
+  const sums = useMemo(() => {
+    const liters = rows.reduce((t, r) => t + Number(r.total_liters), 0);
+    const total = rows.reduce((t, r) => t + Number(r.total_amount), 0);
+    const received = rows.reduce((t, r) => t + Number(r.received_amount), 0);
+
+    // Paying a span in full and then looking at a later one leaves payments
+    // ahead of the milk. Nothing is owed then — a negative "Due" would just
+    // read as broken.
+    return { liters, total, due: Math.max(0, total - received) };
+  }, [rows]);
 
   return (
     <>
@@ -105,6 +143,22 @@ export default function BillingTable({
         </TextField>
       </Stack>
 
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 6, md: 4 }}>
+          <Summary label="Total amount" value={formatAmount(sums.total)} />
+        </Grid>
+        <Grid size={{ xs: 6, md: 4 }}>
+          <Summary label="Total milk" value={formatLiters(sums.liters)} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Summary
+            label="Due"
+            value={formatAmount(sums.due)}
+            color={sums.due > 0 ? "warning.dark" : "text.secondary"}
+          />
+        </Grid>
+      </Grid>
+
       <DataCards
         sx={cardsOnly}
         items={rows}
@@ -139,7 +193,7 @@ export default function BillingTable({
               onClick={() => setPaying(r)}
               sx={{ color: "text.secondary" }}
             >
-              Change
+              Add payment
             </Button>
           ) : (
             <Button
@@ -251,7 +305,7 @@ export default function BillingTable({
                         onClick={() => setPaying(r)}
                         sx={{ color: "text.secondary" }}
                       >
-                        Change
+                        Add payment
                       </Button>
                     ) : (
                       <Button
