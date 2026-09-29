@@ -6,7 +6,6 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -14,12 +13,11 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import SaveIcon from "@mui/icons-material/Save";
 import LockResetIcon from "@mui/icons-material/LockReset";
-import { formatLiters, formatRate } from "@/lib/format";
 import { ACCOUNT_STATUS, STATUS_COLOR } from "@/lib/constants";
 import AvatarPicker from "@/components/AvatarPicker";
-import EditIcon from "@mui/icons-material/Edit";
-import MilkPlanDialog from "./MilkPlanDialog";
-import { updateMyProfile, changeMyPassword } from "./actions";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import { updateMyProfile, changeMyPassword, updateMyMilkPlan } from "./actions";
 
 function SaveButton({ icon: Icon = SaveIcon, label, busy }) {
   const { pending } = useFormStatus();
@@ -59,35 +57,32 @@ function Section({ title, subtitle, action, children }) {
   );
 }
 
-function Row({ label, value }) {
-  return (
-    <Stack
-      direction="row"
-      sx={{
-        justifyContent: "space-between",
-        alignItems: "baseline",
-        gap: 2,
-        py: 1,
-      }}
-    >
-      <Typography variant="body2" color="text.secondary">
-        {label}
-      </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right" }}>
-        {value}
-      </Typography>
-    </Stack>
-  );
-}
+const TABS = ["My details", "My milk details", "Password"];
 
 export default function ProfileView({ user, customer, settings }) {
   const [profileState, saveProfile] = useActionState(updateMyProfile, null);
   const [passwordState, savePassword] = useActionState(changeMyPassword, null);
-  const [editingPlan, setEditingPlan] = useState(false);
+  const [planState, savePlan] = useActionState(updateMyMilkPlan, null);
+  const [tab, setTab] = useState(0);
 
   return (
-    <Grid container spacing={3} sx={{ alignItems: "flex-start" }}>
-      <Grid size={{ xs: 12, md: 6 }}>
+    <Box>
+      {/* Tabs, the same way the dairy's Settings page is laid out. Side by
+          side these three sat in two columns of very different heights, and
+          the shorter one left a hole down the page. */}
+      <Tabs
+        value={tab}
+        onChange={(e, v) => setTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}
+      >
+        {TABS.map((label) => (
+          <Tab key={label} label={label} sx={{ textTransform: "none" }} />
+        ))}
+      </Tabs>
+
+      {tab === 0 && (
         <Section
           title="My details"
           subtitle="You can change your name, mobile and photo yourself."
@@ -146,140 +141,181 @@ export default function ProfileView({ user, customer, settings }) {
             </Stack>
           </Box>
         </Section>
-      </Grid>
+      )}
 
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Stack spacing={3}>
-          <Section
-            title="My milk plan"
-            subtitle="Your details and how much milk you want."
-            action={
-              customer && (
-                <Button
-                  size="small"
-                  startIcon={<EditIcon sx={{ fontSize: 17 }} />}
-                  onClick={() => setEditingPlan(true)}
-                >
-                  Edit
-                </Button>
-              )
-            }
-          >
-            {customer ? (
-              <>
-                <Row
-                  label="Name (in the dairy's records)"
-                  value={customer.name}
-                />
-                <Divider />
-                <Row label="Mobile" value={customer.mobile} />
-                <Divider />
-                <Row label="Address" value={customer.address || "—"} />
-                <Divider />
-                <Row
-                  label="Daily milk"
-                  value={formatLiters(customer.daily_quantity)}
-                />
-                <Divider />
-                <Row
-                  label="My rate"
-                  value={`${formatRate(customer.rate_per_liter)} / L`}
-                />
-                <Divider />
-                <Row
-                  label="Delivery time"
-                  value={customer.delivery_time || "—"}
-                />
-                <Divider />
-                <Stack
-                  direction="row"
-                  sx={{
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    py: 1,
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Status
-                  </Typography>
-                  <Chip
-                    size="small"
-                    label={ACCOUNT_STATUS[customer.status]}
-                    color={STATUS_COLOR[customer.status]}
-                    variant={
-                      customer.status === "active" ? "filled" : "outlined"
-                    }
-                  />
-                </Stack>
-
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ display: "block", mt: 2 }}
-                >
-                  The rate and your status are set by {settings.dairy_name}
-                  {settings.phone ? ` — ${settings.phone}` : ""}.
-                </Typography>
-              </>
-            ) : (
-              <Alert severity="info">
-                Your login is not linked to a dairy record yet. Contact the
-                dairy.
-              </Alert>
-            )}
-          </Section>
-
-          <Section
-            title="Change password"
-            subtitle="Use at least 8 characters."
-          >
-            <Box component="form" action={savePassword}>
-              {passwordState?.error && (
+      {tab === 1 && (
+        <Section
+          title="My milk details"
+          subtitle="Your details and how much milk you want."
+        >
+          {customer ? (
+            <Box component="form" action={savePlan}>
+              {planState?.error && (
                 <Alert severity="error" sx={{ mb: 2 }}>
-                  {passwordState.error}
+                  {planState.error}
                 </Alert>
               )}
-              {passwordState?.ok && (
+              {planState?.ok && (
                 <Alert severity="success" sx={{ mb: 2 }}>
-                  Password changed.
+                  Saved.
                 </Alert>
               )}
+
+              {/* Two to a row from sm up, the way the dairy's own Settings
+                  tabs are laid out. Address gets a row of its own: it is the
+                  one field somebody writes a sentence into. */}
+              <Grid container spacing={2} sx={{ mb: 2.5 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="Name (in the dairy's records)"
+                    value={customer.name ?? ""}
+                    fullWidth
+                    disabled
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    name="mobile"
+                    label="Mobile"
+                    defaultValue={customer.mobile ?? ""}
+                    fullWidth
+                    helperText="10 digits. The dairy calls this number."
+                    slotProps={{
+                      htmlInput: { inputMode: "numeric", maxLength: 10 },
+                    }}
+                  />
+                </Grid>
+
+                <Grid size={12}>
+                  <TextField
+                    name="address"
+                    label="Address"
+                    defaultValue={customer.address ?? ""}
+                    fullWidth
+                    multiline
+                    rows={2}
+                    helperText="Where the milk is delivered"
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    name="daily_quantity"
+                    label="Daily milk (liters)"
+                    type="number"
+                    defaultValue={customer.daily_quantity ?? 1}
+                    required
+                    fullWidth
+                    slotProps={{
+                      htmlInput: { min: 0.25, max: 99, step: 0.25 },
+                    }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    name="rate_per_liter"
+                    label="Rate (₹ / liter)"
+                    type="number"
+                    defaultValue={customer.rate_per_liter ?? ""}
+                    required
+                    fullWidth
+                    helperText="Old rates are kept in history"
+                    slotProps={{ htmlInput: { min: 0.01, step: "any" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    name="delivery_time"
+                    label="Delivery time"
+                    defaultValue={customer.delivery_time ?? ""}
+                    fullWidth
+                    placeholder="e.g. before 7 am"
+                  />
+                </Grid>
+              </Grid>
 
               <Stack spacing={2}>
-                <TextField
-                  type="password"
-                  name="password"
-                  label="New password"
-                  required
-                  fullWidth
-                  autoComplete="new-password"
-                />
-                <TextField
-                  type="password"
-                  name="confirm"
-                  label="Confirm password"
-                  required
-                  fullWidth
-                  autoComplete="new-password"
-                />
-                <Box sx={{ textAlign: "right" }}>
-                  <SaveButton
-                    icon={LockResetIcon}
-                    label="Change password"
-                    busy="Changing..."
-                  />
-                </Box>
+                <Stack
+                  direction="row"
+                  sx={{ justifyContent: "space-between", alignItems: "center" }}
+                >
+                  <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Status
+                    </Typography>
+                    <Chip
+                      size="small"
+                      label={ACCOUNT_STATUS[customer.status]}
+                      color={STATUS_COLOR[customer.status]}
+                      variant={
+                        customer.status === "active" ? "filled" : "outlined"
+                      }
+                    />
+                  </Stack>
+
+                  <SaveButton label="Save" busy="Saving..." />
+                </Stack>
+
+                <Typography variant="caption" color="text.secondary">
+                  Your status and the name on the dairy&apos;s records are set
+                  by {settings.dairy_name}
+                  {settings.phone ? ` — ${settings.phone}` : ""}.
+                </Typography>
               </Stack>
             </Box>
-          </Section>
-        </Stack>
-      </Grid>
+          ) : (
+            <Alert severity="info">
+              Your login is not linked to a dairy record yet. Contact the dairy.
+            </Alert>
+          )}
+        </Section>
+      )}
 
-      <MilkPlanDialog
-        open={editingPlan}
-        onClose={() => setEditingPlan(false)}
-        customer={customer}
-      />
-    </Grid>
+      {tab === 2 && (
+        <Section title="Change password" subtitle="Use at least 8 characters.">
+          <Box component="form" action={savePassword}>
+            {passwordState?.error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {passwordState.error}
+              </Alert>
+            )}
+            {passwordState?.ok && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                Password changed.
+              </Alert>
+            )}
+
+            <Stack spacing={2}>
+              <TextField
+                type="password"
+                name="password"
+                label="New password"
+                required
+                fullWidth
+                autoComplete="new-password"
+              />
+              <TextField
+                type="password"
+                name="confirm"
+                label="Confirm password"
+                required
+                fullWidth
+                autoComplete="new-password"
+              />
+              <Box sx={{ textAlign: "right" }}>
+                <SaveButton
+                  icon={LockResetIcon}
+                  label="Change password"
+                  busy="Changing..."
+                />
+              </Box>
+            </Stack>
+          </Box>
+        </Section>
+      )}
+    </Box>
   );
 }

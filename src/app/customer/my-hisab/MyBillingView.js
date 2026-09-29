@@ -67,6 +67,7 @@ export default function MyBillingView({
             value={formatLiters(liters)}
             sub={`${days} days`}
             icon={LocalDrinkIcon}
+            color="blue"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -74,6 +75,7 @@ export default function MyBillingView({
             label="Total amount"
             value={formatAmount(billed)}
             icon={CurrencyRupeeIcon}
+            color="violet"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -82,7 +84,7 @@ export default function MyBillingView({
             value={formatAmount(received)}
             sub={`${payments.length} var`}
             icon={PaymentsIcon}
-            color="success"
+            color="green"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -90,7 +92,7 @@ export default function MyBillingView({
             label="Due for this period"
             value={formatAmount(baki)}
             icon={AccountBalanceWalletIcon}
-            color={baki > 0 ? "warning" : "success"}
+            color="amber"
           />
         </Grid>
       </Grid>

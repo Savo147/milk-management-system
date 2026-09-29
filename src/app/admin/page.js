@@ -3,8 +3,8 @@ import Grid from "@mui/material/Grid";
 import PeopleIcon from "@mui/icons-material/People";
 import LocalDrinkIcon from "@mui/icons-material/LocalDrink";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
-import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { createClient } from "@/lib/supabase/server";
 import { formatAmount, formatLiters } from "@/lib/format";
 import PageHeader from "@/components/PageHeader";
@@ -30,8 +30,7 @@ export default async function AdminDashboard() {
     { count: activeCustomers },
     { data: todayEntries },
     { data: monthEntries },
-    { count: pendingBills },
-    { count: doneBills },
+    { data: balances },
   ] = await Promise.all([
     supabase
       .from("customers")
@@ -45,14 +44,8 @@ export default async function AdminDashboard() {
       .from("milk_entries")
       .select("actual_quantity, total_amount")
       .gte("date", month),
-    supabase
-      .from("monthly_bills")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pending"),
-    supabase
-      .from("monthly_bills")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "done"),
+    // One row per customer, summed by the database — see migration 0010.
+    supabase.from("customer_balances").select("due"),
   ]);
 
   const sum = (rows, key) =>
@@ -65,6 +58,11 @@ export default async function AdminDashboard() {
   const served = (todayEntries ?? []).filter(
     (e) => e.delivery_status !== "missed",
   ).length;
+  // Everything owed, by everybody, all time. Not a month's slice of it:
+  // what is owed does not reset when the month does.
+  const totalDue = (balances ?? []).reduce((t, b) => t + Number(b.due ?? 0), 0);
+  const owing = (balances ?? []).filter((b) => Number(b.due) > 0).length;
+
   const missed = (todayEntries ?? []).filter(
     (e) => e.delivery_status === "missed",
   ).length;
@@ -89,6 +87,7 @@ export default async function AdminDashboard() {
             value={formatLiters(todayMilk)}
             sub={`delivered to ${served} customers`}
             icon={LocalDrinkIcon}
+            color="blue"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -97,7 +96,7 @@ export default async function AdminDashboard() {
             value={formatAmount(todayAmount)}
             sub={`${todayEntries?.length ?? 0} entries`}
             icon={CurrencyRupeeIcon}
-            color="success"
+            color="green"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -105,7 +104,7 @@ export default async function AdminDashboard() {
             label="Active customers"
             value={activeCustomers ?? 0}
             icon={PeopleIcon}
-            color="info"
+            color="violet"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -114,7 +113,7 @@ export default async function AdminDashboard() {
             value={missed}
             sub="today"
             icon={LocalShippingIcon}
-            color={missed > 0 ? "error" : "success"}
+            color={missed > 0 ? "red" : "teal"}
           />
         </Grid>
       </Grid>
@@ -127,6 +126,7 @@ export default async function AdminDashboard() {
             label="This month's milk"
             value={formatLiters(monthMilk)}
             icon={LocalDrinkIcon}
+            color="pink"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -134,16 +134,20 @@ export default async function AdminDashboard() {
             label="This month's amount"
             value={formatAmount(monthAmount)}
             icon={CurrencyRupeeIcon}
-            color="success"
+            color="indigo"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
           <StatCard
-            label="Unpaid bills"
-            value={pendingBills ?? 0}
-            sub={`${doneBills ?? 0} settled`}
-            icon={PendingActionsIcon}
-            color="warning"
+            label="Total due"
+            value={formatAmount(totalDue)}
+            sub={
+              owing > 0
+                ? `${owing} ${owing === 1 ? "customer" : "customers"}`
+                : "everyone is settled"
+            }
+            icon={AccountBalanceWalletIcon}
+            color="amber"
           />
         </Grid>
       </Grid>

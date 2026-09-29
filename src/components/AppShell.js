@@ -514,7 +514,10 @@ export default function AppShell({
                     md: "calc(100dvh - 68px)",
                   },
                 }
-              : { p: { xs: 2, md: 3 }, maxWidth: 1400, mx: "auto" }
+              : // No width cap. It was 1400px and centred, which on a wide
+                // monitor left a band of empty page down each side while the
+                // tables inside were being squeezed.
+                { p: { xs: 2, md: 3 } }
           }
         >
           {children}

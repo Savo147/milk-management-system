@@ -15,6 +15,7 @@ import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import SellIcon from "@mui/icons-material/Sell";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import { createClient } from "@/lib/supabase/server";
 import { requireCustomerAccount } from "@/lib/auth";
 import {
@@ -97,7 +98,7 @@ export default async function CustomerDashboard() {
       .maybeSingle(),
     supabase
       .from("milk_entries")
-      .select("actual_quantity, total_amount")
+      .select("actual_quantity, total_amount, delivery_status")
       .eq("customer_id", customer.id)
       .gte("date", monthStart()),
     // Due is an all-time figure on purpose: what is owed does not reset when
@@ -133,6 +134,12 @@ export default async function CustomerDashboard() {
   // Paying ahead leaves payments above the milk; a negative Due would just
   // read as broken.
   const baki = Math.max(0, billed - paid);
+
+  // Days the round did not reach them. A day nobody has recorded yet is not
+  // a missed one — only an entry saved as "missed" counts.
+  const missedThisMonth = (month.data ?? []).filter(
+    (e) => e.delivery_status === "missed",
+  ).length;
   const lastPaid = allPaid.data?.[0]?.paid_on ?? null;
 
   const openProblems = (problems.data ?? []).filter(
@@ -163,13 +170,7 @@ export default async function CustomerDashboard() {
             value={formatLiters(today.data?.actual_quantity ?? 0)}
             sub={DAILY_ROW_STATUS[todayStatus]}
             icon={LocalDrinkIcon}
-            color={
-              todayStatus === "missed"
-                ? "error"
-                : todayStatus === "pending"
-                  ? "warning"
-                  : "primary"
-            }
+            color={todayStatus === "missed" ? "red" : "blue"}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -177,7 +178,7 @@ export default async function CustomerDashboard() {
             label="Today's amount"
             value={formatAmount(today.data?.total_amount ?? 0)}
             icon={CurrencyRupeeIcon}
-            color="success"
+            color="green"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -186,7 +187,7 @@ export default async function CustomerDashboard() {
             value={`${formatRate(customer.rate_per_liter)} / L`}
             sub={`${formatLiters(customer.daily_quantity)} a day`}
             icon={SellIcon}
-            color="info"
+            color="violet"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -199,12 +200,12 @@ export default async function CustomerDashboard() {
                 : "No payments yet"
             }
             icon={AccountBalanceWalletIcon}
-            color={baki > 0 ? "warning" : "success"}
+            color="amber"
           />
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 4 }} />
+      <Box sx={{ mt: 6 }} />
       <SectionLabel>This month</SectionLabel>
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -213,6 +214,7 @@ export default async function CustomerDashboard() {
             value={formatLiters(sum(month.data, "actual_quantity"))}
             sub={`${month.data?.length ?? 0} days`}
             icon={LocalDrinkIcon}
+            color="pink"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -220,7 +222,16 @@ export default async function CustomerDashboard() {
             label="This month's amount"
             value={formatAmount(sum(month.data, "total_amount"))}
             icon={CurrencyRupeeIcon}
-            color="success"
+            color="indigo"
+          />
+        </Grid>
+        <Grid size={{ xs: 6, md: 4, lg: 3 }}>
+          <StatCard
+            label="Missed this month"
+            value={missedThisMonth}
+            sub={missedThisMonth > 0 ? "days with no milk" : "nothing missed"}
+            icon={LocalShippingIcon}
+            color={missedThisMonth > 0 ? "red" : "teal"}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -229,17 +240,17 @@ export default async function CustomerDashboard() {
             value={openProblems}
             sub={openProblems > 0 ? "awaiting a reply" : "all resolved"}
             icon={ReportProblemIcon}
-            color={openProblems > 0 ? "warning" : "success"}
+            color="red"
           />
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 4 }} />
+      <Box sx={{ mt: 6 }} />
       <SectionLabel>Last 7 days</SectionLabel>
       {/* Written out here rather than through DataCards: this is a Server
           Component, and DataCards takes its columns as callbacks, which
           cannot cross that boundary. */}
-      <Stack sx={{ ...cardsOnly, gap: 1.25 }}>
+      <Stack sx={{ ...cardsOnly, gap: 2 }}>
         {(recent.data ?? []).length === 0 && (
           <Paper
             elevation={0}
@@ -371,7 +382,7 @@ export default async function CustomerDashboard() {
 
       {(problems.data ?? []).length > 0 && (
         <>
-          <Box sx={{ mt: 4 }} />
+          <Box sx={{ mt: 6 }} />
           <SectionLabel>Recent complaints</SectionLabel>
           <Stack spacing={1.5}>
             {problems.data.map((p) => (
