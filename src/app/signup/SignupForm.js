@@ -80,7 +80,7 @@ export default function SignupForm() {
             <TextField
               name="name"
               label="Your name"
-              placeholder="Nishant Kalariya"
+              placeholder="Your name"
               autoComplete="name"
               required
               fullWidth
