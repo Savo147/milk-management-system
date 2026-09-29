@@ -20,3 +20,16 @@ export const tableOnly = { display: { xs: "none", md: "block" } };
  * empty-state panel, and the panel centres its text properly in flow.
  */
 export const cardsOnly = { display: { xs: "block", md: "none" } };
+
+/**
+ * The same switch, for a container that lays its own children out — a Stack.
+ *
+ * Spreading `cardsOnly` onto a Stack looks harmless and is not: `display:
+ * block` beats the Stack's own `display: flex`, and a block container ignores
+ * `gap` entirely. The cards then sit edge to edge with no space between them,
+ * and the `gap` in the same `sx` looks as though it simply did not work.
+ */
+export const cardsOnlyFlex = {
+  display: { xs: "flex", md: "none" },
+  flexDirection: "column",
+};

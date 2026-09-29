@@ -338,6 +338,51 @@ export async function createChannel({
   return { ok: true, id: channel.id };
 }
 
+/**
+ * Changes a channel's name, its description, and — the point of this —
+ * whether only the dairy may post in it.
+ *
+ * Who can *see* a channel is deliberately not editable. Turning a private
+ * channel public would hand everything already said in it to people who were
+ * never in the room, and going the other way would strand messages behind a
+ * wall the people who wrote them can no longer get past. Posting is a rule
+ * about what happens next, so it can be turned round freely; visibility is a
+ * promise about what has already been said.
+ */
+export async function updateChannel({
+  id,
+  name,
+  description,
+  announcementOnly,
+}) {
+  // prettier-ignore
+  const user = await getCurrentUser();
+  if (user?.role !== "admin") return { error: "Only the dairy can do that." };
+
+  const title = String(name ?? "").trim();
+  if (!title) return { error: "Give the channel a name." };
+  if (title.length > 60) return { error: "That name is too long." };
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("channels")
+    .update({
+      name: title,
+      description: String(description ?? "").trim() || null,
+      announcement_only: Boolean(announcementOnly),
+    })
+    .eq("id", String(id ?? ""))
+    .select("id");
+
+  if (error) return { error: error.message };
+  // A row the policy hid comes back as no row at all, not as an error.
+  if (!data?.length) return { error: "That channel could not be changed." };
+
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 /** Removes a channel and, by cascade, its messages and membership. */
 export async function deleteChannel(id) {
   const user = await getCurrentUser();

@@ -391,10 +391,10 @@ export default function DailyMilkForm({ date, customers }) {
               <TableCell align="center" sx={{ width: "14%" }}>
                 Delivered
               </TableCell>
-              <TableCell align="center" sx={{ width: "14%" }}>
+              <TableCell align="right" sx={{ width: "14%" }}>
                 Rate
               </TableCell>
-              <TableCell align="center" sx={{ width: "14%" }}>
+              <TableCell align="right" sx={{ width: "14%" }}>
                 Amount
               </TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
@@ -455,11 +455,11 @@ export default function DailyMilkForm({ date, customers }) {
                     />
                   </TableCell>
 
-                  <TableCell align="center">
+                  <TableCell align="right">
                     {formatRate(c.rate_per_liter)}
                   </TableCell>
 
-                  <TableCell align="center">
+                  <TableCell align="right">
                     {amount === null ? "—" : formatAmount(amount)}
                   </TableCell>
 

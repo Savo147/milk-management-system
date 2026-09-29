@@ -27,6 +27,10 @@ import { tableOnly, cardsOnly } from "@/lib/responsive";
 import RangePicker from "@/components/RangePicker";
 import DataCards from "@/components/DataCards";
 import StatCard from "@/components/StatCard";
+import LocalDrinkIcon from "@mui/icons-material/LocalDrink";
+import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 
 export default function MyMilkView({
   entries,
@@ -61,24 +65,37 @@ export default function MyMilkView({
     <>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard label="Total milk" value={formatLiters(liters)} />
+          <StatCard
+            label="Total milk"
+            value={formatLiters(liters)}
+            icon={LocalDrinkIcon}
+            color="blue"
+          />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             label="Total amount"
             value={formatAmount(amount)}
-            color="success"
+            icon={CurrencyRupeeIcon}
+            color="green"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard label="Days" value={entries.length} color="info" />
+          <StatCard
+            label="Days"
+            value={entries.length}
+            sub="in this period"
+            icon={CalendarMonthIcon}
+            color="violet"
+          />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
             label="Not received"
             value={missed}
-            sub={missed > 0 ? "days" : ""}
-            color={missed > 0 ? "error" : "success"}
+            sub={missed > 0 ? "days" : "nothing missed"}
+            icon={LocalShippingIcon}
+            color="red"
           />
         </Grid>
       </Grid>

@@ -4,8 +4,6 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Grid";
 import InputAdornment from "@mui/material/InputAdornment";
 import Paper from "@mui/material/Paper";
@@ -24,28 +22,10 @@ import PrintIcon from "@mui/icons-material/Print";
 import { formatAmount, formatLiters } from "@/lib/format";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import DataCards from "@/components/DataCards";
+import StatCard from "@/components/StatCard";
+import LocalDrinkIcon from "@mui/icons-material/LocalDrink";
+import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import RangePicker from "@/components/RangePicker";
-
-function Summary({ label, value }) {
-  return (
-    <Card sx={{ height: "100%" }}>
-      <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-        <Typography
-          variant="caption"
-          sx={{ color: "text.secondary", fontWeight: 600 }}
-        >
-          {label}
-        </Typography>
-        <Typography
-          variant="h5"
-          sx={{ mt: 0.5, fontVariantNumeric: "tabular-nums" }}
-        >
-          {value}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-}
 
 /**
  * What is still owed for the period.
@@ -144,10 +124,20 @@ export default function ReportView({
     <Box>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Summary label="Total milk" value={formatLiters(totals.liters)} />
+          <StatCard
+            label="Total milk"
+            value={formatLiters(totals.liters)}
+            icon={LocalDrinkIcon}
+            color="blue"
+          />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Summary label="Total amount" value={formatAmount(totals.amount)} />
+          <StatCard
+            label="Total amount"
+            value={formatAmount(totals.amount)}
+            icon={CurrencyRupeeIcon}
+            color="green"
+          />
         </Grid>
       </Grid>
 
@@ -294,19 +284,19 @@ export default function ReportView({
           <TableHead>
             <TableRow>
               <TableCell>Customer</TableCell>
-              <TableCell align="center" sx={{ width: "16%" }}>
+              <TableCell align="right" sx={{ width: "16%" }}>
                 Milk
               </TableCell>
-              <TableCell align="center" sx={{ width: "18%" }}>
+              <TableCell align="right" sx={{ width: "18%" }}>
                 Amount
               </TableCell>
-              <TableCell align="center" sx={{ width: "18%" }}>
+              <TableCell align="right" sx={{ width: "18%" }}>
                 Received
               </TableCell>
-              <TableCell align="center" sx={{ width: "16%" }}>
+              <TableCell align="right" sx={{ width: "16%" }}>
                 Due
               </TableCell>
-              <TableCell align="center" sx={{ width: "14%" }}>
+              <TableCell align="right" sx={{ width: "14%" }}>
                 Due (milk)
               </TableCell>
             </TableRow>
@@ -315,7 +305,7 @@ export default function ReportView({
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     No records in this period.
                   </Typography>
@@ -334,16 +324,16 @@ export default function ReportView({
                   </Typography>
                 </TableCell>
 
-                <TableCell align="center">{formatLiters(r.liters)}</TableCell>
+                <TableCell align="right">{formatLiters(r.liters)}</TableCell>
 
-                <TableCell align="center" sx={{ fontWeight: 600 }}>
+                <TableCell align="right" sx={{ fontWeight: 600 }}>
                   {formatAmount(r.amount)}
                 </TableCell>
 
-                <TableCell align="center">{formatAmount(r.paid)}</TableCell>
+                <TableCell align="right">{formatAmount(r.paid)}</TableCell>
 
                 <TableCell
-                  align="center"
+                  align="right"
                   sx={{
                     fontWeight: 600,
                     color: due(r) > 0 ? "warning.dark" : "text.secondary",
@@ -353,7 +343,7 @@ export default function ReportView({
                 </TableCell>
 
                 <TableCell
-                  align="center"
+                  align="right"
                   sx={{ color: due(r) > 0 ? "warning.dark" : "text.secondary" }}
                 >
                   {formatLiters(litersDue(r))}

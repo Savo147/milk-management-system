@@ -81,8 +81,10 @@ export default function Attachment({ attachment, mine }) {
         p: 1,
         borderRadius: 1.5,
         // Inside a blue bubble a white panel would shout; a wash of the
-        // bubble's own colour reads as part of it.
-        bgcolor: mine ? "rgba(255, 255, 255, 0.16)" : "background.paper",
+        // bubble's own colour reads as part of it. An incoming bubble is
+        // white itself now, so there the panel goes the other way — a grey
+        // step down, or the file would vanish into the bubble.
+        bgcolor: mine ? "rgba(255, 255, 255, 0.16)" : "grey.100",
         maxWidth: 240,
       }}
     >

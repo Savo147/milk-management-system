@@ -79,8 +79,14 @@ function Bubble({ message, initial, photo, showAvatar, onToggleComplaint }) {
           // bubble points back at whoever wrote it.
           borderBottomRightRadius: mine ? 4 : 16,
           borderBottomLeftRadius: mine ? 16 : 4,
-          bgcolor: mine ? "primary.main" : "grey.100",
+          // An incoming bubble is white with a hairline rather than grey:
+          // against the faintly tinted thread behind it, grey on grey went
+          // soft and the messages stopped looking like separate things.
+          bgcolor: mine ? "primary.main" : "background.paper",
           color: mine ? "primary.contrastText" : "text.primary",
+          border: mine ? 0 : 1,
+          borderColor: "grey.200",
+          boxShadow: "0 1px 2px rgba(21,26,32,.06)",
         }}
       >
         {/* In a channel there can be more than two people, so anything that
@@ -362,7 +368,7 @@ export default function ChatThread({
           minHeight: 0,
           overflowY: "auto",
           py: 1,
-          bgcolor: (t) => alpha(t.palette.primary.main, 0.02),
+          bgcolor: (t) => alpha(t.palette.primary.main, 0.04),
         }}
       >
         {messages === null && (

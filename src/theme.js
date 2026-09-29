@@ -66,6 +66,29 @@ const theme = createTheme({
   },
 
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        // One keyboard focus ring for the whole app. :focus-visible only
+        // fires for keyboard and assistive navigation, so nothing changes
+        // for a mouse or a thumb.
+        "*:focus-visible": {
+          outline: `2px solid ${BRAND[400]}`,
+          outlineOffset: 2,
+        },
+        // Long tables and the chat thread both scroll; the default Windows
+        // scrollbar is a grey slab next to this palette.
+        "*::-webkit-scrollbar": { width: 10, height: 10 },
+        "*::-webkit-scrollbar-thumb": {
+          backgroundColor: GREY[300],
+          borderRadius: 8,
+          border: "2px solid transparent",
+          backgroundClip: "content-box",
+        },
+        "*::-webkit-scrollbar-thumb:hover": { backgroundColor: GREY[400] },
+        "*::-webkit-scrollbar-track": { backgroundColor: "transparent" },
+      },
+    },
+
     // Flat, bordered surfaces throughout — drop shadows on every card make a
     // dense admin screen look noisy.
     MuiPaper: {
@@ -92,7 +115,22 @@ const theme = createTheme({
     // of the dozen call sites.
     MuiDialog: {
       styleOverrides: {
+        /**
+         * The blur sits on the dialog's own full-screen container, not on the
+         * backdrop inside it.
+         *
+         * MUI gives that backdrop `z-index: -1` so it paints under the paper.
+         * `backdrop-filter` blurs whatever is painted behind an element
+         * *within its own stacking context*, and from down there the page is
+         * not in it — so the filter had nothing to work on and only the dark
+         * wash showed. This container sits above the page, so from here there
+         * is something to blur. The paper is a child, and children paint on
+         * top of a backdrop-filter untouched, so the dialog itself stays sharp.
+         */
+        root: { backdropFilter: "blur(6px)" },
+
         paper: ({ theme }) => ({
+          borderRadius: 16,
           [theme.breakpoints.down("sm")]: {
             margin: 16,
             width: "calc(100% - 32px)",
@@ -140,6 +178,14 @@ const theme = createTheme({
       },
     },
 
+    MuiTableContainer: {
+      styleOverrides: {
+        // The head has its own background, so without clipping it squares off
+        // the two top corners of the bordered box it sits in.
+        root: { borderRadius: 10 },
+      },
+    },
+
     MuiTableCell: {
       styleOverrides: {
         root: {
@@ -154,7 +200,13 @@ const theme = createTheme({
           textTransform: "uppercase",
           letterSpacing: "0.04em",
           whiteSpace: "nowrap",
+          // A firmer line under the head than between the rows, so the
+          // header reads as a band rather than as the first row.
+          borderBottomColor: GREY[300],
         },
+        // Figures only line up in a column if the digits are the same width.
+        // Every right-aligned cell in this app holds a number.
+        alignRight: { fontVariantNumeric: "tabular-nums" },
       },
     },
 
@@ -162,8 +214,22 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           "&:last-child td": { borderBottom: 0 },
-          "&.MuiTableRow-hover:hover": { backgroundColor: GREY[50] },
+          transition: "background-color 120ms ease",
+          // The old hover was GREY[50] — the same colour as the page behind
+          // the table, so on a white table it was invisible and the rows felt
+          // dead. A faint wash of the brand blue instead: enough to follow
+          // your eye across a wide row, not enough to shout.
+          "&.MuiTableRow-hover:hover": {
+            backgroundColor: alpha(BRAND[500], 0.06),
+          },
+          "&.Mui-selected": {
+            backgroundColor: alpha(BRAND[500], 0.1),
+            "&:hover": { backgroundColor: alpha(BRAND[500], 0.14) },
+          },
         },
+        // Head rows inherit the hover class from nothing, but a table head
+        // sitting on GREY[50] should never light up under the pointer.
+        head: { "&.MuiTableRow-hover:hover": { backgroundColor: GREY[50] } },
       },
     },
 
@@ -189,8 +255,67 @@ const theme = createTheme({
       },
     },
 
-    MuiDialog: {
-      styleOverrides: { paper: { borderRadius: 16 } },
+    // Tabs read as navigation, not as buttons: sentence case, a thicker
+    // indicator with its ends rounded off.
+    MuiTabs: {
+      styleOverrides: {
+        indicator: { height: 3, borderRadius: 3 },
+      },
+    },
+
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+          fontWeight: 600,
+          minHeight: 46,
+          "&:hover": { color: BRAND[600] },
+        },
+      },
+    },
+
+    // Menus and popovers get the same flat bordered treatment as the cards,
+    // with one soft shadow so they clearly float above the page.
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          borderRadius: 12,
+          border: `1px solid ${GREY[200]}`,
+          boxShadow: "0 8px 24px rgba(21,26,32,.10)",
+        },
+        list: { padding: 6 },
+      },
+    },
+
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          minHeight: 38,
+          "&.Mui-selected": {
+            backgroundColor: alpha(BRAND[500], 0.1),
+            "&:hover": { backgroundColor: alpha(BRAND[500], 0.14) },
+          },
+        },
+      },
+    },
+
+    // Behind a dialog the page goes soft as well as dark, so the thing being
+    // asked is clearly the only thing to answer. The dark wash lives here;
+    // the blur cannot — see MuiDialog below.
+    MuiBackdrop: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "rgba(21, 26, 32, 0.4)",
+        },
+        // Menus and popovers put an invisible backdrop behind themselves
+        // purely to catch the click that closes them. Dimming the page for
+        // those would make opening the account menu feel like a decision.
+        invisible: {
+          backgroundColor: "transparent",
+          backdropFilter: "none",
+        },
+      },
     },
 
     MuiTooltip: {

@@ -54,7 +54,7 @@ export default function DataCards({
 
   return (
     <Box sx={sx}>
-      <Stack sx={{ gap: 1.25 }}>
+      <Stack sx={{ gap: 2 }}>
         {items.map((item) => {
           const rows = (fields?.(item) ?? []).filter(Boolean);
           const foot = actions?.(item);

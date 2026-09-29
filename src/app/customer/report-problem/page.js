@@ -14,6 +14,8 @@ export default async function ReportProblemPage({ searchParams }) {
   const { customer } = await requireCustomerAccount();
   const params = await searchParams;
   const { mode, from, to, label, monthFrom, monthTo } = resolveRange(params);
+  // Which complaint to open, when a notification sent us here.
+  const openReport = params?.report ? String(params.report) : null;
 
   if (!customer) {
     return (
@@ -85,6 +87,7 @@ export default async function ReportProblemPage({ searchParams }) {
         </Alert>
       ) : (
         <ProblemsView
+          key={openReport ?? "none"}
           problems={problems}
           repliesByReport={repliesByReport}
           customer={customer}
@@ -94,6 +97,7 @@ export default async function ReportProblemPage({ searchParams }) {
           to={to}
           monthFrom={monthFrom}
           monthTo={monthTo}
+          openReport={openReport}
         />
       )}
     </>

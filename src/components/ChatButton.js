@@ -6,7 +6,6 @@ import Avatar from "@mui/material/Avatar";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import ListItemButton from "@mui/material/ListItemButton";
 import Popover from "@mui/material/Popover";
@@ -77,6 +76,10 @@ export default function ChatButton({
             sx: {
               mt: 1,
               borderRadius: 3,
+              border: 1,
+              borderColor: "divider",
+              boxShadow: "0 12px 32px rgba(21,26,32,.12)",
+              overflow: "hidden",
               width: { xs: "calc(100vw - 32px)", sm: 360 },
               maxWidth: 360,
               // The preview list shrinks to its rows; only an open thread
@@ -90,7 +93,15 @@ export default function ChatButton({
       >
         <Stack
           direction="row"
-          sx={{ alignItems: "center", gap: 1, p: 1.5, flexShrink: 0 }}
+          sx={{
+            alignItems: "center",
+            gap: 1,
+            px: 2,
+            py: 1.25,
+            flexShrink: 0,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
         >
           {openThread && (
             <IconButton
@@ -111,13 +122,24 @@ export default function ChatButton({
           </Typography>
 
           {unread > 0 && !openThread && (
-            <Typography variant="caption" color="text.secondary">
-              {unread} unread
-            </Typography>
+            <Box
+              sx={{
+                px: 0.9,
+                height: 19,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: 5,
+                flexShrink: 0,
+                bgcolor: "error.main",
+                color: "#fff",
+                fontSize: "0.7rem",
+                fontWeight: 700,
+              }}
+            >
+              {unread > 99 ? "99+" : unread}
+            </Box>
           )}
         </Stack>
-
-        <Divider />
 
         {/* The list of conversations — admin only; a customer has just one.
             Only the newest few, the way a header preview should read; the
@@ -125,18 +147,42 @@ export default function ChatButton({
         {!openThread && (
           <Box sx={{ flexGrow: 1, minHeight: 0, overflowY: "auto" }}>
             {all.length === 0 && (
-              <Box sx={{ p: 3, textAlign: "center" }}>
+              <Stack sx={{ alignItems: "center", gap: 1, px: 3, py: 5 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    placeItems: "center",
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    bgcolor: "grey.100",
+                    color: "grey.400",
+                  }}
+                >
+                  <MessagesIcon />
+                </Box>
                 <Typography variant="body2" color="text.secondary">
                   No conversations yet.
                 </Typography>
-              </Box>
+              </Stack>
             )}
 
-            {shown.map((t) => (
+            {shown.map((t, i) => (
               <ListItemButton
                 key={`${t.kind}:${t.id}`}
                 onClick={() => setOpenThread(t)}
-                sx={{ gap: 1.5, py: 1.25, borderRadius: 0 }}
+                sx={{
+                  gap: 1.5,
+                  px: 2,
+                  py: 1.25,
+                  borderRadius: 0,
+                  borderBottom: i === shown.length - 1 ? 0 : 1,
+                  borderColor: "divider",
+                  // Same language as the bell: unread is tinted and edged.
+                  bgcolor: t.unread ? "primary.50" : "transparent",
+                  borderLeft: 3,
+                  borderLeftColor: t.unread ? "primary.main" : "transparent",
+                }}
               >
                 <Avatar
                   src={
@@ -146,15 +192,20 @@ export default function ChatButton({
                         ? t.photo
                         : logoUrl) || undefined
                   }
+                  variant={t.kind === "channel" ? "rounded" : "circular"}
                   sx={{
                     width: 38,
                     height: 38,
-                    bgcolor: "primary.main",
+                    // A channel is a room, not a person, so it gets a square
+                    // badge with its hash rather than a round face.
+                    bgcolor:
+                      t.kind === "channel" ? "primary.100" : "primary.main",
+                    color: t.kind === "channel" ? "primary.dark" : undefined,
                     fontSize: "0.9rem",
-                    fontWeight: 600,
+                    fontWeight: 700,
                   }}
                 >
-                  {t.name?.[0]?.toUpperCase()}
+                  {t.kind === "channel" ? "#" : t.name?.[0]?.toUpperCase()}
                 </Avatar>
 
                 <Box sx={{ minWidth: 0, flexGrow: 1 }}>
@@ -230,20 +281,24 @@ export default function ChatButton({
         )}
 
         {!openThread && (
-          <>
-            <Divider />
-            <Button
-              fullWidth
-              component={Link}
-              href={chatHref}
-              onClick={close}
-              sx={{ py: 1.25, borderRadius: 0, flexShrink: 0 }}
-            >
-              Open chat
-              {all.length > PREVIEW_COUNT &&
-                ` (${all.length - PREVIEW_COUNT} more)`}
-            </Button>
-          </>
+          <Button
+            fullWidth
+            component={Link}
+            href={chatHref}
+            onClick={close}
+            sx={{
+              py: 1.25,
+              borderRadius: 0,
+              flexShrink: 0,
+              borderTop: 1,
+              borderColor: "divider",
+              bgcolor: "grey.50",
+            }}
+          >
+            Open chat
+            {all.length > PREVIEW_COUNT &&
+              ` (${all.length - PREVIEW_COUNT} more)`}
+          </Button>
         )}
       </Popover>
     </>

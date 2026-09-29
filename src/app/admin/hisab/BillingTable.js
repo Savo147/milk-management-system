@@ -3,8 +3,6 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -26,33 +24,15 @@ import { BILL_STATUS, STATUS_COLOR } from "@/lib/constants";
 import { formatAmount, formatDate, formatLiters } from "@/lib/format";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import DataCards from "@/components/DataCards";
+import StatCard from "@/components/StatCard";
+import LocalDrinkIcon from "@mui/icons-material/LocalDrink";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import RangePicker from "@/components/RangePicker";
 import PaymentDialog from "./PaymentDialog";
 
 /** Settled once the money in matches the milk out for the shown span. */
 const statusOf = (row) =>
   Number(row.received_amount) >= Number(row.total_amount) ? "done" : "pending";
-
-function Summary({ label, value, color = "text.primary" }) {
-  return (
-    <Card sx={{ height: "100%" }}>
-      <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-        <Typography
-          variant="caption"
-          sx={{ color: "text.secondary", fontWeight: 600 }}
-        >
-          {label}
-        </Typography>
-        <Typography
-          variant="h5"
-          sx={{ mt: 0.5, color, fontVariantNumeric: "tabular-nums" }}
-        >
-          {value}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function BillingTable({
   mode,
@@ -145,16 +125,28 @@ export default function BillingTable({
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 6, md: 4 }}>
-          <Summary label="Total amount" value={formatAmount(sums.total)} />
+          <StatCard
+            label="Total amount"
+            value={formatAmount(sums.total)}
+            icon={CurrencyRupeeIcon}
+            color="green"
+          />
         </Grid>
         <Grid size={{ xs: 6, md: 4 }}>
-          <Summary label="Total milk" value={formatLiters(sums.liters)} />
+          <StatCard
+            label="Total milk"
+            value={formatLiters(sums.liters)}
+            icon={LocalDrinkIcon}
+            color="blue"
+          />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <Summary
+          <StatCard
             label="Due"
             value={formatAmount(sums.due)}
-            color={sums.due > 0 ? "warning.dark" : "text.secondary"}
+            sub={sums.due > 0 ? "still to collect" : "all settled"}
+            icon={AccountBalanceWalletIcon}
+            color="amber"
           />
         </Grid>
       </Grid>
@@ -222,10 +214,10 @@ export default function BillingTable({
           <TableHead>
             <TableRow>
               <TableCell>Customer</TableCell>
-              <TableCell align="center" sx={{ width: "16%" }}>
+              <TableCell align="right" sx={{ width: "16%" }}>
                 Milk
               </TableCell>
-              <TableCell align="center" sx={{ width: "18%" }}>
+              <TableCell align="right" sx={{ width: "18%" }}>
                 Total amount
               </TableCell>
               <TableCell align="center" sx={{ width: "15%" }}>
@@ -266,11 +258,11 @@ export default function BillingTable({
                     </Typography>
                   </TableCell>
 
-                  <TableCell align="center">
+                  <TableCell align="right">
                     {formatLiters(r.total_liters)}
                   </TableCell>
 
-                  <TableCell align="center" sx={{ fontWeight: 600 }}>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
                     {formatAmount(r.total_amount)}
                   </TableCell>
 

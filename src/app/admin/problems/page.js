@@ -14,6 +14,8 @@ export default async function ProblemsPage({ searchParams }) {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(params?.date ?? "")
     ? params.date
     : todayLocal();
+  // Which complaint to open, when a notification sent us here.
+  const openReport = params?.report ? String(params.report) : null;
 
   const supabase = await createClient();
 
@@ -93,9 +95,14 @@ export default async function ProblemsPage({ searchParams }) {
         </Alert>
       ) : (
         <ProblemsView
+          // Keyed on the complaint the URL names, so following a second
+          // notification while this page is already open swaps the thread
+          // instead of leaving the first one showing.
+          key={openReport ?? "none"}
           problems={rows}
           repliesByReport={repliesByReport}
           date={date}
+          openReport={openReport}
         />
       )}
     </>

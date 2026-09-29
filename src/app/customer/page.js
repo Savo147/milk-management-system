@@ -26,7 +26,7 @@ import {
   formatRate,
 } from "@/lib/format";
 import { monthStart, todayLocal } from "@/lib/range";
-import { tableOnly, cardsOnly } from "@/lib/responsive";
+import { tableOnly, cardsOnlyFlex } from "@/lib/responsive";
 import {
   DAILY_ROW_STATUS,
   STATUS_COLOR,
@@ -250,7 +250,7 @@ export default async function CustomerDashboard() {
       {/* Written out here rather than through DataCards: this is a Server
           Component, and DataCards takes its columns as callbacks, which
           cannot cross that boundary. */}
-      <Stack sx={{ ...cardsOnly, gap: 2 }}>
+      <Stack sx={{ ...cardsOnlyFlex, gap: 2 }}>
         {(recent.data ?? []).length === 0 && (
           <Paper
             elevation={0}

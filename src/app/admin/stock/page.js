@@ -1,7 +1,5 @@
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -13,8 +11,13 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import { createClient } from "@/lib/supabase/server";
-import { tableOnly, cardsOnly } from "@/lib/responsive";
+import { tableOnly, cardsOnlyFlex } from "@/lib/responsive";
 import PageHeader from "@/components/PageHeader";
+import StatCard, { SectionLabel } from "@/components/StatCard";
+import LocalDrinkIcon from "@mui/icons-material/LocalDrink";
+import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
+import PeopleIcon from "@mui/icons-material/People";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import {
   formatAmount,
   formatDate,
@@ -29,44 +32,6 @@ export const metadata = { title: "Stock" };
 /** Local YYYY-MM-DD. toISOString() would roll back a day in IST. */
 function ymd(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function Stat({ label, value, color = "text.primary" }) {
-  return (
-    <Card sx={{ height: "100%" }}>
-      <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-        <Typography
-          variant="caption"
-          sx={{ color: "text.secondary", fontWeight: 600 }}
-        >
-          {label}
-        </Typography>
-        <Typography
-          variant="h5"
-          sx={{ mt: 0.5, color, fontVariantNumeric: "tabular-nums" }}
-        >
-          {value}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-}
-
-function SectionLabel({ children }) {
-  return (
-    <Typography
-      variant="overline"
-      sx={{
-        color: "text.secondary",
-        fontWeight: 700,
-        letterSpacing: "0.08em",
-        display: "block",
-        mb: 1.5,
-      }}
-    >
-      {children}
-    </Typography>
-  );
 }
 
 export default async function StockPage({ searchParams }) {
@@ -133,23 +98,38 @@ export default async function StockPage({ searchParams }) {
         <>
           <Grid container spacing={2} sx={{ mb: 4 }}>
             <Grid size={{ xs: 6, md: 3 }}>
-              <Stat label="Total milk delivered" value={formatLiters(liters)} />
-            </Grid>
-            <Grid size={{ xs: 6, md: 3 }}>
-              <Stat
-                label="Total amount"
-                value={formatAmount(amount)}
-                color="success.main"
+              <StatCard
+                label="Total milk delivered"
+                value={formatLiters(liters)}
+                sub={`${rows.length} ${rows.length === 1 ? "entry" : "entries"}`}
+                icon={LocalDrinkIcon}
+                color="blue"
               />
             </Grid>
             <Grid size={{ xs: 6, md: 3 }}>
-              <Stat label="Given to customers" value={served} />
+              <StatCard
+                label="Total amount"
+                value={formatAmount(amount)}
+                icon={CurrencyRupeeIcon}
+                color="green"
+              />
             </Grid>
             <Grid size={{ xs: 6, md: 3 }}>
-              <Stat
+              <StatCard
+                label="Given to customers"
+                value={served}
+                sub="got milk this day"
+                icon={PeopleIcon}
+                color="violet"
+              />
+            </Grid>
+            <Grid size={{ xs: 6, md: 3 }}>
+              <StatCard
                 label="Missed"
                 value={missed}
-                color={missed > 0 ? "error.main" : "text.secondary"}
+                sub={missed > 0 ? "no milk delivered" : "nothing missed"}
+                icon={LocalShippingIcon}
+                color="red"
               />
             </Grid>
           </Grid>
@@ -163,7 +143,7 @@ export default async function StockPage({ searchParams }) {
             {/* Written out here rather than through DataCards: this is a
                 Server Component, and DataCards takes its columns as
                 callbacks, which cannot cross that boundary. */}
-            <Stack sx={{ ...cardsOnly, gap: 1.25 }}>
+            <Stack sx={{ ...cardsOnlyFlex, gap: 2 }}>
               {history.length === 0 && (
                 <Paper
                   elevation={0}

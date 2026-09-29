@@ -25,12 +25,21 @@ import { tableOnly, cardsOnly } from "@/lib/responsive";
 import DataCards from "@/components/DataCards";
 import ProblemDialog from "./ProblemDialog";
 
-export default function ProblemsView({ problems, repliesByReport, date }) {
+export default function ProblemsView({
+  problems,
+  repliesByReport,
+  date,
+  openReport = null,
+}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   // Defaults to what still needs work; closed ones are just history.
   const [statusFilter, setStatusFilter] = useState("pending");
-  const [openId, setOpenId] = useState(null);
+  // Arriving from a notification names the complaint in the URL, so the
+  // thread is already open when the page paints. The page keys this
+  // component on the same id, so following a second notification from the
+  // bell remounts it rather than leaving the first one showing.
+  const [openId, setOpenId] = useState(openReport);
 
   // A complaint is the start of a conversation, so opening one goes to that
   // customer's chat. The details and the reply thread stay one button away.

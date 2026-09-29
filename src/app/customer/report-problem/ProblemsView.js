@@ -41,11 +41,14 @@ export default function ProblemsView({
   to,
   monthFrom,
   monthTo,
+  openReport = null,
 }) {
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState("all");
   const [creating, setCreating] = useState(false);
-  const [openId, setOpenId] = useState(null);
+  // A notification names the complaint in the URL, so the thread is open the
+  // moment the page paints. See the note on the dairy's copy of this.
+  const [openId, setOpenId] = useState(openReport);
 
   const go = (nextMode, a, b) =>
     router.push(`/customer/report-problem?mode=${nextMode}&from=${a}&to=${b}`);

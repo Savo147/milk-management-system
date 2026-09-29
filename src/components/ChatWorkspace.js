@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
-import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import InputAdornment from "@mui/material/InputAdornment";
 import ListItemButton from "@mui/material/ListItemButton";
 import Paper from "@mui/material/Paper";
@@ -27,6 +27,7 @@ import ChatThread from "@/components/ChatThread";
 import MessagesIcon from "@/components/MessagesIcon";
 import DiscoverDialog from "@/components/DiscoverDialog";
 import CreateChannelDialog from "@/components/CreateChannelDialog";
+import EditChannelDialog from "@/components/EditChannelDialog";
 import { ago, preview } from "@/lib/chat-format";
 
 const SIDEBAR_WIDTH = 300;
@@ -43,6 +44,29 @@ const sectionSx = {
   textTransform: "uppercase",
   fontSize: "0.68rem",
 };
+
+/**
+ * A channel carries two independent facts — who can see it, and who can post
+ * in it — so the badge carries both rather than picking one and hiding the
+ * other.
+ *
+ *   the icon  says who can see it:  a lock (private) or a globe (public)
+ *   the tone  says who can post:    amber (the dairy only) or teal (anyone)
+ *
+ * The first version of this treated the two as three exclusive kinds, and a
+ * private announcement board came out looking exactly like a private channel
+ * its members could talk in.
+ */
+const CHANNEL_TONE = {
+  announcement: { bg: "#fae5c6", fg: "#8a5200" },
+  open: { bg: "#cfeeea", fg: "#0f5f57" },
+};
+
+function toneFor(channel) {
+  return channel?.announcementOnly
+    ? CHANNEL_TONE.announcement
+    : CHANNEL_TONE.open;
+}
 
 /** The little red count on the right of a row. */
 function UnreadDot({ count }) {
@@ -74,7 +98,16 @@ function Row({ item, selected, onClick, avatar }) {
     <ListItemButton
       selected={selected}
       onClick={onClick}
-      sx={{ gap: 1.25, borderRadius: 2, py: 1, mb: 0.25 }}
+      sx={{
+        gap: 1.25,
+        borderRadius: 2,
+        py: 1,
+        mb: 0.25,
+        // An unread row is tinted, the same way the header preview and the
+        // notification list mark theirs. The selected row keeps its own
+        // stronger tint — being the one you are reading outranks being new.
+        ...(!selected && item.unread ? { bgcolor: "primary.50" } : null),
+      }}
     >
       {avatar}
 
@@ -156,6 +189,8 @@ export default function ChatWorkspace({
   // including those who have never sent a chat message.
   const [onlyProblems, setOnlyProblems] = useState(false);
   const [creating, setCreating] = useState(false);
+  // Which channel the settings dialog is for, or null when it is shut.
+  const [editing, setEditing] = useState(null);
 
   const chattingWith = useMemo(
     () => new Set(threads.map((t) => t.customerId)),
@@ -228,13 +263,31 @@ export default function ChatWorkspace({
 
   const sidebar = (
     <Stack sx={{ height: "100%", minHeight: 0 }}>
+      {/* A tinted cap on the list, so the sidebar opens with something other
+          than grey and the unread count has somewhere to live. */}
       <Stack
         direction="row"
-        sx={{ gap: 1.5, alignItems: "center", p: 2, flexShrink: 0 }}
+        sx={{
+          gap: 1.5,
+          alignItems: "center",
+          px: 2,
+          py: 1.75,
+          flexShrink: 0,
+          bgcolor: "#eaf4fc",
+          backgroundImage:
+            "radial-gradient(120% 130% at 100% 0%, #cfe3f6 0%, rgba(255,255,255,0) 65%)",
+          borderBottom: 1,
+          borderColor: "#d8e8f7",
+        }}
       >
         <Avatar
           variant="rounded"
-          sx={{ bgcolor: "primary.main", width: 40, height: 40 }}
+          sx={{
+            bgcolor: "primary.main",
+            width: 40,
+            height: 40,
+            boxShadow: "0 0 0 4px rgba(255,255,255,.55)",
+          }}
         >
           <MessagesIcon sx={{ fontSize: 22, color: "common.white" }} />
         </Avatar>
@@ -242,13 +295,16 @@ export default function ChatWorkspace({
           <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700 }}>
             {dairyName} Chat
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant="caption"
+            sx={{ color: unread > 0 ? "#095895" : "text.secondary", fontWeight: unread > 0 ? 700 : 400 }} // prettier-ignore
+          >
             {unread > 0 ? `${unread} unread` : "All caught up"}
           </Typography>
         </Box>
       </Stack>
 
-      <Box sx={{ px: 2, pb: 1, flexShrink: 0 }}>
+      <Box sx={{ px: 2, pb: 1.5, flexShrink: 0 }}>
         <TextField
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -306,14 +362,12 @@ export default function ChatWorkspace({
                 sx={{
                   width: 34,
                   height: 34,
-                  bgcolor: "grey.100",
-                  color: "text.secondary",
+                  bgcolor: toneFor(c).bg,
+                  color: toneFor(c).fg,
                 }}
               >
                 {c.isPrivate ? (
                   <LockOutlinedIcon sx={{ fontSize: 18 }} />
-                ) : c.announcementOnly ? (
-                  <CampaignOutlinedIcon sx={{ fontSize: 18 }} />
                 ) : (
                   <PublicIcon sx={{ fontSize: 18 }} />
                 )}
@@ -434,9 +488,19 @@ export default function ChatWorkspace({
 
   const conversation = selected ? (
     <Stack sx={{ height: "100%", minHeight: 0 }}>
+      {/* The thread's own cap takes the colour of what is open — the
+          channel's tone, or the dairy blue for a person. */}
       <Stack
         direction="row"
-        sx={{ gap: 1.5, alignItems: "center", p: 1.75, flexShrink: 0 }}
+        sx={{
+          gap: 1.5,
+          alignItems: "center",
+          p: 1.75,
+          flexShrink: 0,
+          bgcolor: isChannel ? toneFor(selected).bg : "#eaf4fc",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
       >
         {/* On a phone the two panes take turns, so the thread needs its own
             way back to the list. */}
@@ -457,15 +521,19 @@ export default function ChatWorkspace({
             height: 38,
             fontSize: "0.9rem",
             fontWeight: 600,
-            bgcolor: isChannel ? "grey.100" : "primary.main",
-            color: isChannel ? "text.secondary" : undefined,
+            bgcolor: isChannel ? "background.paper" : "primary.main",
+            color: isChannel ? toneFor(selected).fg : undefined,
+            boxShadow: "0 0 0 3px rgba(255,255,255,.55)",
           }}
         >
           {isChannel ? (
             selected.isPrivate ? (
               <LockOutlinedIcon sx={{ fontSize: 20 }} />
             ) : (
-              <CampaignOutlinedIcon sx={{ fontSize: 20 }} />
+              // This used to show the announcement horn for every channel
+              // that was not private, so an open public channel claimed to
+              // be a notice board.
+              <PublicIcon sx={{ fontSize: 20 }} />
             )
           ) : (
             selected.name?.[0]?.toUpperCase()
@@ -481,17 +549,28 @@ export default function ChatWorkspace({
           </Typography>
         </Box>
 
+        {isChannel && isAdmin && (
+          <Tooltip title="Channel settings">
+            <IconButton
+              size="small"
+              onClick={() => setEditing(selected)}
+              aria-label="Channel settings"
+              sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider" }} // prettier-ignore
+            >
+              <SettingsOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+
         {isChannel && selected.announcementOnly && (
           <Chip
             size="small"
-            variant="outlined"
-            icon={<CampaignOutlinedIcon sx={{ fontSize: 16 }} />}
+            icon={<CampaignOutlinedIcon sx={{ fontSize: 16, color: "inherit !important" }} />} // prettier-ignore
             label="Announcements"
+            sx={{ bgcolor: "background.paper", color: "#8a5200", border: 1, borderColor: "#f0d09a" }} // prettier-ignore
           />
         )}
       </Stack>
-
-      <Divider />
 
       <ChatThread
         key={`${selected.kind}:${selected.id}:${onlyProblems}`}
@@ -522,10 +601,11 @@ export default function ChatWorkspace({
     >
       <Avatar
         sx={{
-          bgcolor: "grey.100",
-          color: "text.disabled",
+          bgcolor: "#dceefb",
+          color: "#095895",
           width: 56,
           height: 56,
+          boxShadow: "0 0 0 8px #f1f8fd",
         }}
       >
         {" "}
@@ -566,6 +646,9 @@ export default function ChatWorkspace({
             flexShrink: 0,
             borderRight: { md: 1 },
             borderColor: { md: "divider" },
+            // The list sits back a shade so the thread beside it reads as
+            // the thing being looked at. Standard for a two-pane messenger.
+            bgcolor: "grey.50",
             // One pane at a time on a phone: the list until something is
             // picked, then the thread.
             display: { xs: selected ? "none" : "block", md: "block" },
@@ -600,6 +683,17 @@ export default function ChatWorkspace({
             onClose={() => setCreating(false)}
             customers={customers}
           />
+
+          {/* Keyed on the channel, so opening a second one starts from its
+              own values rather than from the first one's. */}
+          {editing && (
+            <EditChannelDialog
+              key={editing.id}
+              open
+              onClose={() => setEditing(null)}
+              channel={editing}
+            />
+          )}
         </>
       )}
     </>
