@@ -12,10 +12,17 @@ import Popover from "@mui/material/Popover";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
-import { formatDate } from "@/lib/format";
-import { markNotificationsRead } from "@/lib/notification-actions";
+import { DAIRY_TZ, formatDate } from "@/lib/format";
+import {
+  markNotificationsRead,
+  markNotificationRead,
+} from "@/lib/notification-actions";
 
-export default function NotificationBell({ notifications = [], unread = 0 }) {
+export default function NotificationBell({
+  notifications = [],
+  unread = 0,
+  isAdmin = false,
+}) {
   const router = useRouter();
   const [anchorEl, setAnchorEl] = useState(null);
   const [pending, startTransition] = useTransition();
@@ -23,10 +30,40 @@ export default function NotificationBell({ notifications = [], unread = 0 }) {
   const open = (e) => setAnchorEl(e.currentTarget);
   const close = () => setAnchorEl(null);
 
-  // The bell only carries problems, so every one of them opens the same page.
-  const openProblems = () => {
+  /**
+   * Opens the complaint the bell is about, and stops counting it.
+   *
+   * The two sides have different screens for the same thing, and this used to
+   * send everyone to the admin's — so a customer tapping their own
+   * notification was turned round by the guard and landed back on their
+   * dashboard.
+   *
+   * The date matters too. The dairy's Problems page shows one day at a time,
+   * and the customer's a month; opening either on today would hide the very
+   * complaint that was tapped. Both are pointed at the day the notification
+   * was written.
+   */
+  const openProblem = (n) => {
     close();
-    router.push("/admin/problems");
+
+    const day = new Intl.DateTimeFormat("en-CA", {
+      timeZone: DAIRY_TZ,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date(n.created_at));
+
+    if (!n.is_read) {
+      startTransition(() => markNotificationRead(n.id));
+    }
+
+    const month = day.slice(0, 7);
+
+    router.push(
+      isAdmin
+        ? `/admin/problems?date=${day}`
+        : `/customer/report-problem?mode=month&from=${month}&to=${month}`,
+    );
   };
 
   return (
@@ -86,7 +123,7 @@ export default function NotificationBell({ notifications = [], unread = 0 }) {
         {notifications.map((n) => (
           <ListItemButton
             key={n.id}
-            onClick={openProblems}
+            onClick={() => openProblem(n)}
             sx={{
               alignItems: "flex-start",
               flexDirection: "column",

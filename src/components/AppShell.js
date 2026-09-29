@@ -277,7 +277,11 @@ export default function AppShell({
             />
           )}
 
-          <NotificationBell notifications={notifications} unread={unread} />
+          <NotificationBell
+            notifications={notifications}
+            unread={unread}
+            isAdmin={user.role === "admin"}
+          />
 
           <Tooltip title="Account">
             <IconButton

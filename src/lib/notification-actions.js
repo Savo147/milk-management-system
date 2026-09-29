@@ -29,3 +29,28 @@ export async function markNotificationsRead() {
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+/**
+ * Marks one notification read — the one that was just opened.
+ *
+ * Scoped to the caller's own id as well as the notification's, so an id from
+ * the browser cannot clear somebody else's bell. A Server Action is a public
+ * endpoint; the id it is handed is untrusted.
+ */
+export async function markNotificationRead(id) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Please sign in." };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("notifications")
+    .update({ is_read: true })
+    .eq("id", String(id ?? ""))
+    .eq("user_id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
