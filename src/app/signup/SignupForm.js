@@ -7,6 +7,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
+import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
@@ -68,68 +69,77 @@ export default function SignupForm() {
     <Box sx={{ display: "grid", gap: 2 }}>
       {state?.error && <Alert severity="error">{state.error}</Alert>}
 
-      <Box
-        component="form"
-        action={formAction}
-        sx={{ display: "grid", gap: 2 }}
-      >
+      <Box component="form" action={formAction}>
         {/*
-          shrink is forced on every field. Browser autofill writes a value
-          without firing an event MUI can see, so the label otherwise sits on
-          top of the filled-in text.
+          Two to a row from sm up, stacked on a phone. shrink is forced on
+          every field: browser autofill writes a value without firing an
+          event MUI can see, so the label otherwise sits on top of the
+          filled-in text.
         */}
-        <TextField
-          name="name"
-          label="Your name"
-          placeholder="Nishant Kalariya"
-          autoComplete="name"
-          required
-          fullWidth
-          autoFocus
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              name="name"
+              label="Your name"
+              placeholder="Nishant Kalariya"
+              autoComplete="name"
+              required
+              fullWidth
+              autoFocus
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          </Grid>
 
-        <TextField
-          name="email"
-          type="email"
-          label="Email"
-          placeholder="you@example.com"
-          autoComplete="email"
-          required
-          fullWidth
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              name="email"
+              type="email"
+              label="Email"
+              placeholder="you@example.com"
+              autoComplete="email"
+              required
+              fullWidth
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          </Grid>
 
-        <TextField
-          name="password"
-          type={shown ? "text" : "password"}
-          label="Password"
-          placeholder="••••••••"
-          autoComplete="new-password"
-          required
-          fullWidth
-          helperText="At least 8 characters"
-          slotProps={{
-            inputLabel: { shrink: true },
-            input: eyeAdornment(shown, () => setShown((on) => !on)),
-          }}
-        />
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              name="password"
+              type={shown ? "text" : "password"}
+              label="Password"
+              placeholder="••••••••"
+              autoComplete="new-password"
+              required
+              fullWidth
+              helperText="At least 8 characters"
+              slotProps={{
+                inputLabel: { shrink: true },
+                input: eyeAdornment(shown, () => setShown((on) => !on)),
+              }}
+            />
+          </Grid>
 
-        <TextField
-          name="confirm"
-          type={shown ? "text" : "password"}
-          label="Confirm password"
-          placeholder="••••••••"
-          autoComplete="new-password"
-          required
-          fullWidth
-          slotProps={{
-            inputLabel: { shrink: true },
-            input: eyeAdornment(shown, () => setShown((on) => !on)),
-          }}
-        />
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              name="confirm"
+              type={shown ? "text" : "password"}
+              label="Confirm password"
+              placeholder="••••••••"
+              autoComplete="new-password"
+              required
+              fullWidth
+              slotProps={{
+                inputLabel: { shrink: true },
+                input: eyeAdornment(shown, () => setShown((on) => !on)),
+              }}
+            />
+          </Grid>
+        </Grid>
 
-        <SubmitButton />
+        <Box sx={{ mt: 2.5 }}>
+          <SubmitButton />
+        </Box>
       </Box>
 
       <Divider>
