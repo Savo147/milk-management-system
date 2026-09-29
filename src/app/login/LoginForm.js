@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -109,6 +110,16 @@ export default function LoginForm({ initialError }) {
       </Divider>
 
       <GoogleButton />
+
+      <Typography
+        variant="body2"
+        sx={{ textAlign: "center", color: "text.secondary" }}
+      >
+        New here?{" "}
+        <Box component={Link} href="/signup" sx={{ fontWeight: 600 }}>
+          Create an account
+        </Box>
+      </Typography>
     </Box>
   );
 }

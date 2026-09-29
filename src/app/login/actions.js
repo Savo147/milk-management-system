@@ -12,22 +12,15 @@ import { ensureCustomerRecord } from "@/lib/customer-account";
 const MIN_PASSWORD = 8;
 
 /**
- * First time somebody types an email, the account is made for them.
+ * Makes the account.
  *
- * Only reached once signInWithPassword has already refused, so the email is
- * either new — make it — or known, and the password was simply wrong.
- *
- * Created with the service key rather than supabase.auth.signUp() so the
- * account is confirmed outright. signUp() would wait on a confirmation email,
- * and a customer standing at the door with their milk book is not going to
- * fish a link out of their inbox to get in.
- *
- * Note this does reveal whether an email is already registered: a new one gets
- * in, a known one is told the password is wrong. That is the behaviour that
- * was asked for, and it is the price of signing up and signing in through one
- * box.
+ * Created with the service key rather than supabase.auth.signUp() so it is
+ * confirmed outright. signUp() would wait on a confirmation email, and a
+ * customer standing at the door with their milk book is not going to fish a
+ * link out of their inbox to get in — nor, on this project, would the email
+ * arrive: the built-in sender only delivers to the project's owner.
  */
-async function registerFirstTime(email, password) {
+async function createAccount(email, password, name) {
   const db = createAdminClient();
 
   const { data: existing } = await db
@@ -36,11 +29,15 @@ async function registerFirstTime(email, password) {
     .eq("email", email)
     .maybeSingle();
 
-  if (existing) return { error: "That password is wrong." };
+  if (existing) {
+    return {
+      error: "An account with that email already exists. Sign in instead.",
+    };
+  }
 
   if (password.length < MIN_PASSWORD) {
     return {
-      error: `To create a new account the password must be at least ${MIN_PASSWORD} characters.`,
+      error: `The password must be at least ${MIN_PASSWORD} characters.`,
     };
   }
 
@@ -48,17 +45,18 @@ async function registerFirstTime(email, password) {
     email,
     password,
     email_confirm: true,
-    // handle_new_user copies this into users.name. The part before the @ is a
-    // placeholder worth having — they can change it on their Profile page.
-    user_metadata: { name: email.split("@")[0] },
+    // handle_new_user copies this into users.name.
+    user_metadata: { name: name || email.split("@")[0] },
   });
 
   if (error) {
     // An auth user with no profile row would slip past the check above.
     if (/already (registered|exists)/i.test(error.message)) {
-      return { error: "That password is wrong." };
+      return {
+        error: "An account with that email already exists. Sign in instead.",
+      };
     }
-    console.error("[login] first-time sign-up failed:", error);
+    console.error("[signup] could not create the account:", error);
     return { error: `Account not created: ${error.message}` };
   }
 
@@ -83,7 +81,7 @@ export async function signIn(prevState, formData) {
   // connection was taking twenty-two seconds to say it had failed. Eight is
   // far longer than a working one has ever needed, and short enough that
   // somebody watching the button learns something.
-  let { data, error } = await withDeadline(
+  const { data, error } = await withDeadline(
     supabase.auth.signInWithPassword({ email, password }),
     LOGIN_DEADLINE_MS,
     { data: null, error: { status: 0, message: "timed out" } },
@@ -115,20 +113,11 @@ export async function signIn(prevState, formData) {
       };
     }
 
-    const made = await registerFirstTime(email, password);
-    if (made.error) return { error: made.error };
-
-    ({ data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    }));
-
-    if (error) {
-      console.error("[login] sign-in after sign-up failed:", error);
-      return {
-        error: `The account was created, but signing in failed. (${error.message})`,
-      };
-    }
+    // Signing in no longer makes accounts. It used to, so that one box did
+    // both — but a typo in the email then quietly opened a second account
+    // instead of saying the password was wrong. Creating one is its own
+    // screen now, and this points at it.
+    return { error: "Wrong email or password." };
   }
 
   const { data: profile } = await supabase
@@ -157,6 +146,60 @@ export async function signIn(prevState, formData) {
   redirect(profile.role === "admin" ? "/admin" : "/customer");
 }
 
+/**
+ * Creates an account and signs straight into it.
+ *
+ * Nobody is asked to go and find a confirmation email: the account is made
+ * confirmed, so the two steps a customer would otherwise face are one.
+ */
+export async function signUp(prevState, formData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+
+  if (!name) return { error: "Enter your name." };
+  if (!email || !password) return { error: "Enter an email and a password." };
+
+  // Checked before the account is made, not after: a mistyped password that
+  // only surfaces at the next sign-in leaves somebody locked out of an
+  // account they just created.
+  if (password !== confirm) return { error: "The two passwords do not match." };
+
+  const made = await createAccount(email, password, name);
+  if (made.error) return { error: made.error };
+
+  const supabase = await createClient();
+  const { data, error } = await withDeadline(
+    supabase.auth.signInWithPassword({ email, password }),
+    LOGIN_DEADLINE_MS,
+    { data: null, error: { status: 0, message: "timed out" } },
+  );
+
+  if (error) {
+    console.error("[signup] made the account but could not sign in:", error);
+    return {
+      error: "Your account was created. Sign in with it below.",
+    };
+  }
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("id, name, email, role, status")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  if (!profile) {
+    await supabase.auth.signOut();
+    return { error: "This account has not been set up. Contact the dairy." };
+  }
+
+  await ensureCustomerRecord(profile);
+  revalidatePath("/", "layout");
+
+  // redirect() works by throwing, so it must sit outside any try/catch.
+  redirect(profile.role === "admin" ? "/admin" : "/customer");
+}
 /**
  * Hands off to Google. Nothing is signed in yet when this returns — Google
  * sends the browser back to /auth/callback with a code, and that route is
