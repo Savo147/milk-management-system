@@ -233,19 +233,27 @@ export default function DailyMilkForm({ date, customers }) {
     });
   }, [customers, query, statusFilter]);
 
+  /**
+   * What is actually recorded for the day — saved rows only.
+   *
+   * These used to total the boxes on screen instead, and every box starts
+   * pre-filled with what the customer normally takes. So the figures counted
+   * customers nobody had been to yet, and undoing an entry left them exactly
+   * where they were. A number that does not move when the thing it counts is
+   * taken away is worse than no number.
+   */
   const totals = useMemo(() => {
     let count = 0;
     let liters = 0;
     let amount = 0;
     for (const c of customers) {
-      const qty = values[c.id] ?? "";
-      if (qty === "") continue;
+      if (!c.entry) continue;
       count += 1;
-      liters += Number(qty);
-      amount += Number(qty) * Number(c.rate_per_liter);
+      liters += Number(c.entry.actual_quantity ?? 0);
+      amount += Number(c.entry.total_amount ?? 0);
     }
     return { count, liters, amount };
-  }, [customers, values]);
+  }, [customers]);
 
   return (
     <Box>
@@ -298,8 +306,8 @@ export default function DailyMilkForm({ date, customers }) {
 
         <Box sx={{ flexGrow: 1 }} />
 
-        {/* Totals sit with the controls rather than in a sticky footer: the
-            numbers are a summary of what is on screen, not an action. */}
+        {/* Totals sit with the controls rather than in a sticky footer:
+            they are a summary of what has been recorded, not an action. */}
         <Stack
           direction="row"
           sx={{
@@ -311,7 +319,7 @@ export default function DailyMilkForm({ date, customers }) {
             pt: { xs: 0.5, sm: 0 },
           }}
         >
-          <Total label="Entries" value={totals.count} />
+          <Total label="Saved" value={totals.count} />
           <Total label="Total milk" value={formatLiters(totals.liters)} />
           <Total label="Total amount" value={formatAmount(totals.amount)} />
         </Stack>

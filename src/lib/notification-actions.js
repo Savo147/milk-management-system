@@ -7,11 +7,10 @@ import { getCurrentUser } from "@/lib/auth";
 /**
  * Postgres reports a row that row-level security hid as no row at all, so a
  * blocked delete looks exactly like one that had nothing to delete. The row
- * was on screen a moment ago, so it is the policy that is missing —
- * `scripts/0011-notifications-delete.sql` adds it.
+ * was on screen a moment ago, so if this fires it is a DELETE policy on the
+ * notifications table that is missing, not the row.
  */
-const NOT_ALLOWED =
-  "Could not delete this. The database is not allowing it — run scripts/0011.";
+const NOT_ALLOWED = "Could not delete this — the database would not allow it.";
 
 /**
  * Marks the signed-in user's unread notifications as read.

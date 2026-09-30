@@ -28,7 +28,10 @@ export default async function DailyMilkPage({ searchParams }) {
       .order("name"),
     supabase
       .from("milk_entries")
-      .select("customer_id, actual_quantity, delivery_status")
+      // total_amount comes from the row rather than being worked out from
+      // the customer's rate: the entry was billed at whatever the rate was
+      // the day it was saved, and that is the figure the books carry.
+      .select("customer_id, actual_quantity, total_amount, delivery_status")
       .eq("date", date),
   ]);
 

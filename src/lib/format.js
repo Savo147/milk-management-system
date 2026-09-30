@@ -97,3 +97,28 @@ export function errorText(error) {
 
   return message;
 }
+
+/**
+ * "Good morning" and the rest, off the dairy's clock rather than the
+ * server's — on Vercel that is UTC, which would wish somebody good night
+ * while they are having their breakfast.
+ *
+ * Night runs from ten to five: the dairy's own round starts before six, so
+ * anyone here at that hour is up for the morning, not still up from the
+ * night.
+ */
+export function greeting() {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: DAIRY_TZ,
+      hour: "2-digit",
+      hour12: false,
+    }).format(new Date()),
+  );
+
+  if (hour < 5) return "Good night";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 22) return "Good evening";
+  return "Good night";
+}

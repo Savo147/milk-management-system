@@ -1,5 +1,16 @@
+import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import PeopleIcon from "@mui/icons-material/People";
 import LocalDrinkIcon from "@mui/icons-material/LocalDrink";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
@@ -7,9 +18,19 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import { createClient } from "@/lib/supabase/server";
-import { DAIRY_TZ, formatAmount, formatLiters } from "@/lib/format";
+import { requireAdmin } from "@/lib/auth";
+import {
+  DAIRY_TZ,
+  formatAmount,
+  formatDate,
+  formatLiters,
+  greeting,
+} from "@/lib/format";
+import { DAILY_ROW_STATUS, STATUS_COLOR } from "@/lib/constants";
 import PageHeader from "@/components/PageHeader";
 import StatCard, { SectionLabel } from "@/components/StatCard";
+import MilkChart from "@/components/MilkChart";
+import StatusDonut from "@/components/StatusDonut";
 
 /** Local YYYY-MM-DD. toISOString() would shift the date in IST. */
 function today() {
@@ -36,10 +57,138 @@ function monthStart() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
 }
 
+/** How many days the milk report looks back over. */
+const CHART_DAYS = 7;
+/** How many rows the two side panels show before "View all". */
+const PANEL_ROWS = 6;
+
+/** YYYY-MM-DD, `n` days before today. */
+function daysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * One row per day for the chart, oldest first — including the days nothing
+ * was delivered.
+ *
+ * The entries come back with the empty days simply missing. Plotting only
+ * what came back would quietly close those gaps up and draw a week that
+ * never had a quiet day in it, so the run of dates is built first and the
+ * totals are dropped into it.
+ */
+function dailySeries(entries, from, count) {
+  const totals = new Map();
+
+  for (const e of entries ?? []) {
+    const t = totals.get(e.date) ?? { liters: 0, amount: 0, count: 0 };
+    t.liters += Number(e.actual_quantity ?? 0);
+    t.amount += Number(e.total_amount ?? 0);
+    if (Number(e.actual_quantity) > 0) t.count += 1;
+    totals.set(e.date, t);
+  }
+
+  const start = new Date(`${from}T00:00:00`);
+  const days = [];
+
+  for (let i = 0; i < count; i += 1) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+
+    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const t = totals.get(date) ?? { liters: 0, amount: 0, count: 0 };
+
+    days.push({
+      date,
+      ...t,
+      // Short under the plot, long in the tooltip.
+      tick: d.toLocaleDateString("en-IN", { weekday: "short" }),
+      label: d.toLocaleDateString("en-IN", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      }),
+    });
+  }
+
+  return days;
+}
+
+/** The titled box the lower half of the dashboard is built out of. */
+function Panel({ title, sub, action, children }) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        border: 1,
+        borderColor: "divider",
+        borderRadius: 3,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        // A flex item is sized by its content unless it is told otherwise,
+        // so without this a wide table inside pushes the panel past its
+        // column and takes the whole page sideways with it.
+        minWidth: 0,
+        overflow: "hidden",
+      }}
+    >
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+          px: 2.5,
+          py: 1.75,
+          flexShrink: 0,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+            {title}
+          </Typography>
+          {sub && (
+            <Typography variant="body2" color="text.secondary" noWrap>
+              {sub}
+            </Typography>
+          )}
+        </Box>
+        {action}
+      </Stack>
+
+      <Box sx={{ flexGrow: 1, minHeight: 0, minWidth: 0 }}>{children}</Box>
+    </Paper>
+  );
+}
+
+/** The line a side panel shows when it has nothing to list. */
+function PanelEmpty({ children }) {
+  return (
+    <Typography
+      variant="body2"
+      color="text.secondary"
+      sx={{ px: 2.5, py: 5, textAlign: "center" }}
+    >
+      {children}
+    </Typography>
+  );
+}
+
 export default async function AdminDashboard() {
+  // The layout has already turned away anyone who is not an active admin;
+  // this is here for the name in the greeting.
+  const admin = await requireAdmin();
   const supabase = await createClient();
   const day = today();
   const month = monthStart();
+  // Six days back plus today makes a week of columns.
+  const chartFrom = daysAgo(CHART_DAYS - 1);
+  // Two weeks back, so last week can be drawn behind this one.
+  const compareFrom = daysAgo(CHART_DAYS * 2 - 1);
 
   const [
     { count: activeCustomers },
@@ -47,6 +196,9 @@ export default async function AdminDashboard() {
     { data: monthEntries },
     { data: balances },
     { data: openReports },
+    { data: chartEntries },
+    { data: todayRows },
+    { data: latestPayments },
   ] = await Promise.all([
     supabase
       .from("customers")
@@ -58,17 +210,112 @@ export default async function AdminDashboard() {
       .eq("date", day),
     supabase
       .from("milk_entries")
-      .select("actual_quantity, total_amount")
+      .select("actual_quantity, total_amount, customer_id, customers(name)")
       .gte("date", month),
     // One row per customer, summed by the database — see migration 0010.
-    supabase.from("customer_balances").select("due"),
+    supabase.from("customer_balances").select("customer_id, name, due"),
     // Complaints nobody has answered yet. Not a month's slice: a complaint
     // left unanswered from three weeks ago is the one that matters most.
     supabase
       .from("reports")
       .select("id, created_at")
       .not("status", "in", "(resolved,rejected)"),
+    supabase
+      .from("milk_entries")
+      .select("date, actual_quantity, total_amount")
+      .gte("date", compareFrom)
+      .order("date"),
+    // Today again, but with the names on it. The cards above only need the
+    // numbers, and dragging the join into that query would slow them down
+    // for the sake of a list further down the page.
+    supabase
+      .from("milk_entries")
+      .select(
+        "id, actual_quantity, total_amount, delivery_status, customers(name)",
+      ) // prettier-ignore
+      .eq("date", day)
+      .order("id"),
+    supabase
+      .from("payments")
+      .select("id, amount, paid_on, customers(name)")
+      .order("paid_on", { ascending: false })
+      .limit(PANEL_ROWS),
   ]);
+
+  const series = dailySeries(chartEntries, chartFrom, CHART_DAYS);
+  // The same seven weekdays a week earlier, in the same order, so Monday is
+  // compared with Monday.
+  const lastWeek = dailySeries(chartEntries, compareFrom, CHART_DAYS).map(
+    (d) => d.liters,
+  );
+
+  // Colours are the app's status colours; the key beside the ring carries
+  // the words and the counts, because some of them sit close under colour
+  // blindness.
+  // Who took the most this month. The month query already has every row it
+  // needs, so this costs one pass rather than another trip to the database.
+  const perCustomer = new Map();
+  for (const e of monthEntries ?? []) {
+    const id = e.customer_id;
+    const row = perCustomer.get(id) ?? {
+      id,
+      name: e.customers?.name ?? "—",
+      liters: 0,
+    };
+    row.liters += Number(e.actual_quantity ?? 0);
+    perCustomer.set(id, row);
+  }
+  const topCustomers = [...perCustomer.values()]
+    .filter((c) => c.liters > 0)
+    .sort((a, b) => b.liters - a.liters)
+    .slice(0, PANEL_ROWS);
+  const topLiters = Math.max(1, ...topCustomers.map((c) => c.liters));
+
+  // Pending is counted, not left out. It is the one state with no row in the
+  // database — it means a customer the round has not reached yet — so a ring
+  // built only from saved entries said "4 entries, 100% delivered" on a
+  // morning when ten customers had not been marked at all. The round looked
+  // finished because only the finished part was being counted.
+  const entered = todayEntries?.length ?? 0;
+  const notYet = Math.max(0, (activeCustomers ?? 0) - entered);
+  const roundTotal = entered + notYet;
+
+  const countOf = (key) =>
+    (todayEntries ?? []).filter((e) => e.delivery_status === key).length;
+
+  // The five states keep the same words the Daily Milk page uses, so the ring
+  // and the list over there never disagree about what a row is called.
+  const byStatus = [
+    { label: DAILY_ROW_STATUS.pending, color: "#9aa4b2", value: notYet },
+    { label: DAILY_ROW_STATUS.delivered, color: "#1f8f5f", value: countOf("delivered") }, // prettier-ignore
+    { label: DAILY_ROW_STATUS.partial, color: "#c08400", value: countOf("partial") }, // prettier-ignore
+    { label: DAILY_ROW_STATUS.extra, color: "#7b4bd4", value: countOf("extra") }, // prettier-ignore
+    { label: DAILY_ROW_STATUS.missed, color: "#d0402a", value: countOf("missed") }, // prettier-ignore
+  ];
+
+  const deliveries = (todayRows ?? []).map((r) => ({
+    id: r.id,
+    name: r.customers?.name ?? "—",
+    liters: Number(r.actual_quantity ?? 0),
+    amount: Number(r.total_amount ?? 0),
+    status: r.delivery_status,
+  }));
+
+  const payments = (latestPayments ?? []).map((p) => ({
+    id: p.id,
+    name: p.customers?.name ?? "—",
+    amount: Number(p.amount ?? 0),
+    paid_on: p.paid_on,
+  }));
+
+  // The card above says how much is outstanding in all; this says who by.
+  const debtors = (balances ?? [])
+    .filter((b) => Number(b.due) > 0)
+    .sort((a, b) => Number(b.due) - Number(a.due))
+    .slice(0, PANEL_ROWS);
+  // The bars are read against the biggest debt, not against the total —
+  // relative to the total every bar would be a sliver.
+  const worstDue = Math.max(1, ...debtors.map((b) => Number(b.due)));
 
   const sum = (rows, key) =>
     (rows ?? []).reduce((t, r) => t + Number(r[key] ?? 0), 0);
@@ -107,7 +354,7 @@ export default async function AdminDashboard() {
   return (
     <>
       <PageHeader
-        title="Dashboard"
+        title={`${greeting()}, ${admin.name}`}
         subtitle={new Date().toLocaleDateString("en-IN", {
           weekday: "long",
           day: "numeric",
@@ -201,6 +448,249 @@ export default async function AdminDashboard() {
             icon={ReportProblemIcon}
             color="teal"
           />
+        </Grid>
+      </Grid>
+
+      <Box sx={{ mt: 5 }} />
+      <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Panel
+            title="Today's deliveries"
+            sub={`${deliveries.length} ${deliveries.length === 1 ? "entry" : "entries"}`}
+          >
+            <TableContainer sx={{ borderRadius: 0 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ width: 52 }}>#</TableCell>
+                    <TableCell>Customer</TableCell>
+                    <TableCell align="right">Milk</TableCell>
+                    <TableCell align="right">Amount</TableCell>
+                    <TableCell align="center">Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {deliveries.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Nothing recorded today yet.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+
+                  {deliveries.map((d, i) => (
+                    <TableRow key={d.id} hover>
+                      <TableCell sx={{ color: "text.disabled" }}>
+                        {i + 1}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{d.name}</TableCell>
+                      <TableCell align="right">
+                        {formatLiters(d.liters)}
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        {formatAmount(d.amount)}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          size="small"
+                          label={DAILY_ROW_STATUS[d.status] ?? d.status}
+                          color={STATUS_COLOR[d.status] ?? "default"}
+                          variant={
+                            d.status === "delivered" ? "filled" : "outlined"
+                          }
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Panel>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Panel
+            title="Owing the most"
+            sub={
+              owing > 0
+                ? `${owing} ${owing === 1 ? "customer owes" : "customers owe"} money`
+                : "everyone is settled"
+            }
+          >
+            {debtors.length === 0 ? (
+              <PanelEmpty>Nothing outstanding.</PanelEmpty>
+            ) : (
+              <Stack sx={{ px: 2.5, py: 2, gap: 1.75 }}>
+                {debtors.map((b) => (
+                  <Box key={b.customer_id}>
+                    <Stack
+                      direction="row"
+                      sx={{ justifyContent: "space-between", gap: 2, mb: 0.6 }}
+                    >
+                      <Typography
+                        variant="body2"
+                        noWrap
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {b.name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 700, flexShrink: 0, color: "#8a5200", fontVariantNumeric: "tabular-nums" }} // prettier-ignore
+                      >
+                        {formatAmount(b.due)}
+                      </Typography>
+                    </Stack>
+
+                    {/* The track is a lighter step of the fill's own colour,
+                        so the bar reads as one thing at any length. */}
+                    <Box
+                      sx={{ height: 6, borderRadius: 3, bgcolor: "#fae5c6", overflow: "hidden" }} // prettier-ignore
+                    >
+                      <Box
+                        sx={{
+                          height: "100%",
+                          width: `${Math.max(6, (Number(b.due) / worstDue) * 100)}%`,
+                          bgcolor: "#c08400",
+                          borderRadius: 3,
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Panel>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Panel title="Milk report" sub="Litres delivered each day">
+            <Box sx={{ p: 2.5 }}>
+              <MilkChart days={series} previous={lastWeek} />
+            </Box>
+          </Panel>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Panel title="Recent payments" sub="Money that has come in">
+            {payments.length === 0 ? (
+              <PanelEmpty>No payments recorded yet.</PanelEmpty>
+            ) : (
+              <Stack sx={{ px: 1.5, py: 1.5, gap: 0.25 }}>
+                {payments.map((p) => (
+                  <Stack
+                    key={p.id}
+                    direction="row"
+                    sx={{ alignItems: "center", gap: 1.5, px: 1, py: 0.9 }}
+                  >
+                    <Avatar
+                      sx={{ width: 34, height: 34, flexShrink: 0, fontSize: "0.8rem", fontWeight: 700, bgcolor: "#d6efe3", color: "#0c6244" }} // prettier-ignore
+                    >
+                      {p.name?.[0]?.toUpperCase()}
+                    </Avatar>
+
+                    <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                      <Typography
+                        variant="body2"
+                        noWrap
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {p.name}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ display: "block", color: "text.secondary" }}
+                      >
+                        {formatDate(p.paid_on)}
+                      </Typography>
+                    </Box>
+
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 700, flexShrink: 0, color: "#0c6244", fontVariantNumeric: "tabular-nums" }} // prettier-ignore
+                    >
+                      {formatAmount(p.amount)}
+                    </Typography>
+                  </Stack>
+                ))}
+              </Stack>
+            )}
+          </Panel>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Panel title="Today's round" sub="How the deliveries came out">
+            <StatusDonut
+              slices={byStatus}
+              total={roundTotal}
+              note="customers"
+              figures={[
+                { label: "Milk today", value: formatLiters(todayMilk) },
+                {
+                  label: "Amount today",
+                  value: formatAmount(todayAmount),
+                  color: "#0c6244",
+                },
+              ]}
+            />
+          </Panel>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Panel title="Top customers" sub="Most milk taken this month">
+            {topCustomers.length === 0 ? (
+              <PanelEmpty>Nothing delivered this month yet.</PanelEmpty>
+            ) : (
+              <Stack sx={{ px: 2.5, py: 2, gap: 1.75 }}>
+                {topCustomers.map((c, i) => (
+                  <Box key={c.id}>
+                    <Stack
+                      direction="row"
+                      sx={{ alignItems: "center", gap: 1.5, mb: 0.6 }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "text.disabled", width: 14, flexShrink: 0 }} // prettier-ignore
+                      >
+                        {i + 1}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        noWrap
+                        sx={{ fontWeight: 600, flexGrow: 1, minWidth: 0 }}
+                      >
+                        {c.name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 700, flexShrink: 0, fontVariantNumeric: "tabular-nums" }} // prettier-ignore
+                      >
+                        {formatLiters(c.liters)}
+                      </Typography>
+                    </Stack>
+
+                    {/* Read against the biggest of them, not against the
+                        month's total — against the total every bar would be
+                        a sliver and nothing could be compared. */}
+                    <Box
+                      sx={{ height: 6, borderRadius: 3, bgcolor: "#dceefb", overflow: "hidden", ml: "30px" }} // prettier-ignore
+                    >
+                      <Box
+                        sx={{
+                          height: "100%",
+                          width: `${Math.max(6, (c.liters / topLiters) * 100)}%`,
+                          bgcolor: "#127fd2",
+                          borderRadius: 3,
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Panel>
         </Grid>
       </Grid>
     </>
