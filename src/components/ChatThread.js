@@ -87,6 +87,11 @@ function Bubble({ message, initial, photo, showAvatar, onToggleComplaint }) {
           border: mine ? 0 : 1,
           borderColor: "grey.200",
           boxShadow: "0 1px 2px rgba(21,26,32,.06)",
+          // On screen before the server has confirmed it. Faint rather than
+          // marked with a spinner: it almost always lands, and it settles
+          // before anyone has read it twice.
+          opacity: message.unsent ? 0.65 : 1,
+          transition: "opacity .2s",
         }}
       >
         {/* In a channel there can be more than two people, so anything that
@@ -337,20 +342,64 @@ export default function ChatThread({
     setPending(res.attachment);
   };
 
+  /**
+   * Sends, and puts the message on screen before the server has heard about
+   * it.
+   *
+   * It used to wait for two round trips — the insert, then a full reload of
+   * the thread — before anything appeared, with the typed text still sitting
+   * in the box and a spinner where the send button was. On a slow connection
+   * that is a second or more of looking like nothing happened, which is when
+   * people press send again.
+   *
+   * A message is accepted almost every time, so it goes up at once and the
+   * two round trips happen behind it. If the server does refuse, the bubble
+   * is taken back out and the text is returned to the box with the reason.
+   *
+   * A message with a file attached is not shown early: the file's link is
+   * signed by the server, so an early bubble would show it as expired for a
+   * moment. That send has already waited for an upload, so one more moment
+   * is not where it hurts — but the box is cleared either way.
+   */
   const send = () => {
     const text = draft.trim();
-    if ((!text && !pending) || !targetId) return;
+    const file = pending;
+    if ((!text && !file) || !targetId) return;
+
+    setDraft("");
+    setPending(null);
+    setError(null);
+
+    const draftId = file ? null : `draft:${Date.now()}`;
+
+    if (draftId) {
+      setMessages((prev) => [
+        ...(prev ?? []),
+        {
+          id: draftId,
+          mine: true,
+          message: text,
+          created_at: new Date().toISOString(),
+          sender_name: meName,
+          attachment: null,
+          complaint: null,
+          unsent: true,
+        },
+      ]);
+    }
 
     startSending(async () => {
-      const res = await sendMessage(kind, targetId, text, pending);
+      const res = await sendMessage(kind, targetId, text, file);
+
       if (res.error) {
+        if (draftId) {
+          setMessages((prev) => (prev ?? []).filter((m) => m.id !== draftId));
+        }
+        setDraft(text);
+        setPending(file);
         setError(res.error);
         return;
       }
-
-      setDraft("");
-      setPending(null);
-      setError(null);
 
       const fresh = await loadMessages(kind, targetId, withComplaints);
       setMessages(fresh.messages ?? []);
@@ -564,12 +613,15 @@ export default function ChatThread({
 
           {!recording && (
             <IconButton
+              // Not disabled while a send is in flight. The bubble is
+              // already up, the box is already empty, and locking the button
+              // would stop the next message going straight after this one.
               color="primary"
               onClick={send}
-              disabled={sending || uploading || (!draft.trim() && !pending)}
+              disabled={uploading || (!draft.trim() && !pending)}
               aria-label="Send"
             >
-              {sending ? <CircularProgress size={20} /> : <SendIcon />}
+              {uploading ? <CircularProgress size={20} /> : <SendIcon />}
             </IconButton>
           )}
         </Stack>
