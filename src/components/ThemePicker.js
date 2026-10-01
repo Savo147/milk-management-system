@@ -1,57 +1,31 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CheckIcon from "@mui/icons-material/Check";
+import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import { setThemeMode } from "@/lib/theme-mode";
 
 /**
- * The looks on offer, each with the colour of the page it makes.
+ * The looks on offer.
  *
- * Written out here rather than read from the theme on purpose: the theme only
- * ever knows about the look in force, and this list has to show the one you
- * are not using.
+ * A sun and a moon rather than a disc of each look's page colour. The disc
+ * was honest — white for Light, black for Dark — but in the top bar, beside a
+ * speech bubble and a bell, a plain circle is the one thing up there that
+ * does not say what it is. These do.
  */
 const OPTIONS = [
-  { mode: "light", label: "Light", page: "#ffffff" },
-  { mode: "dark", label: "Dark", page: "#000000" },
+  { mode: "light", label: "Light", Icon: LightModeOutlinedIcon },
+  { mode: "dark", label: "Dark", Icon: DarkModeOutlinedIcon },
 ];
-
-/**
- * The circle: plainly the colour of the page that look gives you. White for
- * Light, black for Dark.
- *
- * It was two colours split down the diagonal at first — the page on one side,
- * the buttons on the other. Both looks are the same two colours the other way
- * round, so the two circles came out near enough identical to be useless. One
- * solid colour says which is which at a glance.
- *
- * The border is what keeps a white circle visible on a white menu, and a
- * black one on a black menu.
- */
-function Swatch({ option, size = 16 }) {
-  return (
-    <Box
-      sx={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        flexShrink: 0,
-        bgcolor: option.page,
-        border: 1,
-        borderColor: "text.secondary",
-      }}
-    />
-  );
-}
 
 export default function ThemePicker({ mode: inForce = "light" }) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -76,25 +50,23 @@ export default function ThemePicker({ mode: inForce = "light" }) {
 
   return (
     <>
-      <Tooltip title="How the app looks">
-        <Button
-          size="small"
-          variant="outlined"
-          color="inherit"
-          disabled={pending}
+      {/* A palette, and the same one whichever look is on. The button is
+          "choose a theme", not "the theme is light" — and an icon that swaps
+          between a sun and a moon makes you read it before you know what
+          pressing it does. The sun and moon belong on the two lines inside,
+          where they are telling the two apart. */}
+      <Tooltip title={`Theme — ${current.label}`}>
+        <IconButton
           onClick={(e) => setAnchorEl(e.currentTarget)}
-          startIcon={
-            pending ? (
-              <CircularProgress size={15} />
-            ) : (
-              <Swatch option={current} />
-            )
-          }
-          endIcon={<ArrowDropDownIcon />}
-          sx={{ color: "text.secondary", borderColor: "divider" }}
+          disabled={pending}
+          aria-label="Theme"
         >
-          {current.label}
-        </Button>
+          {pending ? (
+            <CircularProgress size={18} />
+          ) : (
+            <PaletteOutlinedIcon fontSize="small" />
+          )}
+        </IconButton>
       </Tooltip>
 
       <Menu
@@ -111,7 +83,7 @@ export default function ThemePicker({ mode: inForce = "light" }) {
             onClick={() => choose(o.mode)}
           >
             <ListItemIcon>
-              <Swatch option={o} size={18} />
+              <o.Icon fontSize="small" />
             </ListItemIcon>
             <ListItemText>{o.label}</ListItemText>
             {o.mode === mode && (

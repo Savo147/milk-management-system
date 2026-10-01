@@ -6,6 +6,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import { requireCustomer, getBusinessSettings } from "@/lib/auth";
 import { getNotifications } from "@/lib/notifications";
 import { getChat } from "@/lib/chat";
+import { getThemeMode } from "@/lib/theme-mode";
 import { withDeadline, HEADER_DEADLINE_MS } from "@/lib/deadline";
 import AppShell from "@/components/AppShell";
 
@@ -48,19 +49,24 @@ export default async function CustomerLayout({ children }) {
   // deadline of their own. A connection that has dropped costs a missing
   // badge for one page load instead of holding back a page whose real data
   // is already here.
-  const [settings, { notifications, unread }, chat] = await Promise.all([
-    getBusinessSettings(),
-    withDeadline(getNotifications(user.id), HEADER_DEADLINE_MS, {
-      notifications: [],
-      unread: 0,
-    }),
-    withDeadline(getChat(user), HEADER_DEADLINE_MS, {
-      isAdmin: false,
-      customerId: null,
-      threads: [],
-      channels: [],
-    }),
-  ]);
+  const [settings, { notifications, unread }, chat, themeMode] =
+    await Promise.all([
+      getBusinessSettings(),
+      withDeadline(getNotifications(user.id), HEADER_DEADLINE_MS, {
+        notifications: [],
+        unread: 0,
+      }),
+      withDeadline(getChat(user), HEADER_DEADLINE_MS, {
+        isAdmin: false,
+        customerId: null,
+        threads: [],
+        channels: [],
+      }),
+      // No deadline on this one: it decides what colour the page is, and a
+      // page that paints in the wrong theme and then corrects itself is worse
+      // than a page that waits.
+      getThemeMode(),
+    ]);
 
   return (
     <AppShell
@@ -74,6 +80,7 @@ export default async function CustomerLayout({ children }) {
       notifications={notifications}
       unread={unread}
       chat={chat}
+      themeMode={themeMode}
     >
       {children}
     </AppShell>

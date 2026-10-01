@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -21,6 +21,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
+import SelectField from "@/components/SelectField";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
@@ -49,8 +50,7 @@ function StaffControls({ member, isSelf }) {
     <Box component="form" action={formAction}>
       <input type="hidden" name="user_id" value={member.id} />
       <Stack direction="row" spacing={1} sx={{ justifyContent: "center" }}>
-        <TextField
-          select
+        <SelectField
           size="small"
           name="role"
           defaultValue={member.role}
@@ -59,10 +59,9 @@ function StaffControls({ member, isSelf }) {
         >
           <MenuItem value="admin">Admin</MenuItem>
           <MenuItem value="customer">Customer</MenuItem>
-        </TextField>
+        </SelectField>
 
-        <TextField
-          select
+        <SelectField
           size="small"
           name="status"
           defaultValue={member.status}
@@ -74,7 +73,7 @@ function StaffControls({ member, isSelf }) {
               {text}
             </MenuItem>
           ))}
-        </TextField>
+        </SelectField>
       </Stack>
 
       {state?.error && (
@@ -102,8 +101,23 @@ function AddButton() {
 function AddStaffDialog({ open, onClose }) {
   const [state, formAction] = useActionState(addStaff, null);
 
+  /**
+   * Close once, on the result that said so.
+   *
+   * useActionState keeps the last result for as long as the component lives,
+   * so `state.ok` stays true after a successful one. This effect also depends
+   * on `onClose`, which the parent rebuilds on every render — so the next
+   * time the dialog was opened the effect ran again, saw the *old* ok, and
+   * shut it before it had drawn. The dialog simply would not open a second
+   * time. Remembering which result has been acted on fixes it whether or not
+   * the component happens to remount.
+   */
+  const handled = useRef(null);
   useEffect(() => {
-    if (state?.ok) onClose();
+    if (state?.ok && handled.current !== state) {
+      handled.current = state;
+      onClose();
+    }
   }, [state, onClose]);
 
   return (

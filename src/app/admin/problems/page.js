@@ -2,7 +2,7 @@ import Alert from "@mui/material/Alert";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
 import { problemState } from "@/lib/constants";
-import { todayLocal } from "@/lib/range";
+import { todayLocal, dayStart, dayEnd } from "@/lib/range";
 import { formatDate, errorText } from "@/lib/format";
 import ProblemsView from "./ProblemsView";
 
@@ -26,8 +26,8 @@ export default async function ProblemsPage({ searchParams }) {
     )
     // created_at is a timestamp, so the day has to run to its last moment
     // rather than stopping at midnight.
-    .gte("created_at", `${date}T00:00:00`)
-    .lte("created_at", `${date}T23:59:59.999`)
+    .gte("created_at", dayStart(date))
+    .lte("created_at", dayEnd(date))
     .order("created_at", { ascending: false });
 
   const problems = (reports ?? []).map((r) => ({

@@ -122,3 +122,44 @@ export function greeting() {
   if (hour < 22) return "Good evening";
   return "Good night";
 }
+
+/**
+ * A stored delivery time as a value a `type="time"` input will accept.
+ *
+ * The column used to hold whatever was typed — "before 7 am", "6:00 in the
+ * morning", "7am". A time input only accepts "HH:MM" and silently shows
+ * nothing for anything else, so every one of those would have looked like an
+ * empty field and been wiped on the next save. This pulls the hour and minute
+ * out of the old text where it can, and gives back "" where it cannot.
+ */
+export function toTimeValue(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+
+  const m = text.match(/(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?/i);
+  if (!m) return "";
+
+  let hour = Number(m[1]);
+  const minute = Number(m[2] ?? 0);
+  const half = (m[3] ?? "").toLowerCase().replace(/\./g, "");
+
+  if (half === "pm" && hour < 12) hour += 12;
+  if (half === "am" && hour === 12) hour = 0;
+
+  if (hour > 23 || minute > 59) return "";
+
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+/** "06:30" → "6:30 am". For reading, not for the input. */
+export function formatTime(value) {
+  const hhmm = toTimeValue(value);
+  if (!hhmm) return "";
+
+  const [h, m] = hhmm.split(":").map(Number);
+  return new Intl.DateTimeFormat("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(2000, 0, 1, h, m));
+}

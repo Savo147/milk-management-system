@@ -16,6 +16,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
+import SelectField from "@/components/SelectField";
 import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
@@ -110,8 +111,7 @@ export default function BillingTable({
           }}
         />
 
-        <TextField
-          select
+        <SelectField
           size="small"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -120,7 +120,7 @@ export default function BillingTable({
           <MenuItem value="all">All</MenuItem>
           <MenuItem value="pending">Pending</MenuItem>
           <MenuItem value="done">Done</MenuItem>
-        </TextField>
+        </SelectField>
       </Stack>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>

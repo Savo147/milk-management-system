@@ -1,7 +1,7 @@
 import Alert from "@mui/material/Alert";
 import { createClient } from "@/lib/supabase/server";
 import { requireCustomerAccount } from "@/lib/auth";
-import { resolveRange, todayLocal } from "@/lib/range";
+import { resolveRange, todayLocal, dayStart, dayEnd } from "@/lib/range";
 import { problemState } from "@/lib/constants";
 import PageHeader from "@/components/PageHeader";
 import NotLinked from "@/components/NotLinked";
@@ -36,8 +36,8 @@ export default async function ReportProblemPage({ searchParams }) {
     .eq("customer_id", customer.id)
     // created_at is a timestamp, so the end of the span has to include its
     // whole last day rather than stopping at midnight.
-    .gte("created_at", `${from}T00:00:00`)
-    .lte("created_at", `${to}T23:59:59.999`)
+    .gte("created_at", dayStart(from))
+    .lte("created_at", dayEnd(to))
     .order("created_at", { ascending: false });
 
   const problems = reports ?? [];

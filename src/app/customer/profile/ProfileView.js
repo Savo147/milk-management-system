@@ -17,7 +17,8 @@ import { ACCOUNT_STATUS, STATUS_COLOR } from "@/lib/constants";
 import AvatarPicker from "@/components/AvatarPicker";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
-import ThemePicker from "@/components/ThemePicker";
+import TimeField from "@/components/TimeField";
+import { toTimeValue } from "@/lib/format";
 import { updateMyProfile, changeMyPassword, updateMyMilkPlan } from "./actions";
 
 function SaveButton({ icon: Icon = SaveIcon, label, busy }) {
@@ -60,11 +61,24 @@ function Section({ title, subtitle, action, children }) {
 
 const TABS = ["My details", "My milk details", "Password"];
 
-export default function ProfileView({ user, customer, settings, themeMode }) {
+export default function ProfileView({ user, customer, settings, initialTab }) {
   const [profileState, saveProfile] = useActionState(updateMyProfile, null);
   const [passwordState, savePassword] = useActionState(changeMyPassword, null);
   const [planState, savePlan] = useActionState(updateMyMilkPlan, null);
-  const [tab, setTab] = useState(0);
+  /**
+   * Which tab to open on, when the URL names one.
+   *
+   * A notification about a rate links straight here, and landing on the first
+   * tab would leave the reader to find the thing they were just told about.
+   * A lazy initialiser rather than an effect: the right tab is drawn first
+   * time, with no flicker through the wrong one.
+   */
+  const [tab, setTab] = useState(() =>
+    Math.max(
+      0,
+      TABS.findIndex((t) => t.toLowerCase() === initialTab),
+    ),
+  );
 
   return (
     <Box>
@@ -87,9 +101,6 @@ export default function ProfileView({ user, customer, settings, themeMode }) {
         <Section
           title="My details"
           subtitle="You can change your name, mobile and photo yourself."
-          // How the app looks is a setting about you, so it sits with the
-          // rest of your own details. It saves itself — nothing to press.
-          action={<ThemePicker mode={themeMode} />}
         >
           <Box component="form" action={saveProfile}>
             <Box sx={{ mb: 2.5 }}>
@@ -231,12 +242,12 @@ export default function ProfileView({ user, customer, settings, themeMode }) {
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
+                  <TimeField
                     name="delivery_time"
                     label="Delivery time"
-                    defaultValue={customer.delivery_time ?? ""}
+                    value={toTimeValue(customer.delivery_time)}
                     fullWidth
-                    placeholder="e.g. before 7 am"
+                    helperText="When you want the milk"
                   />
                 </Grid>
               </Grid>

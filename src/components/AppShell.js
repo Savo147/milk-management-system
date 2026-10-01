@@ -31,6 +31,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import { alpha } from "@mui/material/styles";
 import ChatButton from "@/components/ChatButton";
+import ThemePicker from "@/components/ThemePicker";
 import NotificationBell from "@/components/NotificationBell";
 import { signOut } from "@/app/login/actions";
 
@@ -104,6 +105,7 @@ export default function AppShell({
   notifications = [],
   unread = 0,
   chat = null,
+  themeMode = "light",
   children,
 }) {
   const pathname = usePathname();
@@ -263,6 +265,8 @@ export default function AppShell({
           >
             {title}
           </Typography>
+
+          <ThemePicker mode={themeMode} />
 
           {chat && (
             <ChatButton

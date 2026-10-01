@@ -1,24 +1,29 @@
 import { DAIRY_TZ } from "@/lib/format";
 
 /**
- * Where a problem notification goes when it is clicked.
+ * Where a notification goes when it is clicked.
  *
- * The two sides have different screens for the same complaint, and the date
+ * Two sides, and two kinds, so four answers.
+ *
+ * **A complaint** opens the complaint itself — `?report=` names it, so the
+ * page lands on that thread rather than on a day's worth of rows. The date
  * matters as much as the side: the dairy's Problems page shows one day at a
  * time and the customer's a month, so opening either on today would hide the
  * very complaint that was tapped. Both are pointed at the day the
- * notification was written, read in the dairy's own timezone — a complaint
- * filed at half past eleven at night belongs to that night, not to the next
- * morning in UTC.
+ * notification was written, read in the dairy's own timezone — one filed at
+ * half past eleven at night belongs to that night, not to the next morning
+ * in UTC.
  *
- * `reportId` is the complaint itself, carried through as `?report=` so the
- * page opens straight onto that thread instead of leaving it to be found in
- * a day's worth of rows. Notifications written before the id was stored have
- * none, and those still land on the right day.
- *
- * Shared by the bell and the full list so the two can never drift apart.
+ * **A rate change** has no thread to open, so it goes to wherever the rate
+ * can be seen: the dairy's Rates tab, or the customer's own milk details.
  */
-export function problemHref(createdAt, isAdmin, reportId) {
+export function problemHref(createdAt, isAdmin, reportId, type = "problem") {
+  if (type === "rate") {
+    return isAdmin
+      ? "/admin/settings?tab=rates"
+      : "/customer/profile?tab=my+milk+details";
+  }
+
   const day = new Intl.DateTimeFormat("en-CA", {
     timeZone: DAIRY_TZ,
     year: "numeric",

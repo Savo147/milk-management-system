@@ -19,6 +19,7 @@ import { alpha } from "@mui/material/styles";
 import { clock, dayLabel } from "@/lib/chat-format";
 import Attachment from "@/components/Attachment";
 import EmojiPicker from "@/components/EmojiPicker";
+import TemplatePicker from "@/components/TemplatePicker";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import {
   loadMessages,
@@ -407,6 +408,23 @@ export default function ChatThread({
     });
   };
 
+  /**
+   * Drops a saved reply into the box rather than sending it.
+   *
+   * Appended when something is already typed, so picking one does not throw
+   * away a half-written message; the cursor is left at the end, ready to add
+   * the day or the amount the template deliberately leaves blank.
+   */
+  const useTemplate = (text) => {
+    setDraft((d) => (d.trim() ? `${d.trimEnd()} ${text}` : text));
+    requestAnimationFrame(() => {
+      const el = inputRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    });
+  };
+
   let lastDay = null;
 
   return (
@@ -589,6 +607,15 @@ export default function ChatThread({
           <Box sx={{ pb: 0.5, display: recording ? "none" : "block" }}>
             <EmojiPicker onPick={insertEmoji} />
           </Box>
+
+          {/* Only the dairy. A customer writing to their own dairy has one
+              thing to say and says it; canned replies are for the side that
+              answers the same question forty times. */}
+          {canManage && (
+            <Box sx={{ pb: 0.5, display: recording ? "none" : "block" }}>
+              <TemplatePicker name={themName} onPick={useTemplate} />
+            </Box>
+          )}
 
           {!recording && (
             <TextField

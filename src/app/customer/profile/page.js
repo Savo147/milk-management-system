@@ -1,14 +1,14 @@
 import { requireCustomerAccount, getBusinessSettings } from "@/lib/auth";
 import PageHeader from "@/components/PageHeader";
 import ProfileView from "./ProfileView";
-import { getThemeMode } from "@/lib/theme-mode";
 
 export const metadata = { title: "Profile" };
 
-export default async function ProfilePage() {
+export default async function ProfilePage({ searchParams }) {
   const { user, customer } = await requireCustomerAccount();
   const settings = await getBusinessSettings();
-  const themeMode = await getThemeMode();
+  const params = await searchParams;
+  const initialTab = String(params?.tab ?? "").toLowerCase();
 
   return (
     <>
@@ -20,7 +20,7 @@ export default async function ProfilePage() {
         user={user}
         customer={customer}
         settings={settings}
-        themeMode={themeMode}
+        initialTab={initialTab}
       />
     </>
   );

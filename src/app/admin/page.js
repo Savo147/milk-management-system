@@ -30,7 +30,7 @@ import { DAILY_ROW_STATUS, STATUS_COLOR } from "@/lib/constants";
 import PageHeader from "@/components/PageHeader";
 import StatCard, { SectionLabel } from "@/components/StatCard";
 import MilkChart from "@/components/MilkChart";
-import StatusDonut from "@/components/StatusDonut";
+import RoundPanel from "@/components/RoundPanel";
 
 /** Local YYYY-MM-DD. toISOString() would shift the date in IST. */
 function today() {
@@ -185,6 +185,15 @@ export default async function AdminDashboard() {
   const supabase = await createClient();
   const day = today();
   const month = monthStart();
+  // Monday of this week. It can fall in the previous month — on the 2nd of
+  // October the week began on the 28th of September — so the rows have to be
+  // fetched from whichever of the two comes first, or "this week" quietly
+  // loses its first days at the start of every month.
+  const weekday = (new Date(`${day}T00:00:00`).getDay() + 6) % 7;
+  const weekFrom = new Date(Date.parse(day) - weekday * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  const since = weekFrom < month ? weekFrom : month;
   // Six days back plus today makes a week of columns.
   const chartFrom = daysAgo(CHART_DAYS - 1);
   // Two weeks back, so last week can be drawn behind this one.
@@ -193,7 +202,7 @@ export default async function AdminDashboard() {
   const [
     { count: activeCustomers },
     { data: todayEntries },
-    { data: monthEntries },
+    { data: recentEntries },
     { data: balances },
     { data: openReports },
     { data: chartEntries },
@@ -210,8 +219,10 @@ export default async function AdminDashboard() {
       .eq("date", day),
     supabase
       .from("milk_entries")
-      .select("actual_quantity, total_amount, customer_id, customers(name)")
-      .gte("date", month),
+      .select(
+        "date, delivery_status, actual_quantity, total_amount, customer_id, customers(name)",
+      )
+      .gte("date", since),
     // One row per customer, summed by the database — see migration 0010.
     supabase.from("customer_balances").select("customer_id, name, due"),
     // Complaints nobody has answered yet. Not a month's slice: a complaint
@@ -252,10 +263,19 @@ export default async function AdminDashboard() {
   // Colours are the app's status colours; the key beside the ring carries
   // the words and the counts, because some of them sit close under colour
   // blindness.
-  // Who took the most this month. The month query already has every row it
-  // needs, so this costs one pass rather than another trip to the database.
+  const sum = (rows, key) =>
+    (rows ?? []).reduce((t, r) => t + Number(r[key] ?? 0), 0);
+
+  // One pass over rows the page had fetched anyway. The query reaches back to
+  // whichever came first, this week's Monday or the first of the month, so
+  // "this month" has to be cut out of it rather than taken whole.
+  const recent = recentEntries ?? [];
+  const monthRows = recent.filter((e) => e.date >= month);
+
+  // Who took the most this month. The same rows again, so this costs one more
+  // pass rather than another trip to the database.
   const perCustomer = new Map();
-  for (const e of monthEntries ?? []) {
+  for (const e of monthRows) {
     const id = e.customer_id;
     const row = perCustomer.get(id) ?? {
       id,
@@ -276,22 +296,63 @@ export default async function AdminDashboard() {
   // built only from saved entries said "4 entries, 100% delivered" on a
   // morning when ten customers had not been marked at all. The round looked
   // finished because only the finished part was being counted.
-  const entered = todayEntries?.length ?? 0;
-  const notYet = Math.max(0, (activeCustomers ?? 0) - entered);
-  const roundTotal = entered + notYet;
+  /**
+   * How a stretch of days came out, for the ring.
+   *
+   * `expected` is customers × days, not rows — that is what makes Pending
+   * mean something. A ring built only from saved entries said "4 entries,
+   * 100% delivered" on a morning when ten customers had not been marked at
+   * all: the round looked finished because only the finished part was being
+   * counted. Over a week it answers the same question backwards — how many
+   * customer-days were never written down.
+   */
+  function round(rows, days, noun) {
+    const list = rows ?? [];
+    const expected = (activeCustomers ?? 0) * days;
+    const notYet = Math.max(0, expected - list.length);
+    const countOf = (key) =>
+      list.filter((e) => e.delivery_status === key).length;
 
-  const countOf = (key) =>
-    (todayEntries ?? []).filter((e) => e.delivery_status === key).length;
+    return {
+      total: list.length + notYet,
+      note: noun,
+      // The five states keep the same words the Daily Milk page uses, so the
+      // ring and the list over there never disagree about what a row is
+      // called.
+      slices: [
+        { label: DAILY_ROW_STATUS.pending, color: "var(--ring-pending)", value: notYet }, // prettier-ignore
+        { label: DAILY_ROW_STATUS.delivered, color: "var(--ring-done)", value: countOf("delivered") }, // prettier-ignore
+        { label: DAILY_ROW_STATUS.partial, color: "var(--ring-partial)", value: countOf("partial") }, // prettier-ignore
+        { label: DAILY_ROW_STATUS.extra, color: "var(--ring-extra)", value: countOf("extra") }, // prettier-ignore
+        { label: DAILY_ROW_STATUS.missed, color: "var(--ring-missed)", value: countOf("missed") }, // prettier-ignore
+      ],
+      figures: [
+        {
+          label: "Milk",
+          value: formatLiters(sum(list, "actual_quantity")),
+        },
+        {
+          label: "Amount",
+          value: formatAmount(sum(list, "total_amount")),
+          color: "var(--tile-green-fg)",
+        },
+      ],
+    };
+  }
 
-  // The five states keep the same words the Daily Milk page uses, so the ring
-  // and the list over there never disagree about what a row is called.
-  const byStatus = [
-    { label: DAILY_ROW_STATUS.pending, color: "var(--ring-pending)", value: notYet }, // prettier-ignore
-    { label: DAILY_ROW_STATUS.delivered, color: "var(--ring-done)", value: countOf("delivered") }, // prettier-ignore
-    { label: DAILY_ROW_STATUS.partial, color: "var(--ring-partial)", value: countOf("partial") }, // prettier-ignore
-    { label: DAILY_ROW_STATUS.extra, color: "var(--ring-extra)", value: countOf("extra") }, // prettier-ignore
-    { label: DAILY_ROW_STATUS.missed, color: "var(--ring-missed)", value: countOf("missed") }, // prettier-ignore
-  ];
+  const periods = {
+    today: round(
+      recent.filter((e) => e.date === day),
+      1,
+      "customers",
+    ),
+    week: round(
+      recent.filter((e) => e.date >= weekFrom),
+      weekday + 1,
+      "deliveries",
+    ),
+    month: round(monthRows, Number(day.slice(8)), "deliveries"),
+  };
 
   const deliveries = (todayRows ?? []).map((r) => ({
     id: r.id,
@@ -317,13 +378,10 @@ export default async function AdminDashboard() {
   // relative to the total every bar would be a sliver.
   const worstDue = Math.max(1, ...debtors.map((b) => Number(b.due)));
 
-  const sum = (rows, key) =>
-    (rows ?? []).reduce((t, r) => t + Number(r[key] ?? 0), 0);
-
   const todayMilk = sum(todayEntries, "actual_quantity");
   const todayAmount = sum(todayEntries, "total_amount");
-  const monthMilk = sum(monthEntries, "actual_quantity");
-  const monthAmount = sum(monthEntries, "total_amount");
+  const monthMilk = sum(monthRows, "actual_quantity");
+  const monthAmount = sum(monthRows, "total_amount");
   const waiting = openReports?.length ?? 0;
   // How long the oldest unanswered one has been sitting there. That number,
   // more than the count, is what the customer on the other end feels.
@@ -621,20 +679,8 @@ export default async function AdminDashboard() {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 5 }}>
-          <Panel title="Today's round" sub="How the deliveries came out">
-            <StatusDonut
-              slices={byStatus}
-              total={roundTotal}
-              note="customers"
-              figures={[
-                { label: "Milk today", value: formatLiters(todayMilk) },
-                {
-                  label: "Amount today",
-                  value: formatAmount(todayAmount),
-                  color: "var(--tile-green-fg)",
-                },
-              ]}
-            />
+          <Panel title="The round" sub="How the deliveries came out">
+            <RoundPanel periods={periods} />
           </Panel>
         </Grid>
 

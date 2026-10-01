@@ -14,6 +14,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import SelectField from "@/components/SelectField";
 import Typography from "@mui/material/Typography";
 import SendIcon from "@mui/icons-material/Send";
 import { ISSUE_TYPE, PROBLEM_STATE, problemState } from "@/lib/constants";
@@ -37,15 +38,19 @@ function StatusPicker({ problem }) {
   const [state, formAction] = useActionState(setProblemStatus, null);
 
   return (
-    <Box component="form" action={formAction}>
+    // Pushed to the right by its own margin rather than by a spacer next to
+    // it. A spacer only works while everything stays on one line; the moment
+    // the row wraps on a narrow screen the spacer fills the end of the first
+    // line and this drops to the start of the second, which is where it was
+    // turning up on a phone.
+    <Box component="form" action={formAction} sx={{ ml: "auto" }}>
       <input type="hidden" name="report_id" value={problem.id} />
-      <TextField
-        select
+      <SelectField
         size="small"
         name="status"
         label="Status"
         defaultValue={problemState(problem.status)}
-        sx={{ minWidth: 170 }}
+        sx={{ width: 132 }}
         // Submitting on change keeps this to one click; there is nothing else
         // to fill in.
         onChange={(e) => e.target.form.requestSubmit()}
@@ -55,7 +60,7 @@ function StatusPicker({ problem }) {
             {text}
           </MenuItem>
         ))}
-      </TextField>
+      </SelectField>
       {state?.error && (
         <Typography variant="caption" color="error" sx={{ display: "block" }}>
           {state.error}
@@ -122,7 +127,6 @@ export default function ProblemDialog({ problem, replies, onClose }) {
                 label="Got"
                 value={formatLiters(problem.received_quantity)}
               />
-              <Box sx={{ flexGrow: 1 }} />
               <StatusPicker problem={problem} />
             </Stack>
 

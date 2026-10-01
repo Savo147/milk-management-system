@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
@@ -11,6 +11,9 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
+import SelectField from "@/components/SelectField";
+import TimeField from "@/components/TimeField";
+import { toTimeValue } from "@/lib/format";
 import { saveCustomer } from "./actions";
 
 function Actions({ onClose }) {
@@ -31,8 +34,23 @@ export default function CustomerDialog({ open, onClose, customer }) {
   const [state, formAction] = useActionState(saveCustomer, null);
 
   // Close only once the action reports success, so errors stay visible.
+  /**
+   * Close once, on the result that said so.
+   *
+   * useActionState keeps the last result for as long as the component lives,
+   * so `state.ok` stays true after a successful one. This effect also depends
+   * on `onClose`, which the parent rebuilds on every render — so the next
+   * time the dialog was opened the effect ran again, saw the *old* ok, and
+   * shut it before it had drawn. The dialog simply would not open a second
+   * time. Remembering which result has been acted on fixes it whether or not
+   * the component happens to remount.
+   */
+  const handled = useRef(null);
   useEffect(() => {
-    if (state?.ok) onClose();
+    if (state?.ok && handled.current !== state) {
+      handled.current = state;
+      onClose();
+    }
   }, [state, onClose]);
 
   return (
@@ -135,25 +153,24 @@ export default function CustomerDialog({ open, onClose, customer }) {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+              <TimeField
                 name="delivery_time"
                 label="Delivery time"
-                defaultValue={customer?.delivery_time ?? ""}
+                value={toTimeValue(customer?.delivery_time)}
                 fullWidth
-                placeholder="6:00 in the morning"
+                helperText="When the milk is delivered"
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+              <SelectField
                 name="status"
                 label="Status"
                 defaultValue={customer?.status ?? "active"}
-                select
                 fullWidth
               >
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>
-              </TextField>
+              </SelectField>
             </Grid>
           </Grid>
         </DialogContent>

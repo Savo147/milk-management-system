@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -40,8 +40,23 @@ function ConfirmButton() {
 export default function DeleteStaffDialog({ member, onClose }) {
   const [state, formAction] = useActionState(deleteStaff, null);
 
+  /**
+   * Close once, on the result that said so.
+   *
+   * useActionState keeps the last result for as long as the component lives,
+   * so `state.ok` stays true after a successful one. This effect also depends
+   * on `onClose`, which the parent rebuilds on every render — so the next
+   * time the dialog was opened the effect ran again, saw the *old* ok, and
+   * shut it before it had drawn. The dialog simply would not open a second
+   * time. Remembering which result has been acted on fixes it whether or not
+   * the component happens to remount.
+   */
+  const handled = useRef(null);
   useEffect(() => {
-    if (state?.ok) onClose();
+    if (state?.ok && handled.current !== state) {
+      handled.current = state;
+      onClose();
+    }
   }, [state, onClose]);
 
   return (

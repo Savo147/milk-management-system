@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -12,6 +12,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import SelectField from "@/components/SelectField";
 import Typography from "@mui/material/Typography";
 import SendIcon from "@mui/icons-material/Send";
 import { ISSUE_TYPE, MILK_QUANTITIES } from "@/lib/constants";
@@ -35,9 +36,23 @@ function SubmitButton() {
 export default function NewProblemDialog({ open, customer, today, onClose }) {
   const [state, formAction] = useActionState(raiseProblem, null);
 
-  // Close only once it is actually in, so a failure keeps what was typed.
+  /**
+   * Close once, on the result that said so.
+   *
+   * useActionState keeps the last result for as long as the component lives,
+   * so `state.ok` stays true after a successful one. This effect also depends
+   * on `onClose`, which the parent rebuilds on every render — so the next
+   * time the dialog was opened the effect ran again, saw the *old* ok, and
+   * shut it before it had drawn. The dialog simply would not open a second
+   * time. Remembering which result has been acted on fixes it whether or not
+   * the component happens to remount.
+   */
+  const handled = useRef(null);
   useEffect(() => {
-    if (state?.ok) onClose();
+    if (state?.ok && handled.current !== state) {
+      handled.current = state;
+      onClose();
+    }
   }, [state, onClose]);
 
   return (
@@ -67,8 +82,7 @@ export default function NewProblemDialog({ open, customer, today, onClose }) {
           )}
 
           <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              select
+            <SelectField
               name="issue_type"
               label="What went wrong"
               defaultValue=""
@@ -80,7 +94,7 @@ export default function NewProblemDialog({ open, customer, today, onClose }) {
                   {text}
                 </MenuItem>
               ))}
-            </TextField>
+            </SelectField>
 
             <TextField
               type="date"
@@ -95,8 +109,7 @@ export default function NewProblemDialog({ open, customer, today, onClose }) {
               }}
             />
 
-            <TextField
-              select
+            <SelectField
               name="received_quantity"
               label="How much you actually got"
               defaultValue=""
@@ -112,7 +125,7 @@ export default function NewProblemDialog({ open, customer, today, onClose }) {
                   {formatLiters(q)}
                 </MenuItem>
               ))}
-            </TextField>
+            </SelectField>
 
             <TextField
               name="message"

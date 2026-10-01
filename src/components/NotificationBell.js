@@ -13,6 +13,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
+import SellIcon from "@mui/icons-material/Sell";
 import { formatDate } from "@/lib/format";
 import { problemHref } from "@/lib/notification-link";
 import {
@@ -36,7 +37,7 @@ export default function NotificationBell({
   const openProblem = (n) => {
     close();
     if (!n.is_read) startTransition(() => markNotificationRead(n.id));
-    router.push(problemHref(n.created_at, isAdmin, n.reference_id));
+    router.push(problemHref(n.created_at, isAdmin, n.reference_id, n.type));
   };
 
   const allHref = isAdmin ? "/admin/notifications" : "/customer/notifications";
@@ -181,7 +182,11 @@ export default function NotificationBell({
                   color: n.is_read ? "grey.500" : "primary.dark",
                 }}
               >
-                <ReportProblemIcon sx={{ fontSize: 18 }} />
+                {n.type === "rate" ? (
+                  <SellIcon sx={{ fontSize: 18 }} />
+                ) : (
+                  <ReportProblemIcon sx={{ fontSize: 18 }} />
+                )}
               </Box>
 
               <Box sx={{ minWidth: 0, flexGrow: 1 }}>

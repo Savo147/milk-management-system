@@ -358,6 +358,27 @@ export function buildTheme(mode = "light") {
       // that spends a fifth of the screen on nothing, and the forms inside are
       // already tight. Halved below sm, applied once here rather than at each
       // of the dozen call sites.
+      MuiDialogContent: {
+        styleOverrides: {
+          root: {
+            /**
+             * Room above the first field.
+             *
+             * MUI drops the content's top padding to zero whenever a
+             * DialogTitle sits directly above it. A TextField's label floats
+             * *above* its box once the field has a value, and the content is
+             * also the scroll container — so with no padding the scroller
+             * cuts the first label in half. "Name" came out as a sliver of
+             * letters along the top edge.
+             *
+             * Written as the same adjacent-sibling selector MUI uses, so it
+             * carries the same weight and lands after it.
+             */
+            ".MuiDialogTitle-root + &": { paddingTop: 10 },
+          },
+        },
+      },
+
       MuiDialog: {
         styleOverrides: {
           /**

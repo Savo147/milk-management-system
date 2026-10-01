@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireCustomer } from "@/lib/auth";
+import { notifyAdmins } from "@/lib/notify";
+import { formatRate } from "@/lib/format";
 
 /**
  * The customer's own name, mobile and photo.
@@ -104,6 +106,15 @@ export async function updateMyMilkPlan(prevState, formData) {
 
   const supabase = await createClient();
 
+  // Read before writing, for the same reason the dairy's side does: once the
+  // update has run there is no old rate left to put in the message. The name
+  // comes along too — the dairy's bell needs to say whose rate moved.
+  const { data: before } = await supabase
+    .from("customers")
+    .select("id, name, rate_per_liter")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("customers")
     .update({
@@ -122,6 +133,18 @@ export async function updateMyMilkPlan(prevState, formData) {
       return { error: "Editing your plan is not set up yet (migration 0007)." };
     }
     return { error: `Could not save: ${error.message}` };
+  }
+
+  // The dairy is told, and this one is not a courtesy. A customer can set
+  // their own rate — the dairy decided that deliberately — so the only thing
+  // standing between a changed rate and a wrong bill is somebody noticing.
+  if (before && Number(before.rate_per_liter) !== rate) {
+    await notifyAdmins({
+      type: "rate",
+      title: `${before.name} changed their rate`,
+      message: `${formatRate(before.rate_per_liter)} → ${formatRate(rate)} per liter. Milk delivered before today is still billed at the old rate.`,
+      referenceId: before.id,
+    });
   }
 
   revalidatePath("/customer/profile");

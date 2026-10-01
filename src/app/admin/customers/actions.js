@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
+import { notifyCustomer } from "@/lib/notify";
+import { formatRate } from "@/lib/format";
 
 function parseForm(formData) {
   const name = String(formData.get("name") ?? "").trim();
@@ -60,12 +62,37 @@ export async function saveCustomer(prevState, formData) {
   const id = formData.get("id");
   const supabase = await createClient();
 
+  // The rate can be changed from this form as well as from the Rates tab, and
+  // the customer should hear about it either way. Read before writing: once
+  // the update has run the old number is gone.
+  const { data: before } = id
+    ? await supabase
+        .from("customers")
+        .select("rate_per_liter")
+        .eq("id", id)
+        .maybeSingle()
+    : { data: null };
+
   const { error } = id
     ? await supabase.from("customers").update(values).eq("id", id)
     : await supabase.from("customers").insert(values);
 
   if (error) {
     return { error: `Could not save: ${error.message}` };
+  }
+
+  // Only when it actually moved — saving a changed address should not tell
+  // anybody their rate has changed.
+  if (
+    before &&
+    Number(before.rate_per_liter) !== Number(values.rate_per_liter)
+  ) {
+    await notifyCustomer({
+      customerId: id,
+      type: "rate",
+      title: "Your rate has changed",
+      message: `${formatRate(before.rate_per_liter)} → ${formatRate(values.rate_per_liter)} per liter. Milk delivered before today is still billed at the old rate.`,
+    });
   }
 
   revalidatePath("/admin/customers");

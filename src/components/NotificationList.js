@@ -24,6 +24,7 @@ import DoneAllIcon from "@mui/icons-material/DoneAll";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
+import SellIcon from "@mui/icons-material/Sell";
 import { DAIRY_TZ, formatDate } from "@/lib/format";
 import { problemHref } from "@/lib/notification-link";
 import {
@@ -165,7 +166,7 @@ export default function NotificationList({
 
   const open = (n) => {
     if (!n.is_read) startTransition(() => markNotificationRead(n.id));
-    router.push(problemHref(n.created_at, isAdmin, n.reference_id));
+    router.push(problemHref(n.created_at, isAdmin, n.reference_id, n.type));
   };
 
   /**
@@ -459,7 +460,11 @@ export default function NotificationList({
                     borderColor: "grey.200",
                   }}
                 >
-                  <ReportProblemIcon sx={{ fontSize: 21 }} />
+                  {n.type === "rate" ? (
+                    <SellIcon sx={{ fontSize: 21 }} />
+                  ) : (
+                    <ReportProblemIcon sx={{ fontSize: 21 }} />
+                  )}
                 </Box>
 
                 <Box sx={{ minWidth: 0, flexGrow: 1 }}>

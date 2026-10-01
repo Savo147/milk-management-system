@@ -89,3 +89,29 @@ export function resolveRange(params) {
     monthTo,
   };
 }
+
+/**
+ * The dairy's clock, written the way Postgres wants to read it.
+ *
+ * Asia/Kolkata is a fixed +05:30 all year — India has no daylight saving — so
+ * the offset can be written down rather than worked out.
+ */
+const DAIRY_OFFSET = "+05:30";
+
+/**
+ * One calendar day, as the two instants that bound it.
+ *
+ * `created_at` is an instant, not a date. Asking for it between
+ * "2026-10-01T00:00:00" and "2026-10-01T23:59:59.999" with no offset hands
+ * Postgres two *UTC* moments, so the window it actually searched ran from
+ * half past five on the morning of the 1st to half past five on the morning
+ * of the 2nd, in the dairy's own time.
+ *
+ * Everything on screen is formatted in the dairy's timezone, so a complaint
+ * filed at two in the morning on the 2nd was listed under the 1st and then
+ * printed as "02 Oct 2026" on its own row — the page disagreeing with itself.
+ *
+ * With the offset attached, the window is the day the dairy means.
+ */
+export const dayStart = (date) => `${date}T00:00:00${DAIRY_OFFSET}`;
+export const dayEnd = (date) => `${date}T23:59:59.999${DAIRY_OFFSET}`;

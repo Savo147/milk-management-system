@@ -14,7 +14,7 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import TextField from "@mui/material/TextField";
+import SelectField from "@/components/SelectField";
 import Typography from "@mui/material/Typography";
 import {
   formatAmount,
@@ -114,8 +114,7 @@ export default function MyMilkView({
           onChange={go}
         />
         <Box sx={{ flexGrow: 1 }} />
-        <TextField
-          select
+        <SelectField
           size="small"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -127,7 +126,7 @@ export default function MyMilkView({
               {text}
             </MenuItem>
           ))}
-        </TextField>
+        </SelectField>
       </Stack>
 
       <DataCards

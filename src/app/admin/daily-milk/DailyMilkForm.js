@@ -20,6 +20,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
+import SelectField from "@/components/SelectField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
@@ -289,8 +290,7 @@ export default function DailyMilkForm({ date, customers }) {
           }}
         />
 
-        <TextField
-          select
+        <SelectField
           size="small"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -302,7 +302,7 @@ export default function DailyMilkForm({ date, customers }) {
               {label}
             </MenuItem>
           ))}
-        </TextField>
+        </SelectField>
 
         <Box sx={{ flexGrow: 1 }} />
 

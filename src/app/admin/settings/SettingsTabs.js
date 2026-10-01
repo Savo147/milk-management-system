@@ -17,9 +17,22 @@ export default function SettingsTabs({
   user,
   staff,
   rates,
-  themeMode,
+  initialTab,
 }) {
-  const [tab, setTab] = useState(0);
+  /**
+   * Which tab to open on, when the URL names one.
+   *
+   * A notification about a rate links straight here, and landing on the first
+   * tab would leave the reader to find the thing they were just told about.
+   * A lazy initialiser rather than an effect: the right tab is drawn first
+   * time, with no flicker through the wrong one.
+   */
+  const [tab, setTab] = useState(() =>
+    Math.max(
+      0,
+      TABS.findIndex((t) => t.toLowerCase() === initialTab),
+    ),
+  );
 
   return (
     <Box>
@@ -36,7 +49,7 @@ export default function SettingsTabs({
       </Tabs>
 
       {tab === 0 && <DairyForm settings={settings} />}
-      {tab === 1 && <ProfileForm user={user} themeMode={themeMode} />}
+      {tab === 1 && <ProfileForm user={user} />}
       {tab === 2 && <PasswordForm />}
       {tab === 3 && <StaffSection staff={staff} currentUserId={user.id} />}
       {tab === 4 && <RatesTable rates={rates} />}

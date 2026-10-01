@@ -14,7 +14,7 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import TextField from "@mui/material/TextField";
+import SelectField from "@/components/SelectField";
 import Typography from "@mui/material/Typography";
 import AddIcon from "@mui/icons-material/Add";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
@@ -79,8 +79,7 @@ export default function ProblemsView({
           onChange={go}
         />
 
-        <TextField
-          select
+        <SelectField
           size="small"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -92,7 +91,7 @@ export default function ProblemsView({
               {text}
             </MenuItem>
           ))}
-        </TextField>
+        </SelectField>
 
         <Box sx={{ flexGrow: 1 }} />
 

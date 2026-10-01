@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { NOTIFY_TYPES } from "@/lib/notify-types";
 
 /**
  * The bell's contents for one user: the latest few, and how many are unread.
@@ -18,14 +19,14 @@ export async function getNotifications(userId, limit = 15) {
       .from("notifications")
       .select("id, title, message, type, reference_id, is_read, created_at")
       .eq("user_id", userId)
-      .eq("type", "problem")
+      .in("type", NOTIFY_TYPES)
       .order("created_at", { ascending: false })
       .limit(limit),
     supabase
       .from("notifications")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("type", "problem")
+      .in("type", NOTIFY_TYPES)
       .eq("is_read", false),
   ]);
 
@@ -58,7 +59,7 @@ export async function getAllNotifications(userId, page = 1, tab = "unread") {
       .from("notifications")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("type", "problem")
+      .in("type", NOTIFY_TYPES)
       .eq("is_read", isRead);
 
   const [list, unreadCount, readCount] = await Promise.all([
@@ -66,7 +67,7 @@ export async function getAllNotifications(userId, page = 1, tab = "unread") {
       .from("notifications")
       .select("id, title, message, type, reference_id, is_read, created_at")
       .eq("user_id", userId)
-      .eq("type", "problem")
+      .in("type", NOTIFY_TYPES)
       .eq("is_read", wantRead)
       .order("created_at", { ascending: false })
       .range(from, from + NOTIFICATIONS_PER_PAGE - 1),

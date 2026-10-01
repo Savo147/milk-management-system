@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
 import { BRANDING_TAG } from "@/lib/cache-tags";
+import { notifyCustomer } from "@/lib/notify";
+import { formatRate } from "@/lib/format";
 
 function refresh() {
   revalidatePath("/", "layout");
@@ -131,12 +133,32 @@ export async function updateCustomerRate(prevState, formData) {
 
   const supabase = await createClient();
 
+  // Read the old one first: a "rate changed" message that cannot say what it
+  // changed from is not worth sending, and once the update has run the old
+  // number is gone.
+  const { data: before } = await supabase
+    .from("customers")
+    .select("rate_per_liter")
+    .eq("id", customerId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("customers")
     .update({ rate_per_liter: rate })
     .eq("id", customerId);
 
   if (error) return { error: `Could not save: ${error.message}` };
+
+  // Only when it actually moved. Pressing save on an unchanged form should
+  // not ring anybody's bell.
+  if (before && Number(before.rate_per_liter) !== rate) {
+    await notifyCustomer({
+      customerId,
+      type: "rate",
+      title: "Your rate has changed",
+      message: `${formatRate(before.rate_per_liter)} → ${formatRate(rate)} per liter. Milk delivered before today is still billed at the old rate.`,
+    });
+  }
 
   // Both screens read the same column, so both have to be refreshed.
   revalidatePath("/admin/settings");

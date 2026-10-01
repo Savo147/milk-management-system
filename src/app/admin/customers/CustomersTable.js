@@ -17,6 +17,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
+import SelectField from "@/components/SelectField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import AddIcon from "@mui/icons-material/Add";
@@ -69,8 +70,7 @@ export default function CustomersTable({ customers }) {
             },
           }}
         />
-        <TextField
-          select
+        <SelectField
           size="small"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -79,7 +79,7 @@ export default function CustomersTable({ customers }) {
           <MenuItem value="all">All</MenuItem>
           <MenuItem value="active">Active</MenuItem>
           <MenuItem value="inactive">Inactive</MenuItem>
-        </TextField>
+        </SelectField>
         <Box sx={{ flexGrow: 1 }} />
         <Button
           variant="contained"

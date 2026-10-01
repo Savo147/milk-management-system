@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
+import { NOTIFY_TYPES } from "@/lib/notify-types";
 
 /**
  * Postgres reports a row that row-level security hid as no row at all, so a
@@ -29,7 +30,7 @@ export async function markNotificationsRead() {
     .update({ is_read: true })
     .eq("user_id", user.id)
     // Matches what the bell shows; other types are not its business to clear.
-    .eq("type", "problem")
+    .in("type", NOTIFY_TYPES)
     .eq("is_read", false);
 
   if (error) return { error: error.message };
@@ -83,7 +84,7 @@ export async function deleteNotifications(tab) {
     .from("notifications")
     .delete()
     .eq("user_id", user.id)
-    .eq("type", "problem")
+    .in("type", NOTIFY_TYPES)
     .eq("is_read", tab === "read")
     .select("id");
 

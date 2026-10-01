@@ -3,15 +3,15 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdmin, getBusinessSettings } from "@/lib/auth";
 import PageHeader from "@/components/PageHeader";
 import SettingsTabs from "./SettingsTabs";
-import { getThemeMode } from "@/lib/theme-mode";
 import { errorText } from "@/lib/format";
 
 export const metadata = { title: "Settings" };
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ searchParams }) {
   const user = await requireAdmin();
+  const params = await searchParams;
+  const initialTab = String(params?.tab ?? "").toLowerCase();
   const settings = await getBusinessSettings();
-  const themeMode = await getThemeMode();
   const supabase = await createClient();
 
   const [staff, rates] = await Promise.all([
@@ -84,7 +84,7 @@ export default async function SettingsPage() {
           user={user}
           staff={staffRows}
           rates={rateRows}
-          themeMode={themeMode}
+          initialTab={initialTab}
         />
       )}
     </>
