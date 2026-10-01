@@ -286,11 +286,11 @@ export default async function AdminDashboard() {
   // The five states keep the same words the Daily Milk page uses, so the ring
   // and the list over there never disagree about what a row is called.
   const byStatus = [
-    { label: DAILY_ROW_STATUS.pending, color: "#9aa4b2", value: notYet },
-    { label: DAILY_ROW_STATUS.delivered, color: "#1f8f5f", value: countOf("delivered") }, // prettier-ignore
-    { label: DAILY_ROW_STATUS.partial, color: "#c08400", value: countOf("partial") }, // prettier-ignore
-    { label: DAILY_ROW_STATUS.extra, color: "#7b4bd4", value: countOf("extra") }, // prettier-ignore
-    { label: DAILY_ROW_STATUS.missed, color: "#d0402a", value: countOf("missed") }, // prettier-ignore
+    { label: DAILY_ROW_STATUS.pending, color: "var(--ring-pending)", value: notYet }, // prettier-ignore
+    { label: DAILY_ROW_STATUS.delivered, color: "var(--ring-done)", value: countOf("delivered") }, // prettier-ignore
+    { label: DAILY_ROW_STATUS.partial, color: "var(--ring-partial)", value: countOf("partial") }, // prettier-ignore
+    { label: DAILY_ROW_STATUS.extra, color: "var(--ring-extra)", value: countOf("extra") }, // prettier-ignore
+    { label: DAILY_ROW_STATUS.missed, color: "var(--ring-missed)", value: countOf("missed") }, // prettier-ignore
   ];
 
   const deliveries = (todayRows ?? []).map((r) => ({
@@ -538,7 +538,7 @@ export default async function AdminDashboard() {
                       </Typography>
                       <Typography
                         variant="body2"
-                        sx={{ fontWeight: 700, flexShrink: 0, color: "#8a5200", fontVariantNumeric: "tabular-nums" }} // prettier-ignore
+                        sx={{ fontWeight: 700, flexShrink: 0, color: "var(--tile-amber-fg)", fontVariantNumeric: "tabular-nums" }} // prettier-ignore
                       >
                         {formatAmount(b.due)}
                       </Typography>
@@ -547,13 +547,13 @@ export default async function AdminDashboard() {
                     {/* The track is a lighter step of the fill's own colour,
                         so the bar reads as one thing at any length. */}
                     <Box
-                      sx={{ height: 6, borderRadius: 3, bgcolor: "#fae5c6", overflow: "hidden" }} // prettier-ignore
+                      sx={{ height: 6, borderRadius: 3, bgcolor: "var(--tile-amber-bg)", overflow: "hidden" }} // prettier-ignore
                     >
                       <Box
                         sx={{
                           height: "100%",
                           width: `${Math.max(6, (Number(b.due) / worstDue) * 100)}%`,
-                          bgcolor: "#c08400",
+                          bgcolor: "var(--tile-amber-line)",
                           borderRadius: 3,
                         }}
                       />
@@ -586,7 +586,7 @@ export default async function AdminDashboard() {
                     sx={{ alignItems: "center", gap: 1.5, px: 1, py: 0.9 }}
                   >
                     <Avatar
-                      sx={{ width: 34, height: 34, flexShrink: 0, fontSize: "0.8rem", fontWeight: 700, bgcolor: "#d6efe3", color: "#0c6244" }} // prettier-ignore
+                      sx={{ width: 34, height: 34, flexShrink: 0, fontSize: "0.8rem", fontWeight: 700, bgcolor: "var(--tile-green-bg)", color: "var(--tile-green-fg)" }} // prettier-ignore
                     >
                       {p.name?.[0]?.toUpperCase()}
                     </Avatar>
@@ -609,7 +609,7 @@ export default async function AdminDashboard() {
 
                     <Typography
                       variant="body2"
-                      sx={{ fontWeight: 700, flexShrink: 0, color: "#0c6244", fontVariantNumeric: "tabular-nums" }} // prettier-ignore
+                      sx={{ fontWeight: 700, flexShrink: 0, color: "var(--tile-green-fg)", fontVariantNumeric: "tabular-nums" }} // prettier-ignore
                     >
                       {formatAmount(p.amount)}
                     </Typography>
@@ -631,7 +631,7 @@ export default async function AdminDashboard() {
                 {
                   label: "Amount today",
                   value: formatAmount(todayAmount),
-                  color: "#0c6244",
+                  color: "var(--tile-green-fg)",
                 },
               ]}
             />
@@ -675,13 +675,13 @@ export default async function AdminDashboard() {
                         month's total — against the total every bar would be
                         a sliver and nothing could be compared. */}
                     <Box
-                      sx={{ height: 6, borderRadius: 3, bgcolor: "#dceefb", overflow: "hidden", ml: "30px" }} // prettier-ignore
+                      sx={{ height: 6, borderRadius: 3, bgcolor: "var(--tile-blue-bg)", overflow: "hidden", ml: "30px" }} // prettier-ignore
                     >
                       <Box
                         sx={{
                           height: "100%",
                           width: `${Math.max(6, (c.liters / topLiters) * 100)}%`,
-                          bgcolor: "#127fd2",
+                          bgcolor: "var(--tile-blue-line)",
                           borderRadius: 3,
                         }}
                       />

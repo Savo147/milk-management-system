@@ -23,15 +23,22 @@ import Typography from "@mui/material/Typography";
  *   fg   — the icon itself
  *   line — the edge down the left, the strongest note of the three
  */
+const hue = (name) => ({
+  card: `var(--tile-${name}-card)`,
+  bg: `var(--tile-${name}-bg)`,
+  fg: `var(--tile-${name}-fg)`,
+  line: `var(--tile-${name}-line)`,
+});
+
 const TINT = {
-  blue: { card: "#e8f1fb", bg: "#c6def6", fg: "#15599a", line: "#1b6fbf" },
-  green: { card: "#e8f6ee", bg: "#c3e7d3", fg: "#19774e", line: "#1f8f5f" },
-  violet: { card: "#f1ebfd", bg: "#d9cbf9", fg: "#6136c4", line: "#7b4bd4" },
-  amber: { card: "#fdf4e2", bg: "#fae1a8", fg: "#946600", line: "#c08400" },
-  pink: { card: "#fcedf4", bg: "#f8cce1", fg: "#a8306f", line: "#c33d84" },
-  indigo: { card: "#ebedfc", bg: "#cfd4f7", fg: "#3b48b8", line: "#4b58cf" },
-  teal: { card: "#e5f5f9", bg: "#b8e4ee", fg: "#0c7789", line: "#0f8fa8" },
-  red: { card: "#fdece9", bg: "#f9cec4", fg: "#b1331c", line: "#d0402a" },
+  blue: hue("blue"),
+  green: hue("green"),
+  violet: hue("violet"),
+  amber: hue("amber"),
+  pink: hue("pink"),
+  indigo: hue("indigo"),
+  teal: hue("teal"),
+  red: hue("red"),
 };
 
 // The names the pages used before the palette grew. Kept so that a card asking
@@ -66,7 +73,7 @@ export default function StatCard({
         backgroundImage:
           "radial-gradient(120% 120% at 100% 0%, " +
           tint.bg +
-          " 0%, rgba(255,255,255,0) 62%)",
+          " 0%, var(--tile-fade) 62%)",
         transition: "box-shadow .15s, transform .15s",
         "&:hover": {
           boxShadow: "0 4px 14px rgba(21,26,32,.09)",
@@ -104,7 +111,7 @@ export default function StatCard({
                 flexShrink: 0,
                 bgcolor: tint.bg,
                 color: tint.fg,
-                boxShadow: "0 0 0 4px rgba(255,255,255,.55)",
+                boxShadow: "0 0 0 4px var(--ring)",
               }}
             >
               <Icon sx={{ fontSize: 24 }} />

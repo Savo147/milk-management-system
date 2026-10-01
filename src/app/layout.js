@@ -1,8 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
-import { ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import theme from "@/theme";
+import AppTheme from "@/components/AppTheme";
+import { getThemeMode } from "@/lib/theme-mode";
 import { getPublicBranding } from "@/lib/auth";
 import "./globals.css";
 
@@ -39,7 +38,11 @@ export async function generateMetadata() {
   };
 }
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  // Read here, at the root, so the very first paint is already in the chosen
+  // colours rather than swapping once the browser catches up.
+  const mode = await getThemeMode();
+
   return (
     <html
       lang="en"
@@ -48,10 +51,7 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col">
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            {children}
-          </ThemeProvider>
+          <AppTheme mode={mode}>{children}</AppTheme>
         </AppRouterCacheProvider>
       </body>
     </html>

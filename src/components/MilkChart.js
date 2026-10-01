@@ -11,8 +11,8 @@ import { formatAmount, formatLiters } from "@/lib/format";
  * blues: the pair has to stay apart under colour blindness as well as on a
  * good screen, and blue-vs-violet does not.
  */
-const NOW = "#127fd2";
-const BEFORE = "#c08400";
+const NOW = "var(--chart-now)";
+const BEFORE = "var(--chart-before)";
 
 const PLOT_HEIGHT = 200;
 
@@ -292,7 +292,8 @@ export default function MilkChart({ days = [], previous = [] }) {
                         height: 7,
                         borderRadius: "50%",
                         bgcolor: BEFORE,
-                        boxShadow: "0 0 0 2px #fff",
+                        boxShadow:
+                          "0 0 0 2px var(--mui-palette-background-paper)",
                         transform: "translate(-50%, -50%)",
                         pointerEvents: "none",
                       }}
@@ -311,7 +312,8 @@ export default function MilkChart({ days = [], previous = [] }) {
                       height: 9,
                       borderRadius: "50%",
                       bgcolor: NOW,
-                      boxShadow: "0 0 0 2px #fff",
+                      boxShadow:
+                        "0 0 0 2px var(--mui-palette-background-paper)",
                       transform: "translate(-50%, -50%)",
                       transition: "transform .12s",
                       pointerEvents: "none",

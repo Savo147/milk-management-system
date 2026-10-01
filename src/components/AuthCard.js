@@ -18,7 +18,9 @@ export default function AuthCard({
         alignItems: "center",
         justifyContent: "center",
         p: 2,
-        bgcolor: "grey.100",
+        // Not grey.100: the grey ramp is the same in both looks, so on a dark
+        // page it stayed a pale slab with a black card sitting on it.
+        bgcolor: "var(--surface-sunken)",
         // 100vh on a phone counts the browser's own address bar, so the page
         // ends up taller than the screen and scrolls for no reason. dvh is
         // the height actually available; vh stays as the fallback for
@@ -33,7 +35,7 @@ export default function AuthCard({
           width: "100%",
           maxWidth: 410,
           border: 1,
-          borderColor: "divider",
+          borderColor: "var(--surface-card-edge)",
           borderRadius: 4,
           boxShadow:
             "0 1px 2px rgba(21,26,32,.04), 0 8px 24px rgba(21,26,32,.06)",

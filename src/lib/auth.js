@@ -45,13 +45,28 @@ export const getCurrentUser = cache(async () => {
 
   if (!userId) return null;
 
+  const CORE = "id, name, email, mobile, role, status, profile_photo";
+
+  // theme_mode arrived with migration 0011. Asking for a column the database
+  // does not have is an error, not a null — the whole row comes back empty,
+  // every guard decides nobody is signed in, and the app locks everyone out
+  // of a working login over a preference. So it is asked for separately, and
+  // the sign-in path does not depend on the migration having been run.
   const { data: profile } = await supabase
     .from("users")
-    .select("id, name, email, mobile, role, status, profile_photo")
+    .select(`${CORE}, theme_mode`)
     .eq("id", userId)
     .maybeSingle();
 
-  return profile ?? null;
+  if (profile) return profile;
+
+  const { data: fallback } = await supabase
+    .from("users")
+    .select(CORE)
+    .eq("id", userId)
+    .maybeSingle();
+
+  return fallback ?? null;
 });
 
 /**

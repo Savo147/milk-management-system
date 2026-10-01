@@ -129,8 +129,8 @@ function TabPill({ href, label, count, active, tone }) {
   );
 }
 
-const UNREAD_TONE = { bg: "#c9e3f8", fg: "#095895" };
-const READ_TONE = { bg: "#d6efe3", fg: "#0c6244" };
+const UNREAD_TONE = { bg: "var(--tile-blue-bg)", fg: "var(--tile-blue-fg)" };
+const READ_TONE = { bg: "var(--tile-green-bg)", fg: "var(--tile-green-fg)" };
 
 /**
  * Every notification, a page at a time.
@@ -206,14 +206,17 @@ export default function NotificationList({
           py: { xs: 2, sm: 2.25 },
           borderRadius: 3,
           border: 1,
-          borderColor: unread > 0 ? "#cfe3f6" : "#cfe9dd",
+          borderColor:
+            unread > 0 ? "var(--tile-blue-bg)" : "var(--tile-green-bg)",
           borderLeft: 4,
-          borderLeftColor: unread > 0 ? "#127fd2" : "#12855c",
-          bgcolor: unread > 0 ? "#eef6fd" : "#eff8f3",
+          borderLeftColor:
+            unread > 0 ? "var(--tile-blue-line)" : "var(--tile-green-line)",
+          bgcolor:
+            unread > 0 ? "var(--tile-blue-card)" : "var(--tile-green-card)",
           backgroundImage:
             unread > 0
-              ? "radial-gradient(120% 130% at 100% 0%, #d4e8fa 0%, rgba(255,255,255,0) 62%)"
-              : "radial-gradient(120% 130% at 100% 0%, #d2eddf 0%, rgba(255,255,255,0) 62%)",
+              ? "radial-gradient(120% 130% at 100% 0%, var(--tile-blue-bg) 0%, var(--tile-fade) 62%)"
+              : "radial-gradient(120% 130% at 100% 0%, var(--tile-green-bg) 0%, var(--tile-fade) 62%)",
         }}
       >
         <Stack
@@ -228,9 +231,11 @@ export default function NotificationList({
               height: 52,
               borderRadius: 2.5,
               flexShrink: 0,
-              bgcolor: unread > 0 ? "#cfe3f6" : "#cfe9dd",
-              color: unread > 0 ? "#095895" : "#0c6244",
-              boxShadow: "0 0 0 4px rgba(255,255,255,.6)",
+              bgcolor:
+                unread > 0 ? "var(--tile-blue-bg)" : "var(--tile-green-bg)",
+              color:
+                unread > 0 ? "var(--tile-blue-fg)" : "var(--tile-green-fg)",
+              boxShadow: "0 0 0 4px var(--ring)",
             }}
           >
             {unread > 0 ? (
@@ -356,8 +361,8 @@ export default function NotificationList({
                 width: 64,
                 height: 64,
                 borderRadius: "50%",
-                bgcolor: tab === "read" ? "grey.100" : "#e6f5ee",
-                color: tab === "read" ? "grey.400" : "#12855c",
+                bgcolor: tab === "read" ? "grey.100" : "var(--tile-green-bg)",
+                color: tab === "read" ? "grey.400" : "var(--tile-green-fg)",
               }}
             >
               {tab === "read" ? (
@@ -425,11 +430,13 @@ export default function NotificationList({
                   // A read row is not blank paper either — a cool grey wash,
                   // with its own left edge, so the list reads as rows rather
                   // than as text floating on a white card.
-                  bgcolor: n.is_read ? "#f6f8fb" : "#f2f8fd",
+                  bgcolor: n.is_read ? "grey.50" : "var(--tile-blue-card)",
                   borderLeft: 3,
-                  borderLeftColor: n.is_read ? "#cbd2dc" : "#127fd2",
+                  borderLeftColor: n.is_read
+                    ? "grey.300"
+                    : "var(--tile-blue-line)",
                   "&:hover": {
-                    bgcolor: n.is_read ? "#eef1f6" : "#e8f3fc",
+                    bgcolor: n.is_read ? "grey.100" : "var(--tile-blue-bg)",
                   },
                 }}
               >
@@ -444,8 +451,10 @@ export default function NotificationList({
                     mt: 0.25,
                     // White on the wash, so the icon sits in its own tile
                     // instead of disappearing into the row.
-                    bgcolor: n.is_read ? "background.paper" : "#fae5c6",
-                    color: n.is_read ? "grey.500" : "#8a5200",
+                    bgcolor: n.is_read
+                      ? "background.paper"
+                      : "var(--tile-amber-bg)",
+                    color: n.is_read ? "grey.500" : "var(--tile-amber-fg)",
                     border: n.is_read ? 1 : 0,
                     borderColor: "grey.200",
                   }}
@@ -479,8 +488,8 @@ export default function NotificationList({
                           fontWeight: 700,
                           letterSpacing: "0.04em",
                           textTransform: "uppercase",
-                          bgcolor: "#c9e3f8",
-                          color: "#095895",
+                          bgcolor: "var(--tile-blue-bg)",
+                          color: "var(--tile-blue-fg)",
                         }}
                       >
                         New

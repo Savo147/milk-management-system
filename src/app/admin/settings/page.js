@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdmin, getBusinessSettings } from "@/lib/auth";
 import PageHeader from "@/components/PageHeader";
 import SettingsTabs from "./SettingsTabs";
+import { getThemeMode } from "@/lib/theme-mode";
 import { errorText } from "@/lib/format";
 
 export const metadata = { title: "Settings" };
@@ -10,6 +11,7 @@ export const metadata = { title: "Settings" };
 export default async function SettingsPage() {
   const user = await requireAdmin();
   const settings = await getBusinessSettings();
+  const themeMode = await getThemeMode();
   const supabase = await createClient();
 
   const [staff, rates] = await Promise.all([
@@ -82,6 +84,7 @@ export default async function SettingsPage() {
           user={user}
           staff={staffRows}
           rates={rateRows}
+          themeMode={themeMode}
         />
       )}
     </>

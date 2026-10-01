@@ -143,7 +143,7 @@ function Bubble({ message, initial, photo, showAvatar, onToggleComplaint }) {
                   // unreadable, so it borrows the bubble's ink instead.
                   ...(mine && {
                     color: "inherit",
-                    borderColor: "rgba(255, 255, 255, 0.5)",
+                    borderColor: "var(--on-accent-line)",
                   }),
                 }}
               />

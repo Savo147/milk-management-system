@@ -34,7 +34,24 @@
     padding: 0 !important;
   }
 
+  /*
+    Paper is white whichever look the screen is wearing, so the ink has to be
+    black whichever look the screen is wearing. Forcing only the background
+    left the dark theme printing white text onto a white page: an empty sheet
+    with the right number of lines on it.
+
+    Backgrounds go transparent for the same reason — a dark card would come
+    out as a solid block of toner around text that is now black.
+  */
   body {
     background: #fff !important;
+    color: #000 !important;
+  }
+
+  main,
+  main * {
+    color: #000 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
   }
 }

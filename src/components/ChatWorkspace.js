@@ -58,8 +58,10 @@ const sectionSx = {
  * its members could talk in.
  */
 const CHANNEL_TONE = {
-  announcement: { bg: "#fae5c6", fg: "#8a5200" },
-  open: { bg: "#cfeeea", fg: "#0f5f57" },
+  // The same two the dashboard tiles use, so they darken with everything else
+  // instead of staying two pale chips on a black page.
+  announcement: { bg: "var(--tile-amber-bg)", fg: "var(--tile-amber-fg)" },
+  open: { bg: "var(--tile-teal-bg)", fg: "var(--tile-teal-fg)" },
 };
 
 function toneFor(channel) {
@@ -80,7 +82,7 @@ function UnreadDot({ count }) {
         px: 0.5,
         borderRadius: 9,
         bgcolor: "error.main",
-        color: "common.white",
+        color: "primary.contrastText",
         fontSize: "0.65rem",
         fontWeight: 700,
         lineHeight: "18px",
@@ -273,23 +275,30 @@ export default function ChatWorkspace({
           px: 2,
           py: 1.75,
           flexShrink: 0,
-          bgcolor: "#eaf4fc",
-          backgroundImage:
-            "radial-gradient(120% 130% at 100% 0%, #cfe3f6 0%, rgba(255,255,255,0) 65%)",
+          // Neutral tokens, not a pale blue written out by hand: the hand-
+          // written one stayed pale on a black page, which is how this band
+          // came out white in dark mode.
+          bgcolor: "grey.50",
           borderBottom: 1,
-          borderColor: "#d8e8f7",
+          borderColor: "divider",
         }}
       >
+        {/* Neutral, not the accent colour. The accent is black in the light
+            look and white in the dark one, so an accent-filled badge turned
+            into a glaring white square on a black page. This is a label for
+            the panel, not something to press — it should sit quietly. */}
         <Avatar
           variant="rounded"
           sx={{
-            bgcolor: "primary.main",
+            bgcolor: "grey.100",
+            color: "text.primary",
             width: 40,
             height: 40,
-            boxShadow: "0 0 0 4px rgba(255,255,255,.55)",
+            border: 1,
+            borderColor: "divider",
           }}
         >
-          <MessagesIcon sx={{ fontSize: 22, color: "common.white" }} />
+          <MessagesIcon sx={{ fontSize: 22 }} />
         </Avatar>
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700 }}>
@@ -297,7 +306,7 @@ export default function ChatWorkspace({
           </Typography>
           <Typography
             variant="caption"
-            sx={{ color: unread > 0 ? "#095895" : "text.secondary", fontWeight: unread > 0 ? 700 : 400 }} // prettier-ignore
+            sx={{ color: unread > 0 ? "text.primary" : "text.secondary", fontWeight: unread > 0 ? 700 : 400 }} // prettier-ignore
           >
             {unread > 0 ? `${unread} unread` : "All caught up"}
           </Typography>
@@ -497,7 +506,7 @@ export default function ChatWorkspace({
           alignItems: "center",
           p: 1.75,
           flexShrink: 0,
-          bgcolor: isChannel ? toneFor(selected).bg : "#eaf4fc",
+          bgcolor: isChannel ? toneFor(selected).bg : "grey.50",
           borderBottom: 1,
           borderColor: "divider",
         }}
@@ -523,7 +532,7 @@ export default function ChatWorkspace({
             fontWeight: 600,
             bgcolor: isChannel ? "background.paper" : "primary.main",
             color: isChannel ? toneFor(selected).fg : undefined,
-            boxShadow: "0 0 0 3px rgba(255,255,255,.55)",
+            boxShadow: "0 0 0 3px var(--ring)",
           }}
         >
           {isChannel ? (
@@ -567,7 +576,7 @@ export default function ChatWorkspace({
             size="small"
             icon={<CampaignOutlinedIcon sx={{ fontSize: 16, color: "inherit !important" }} />} // prettier-ignore
             label="Announcements"
-            sx={{ bgcolor: "background.paper", color: "#8a5200", border: 1, borderColor: "#f0d09a" }} // prettier-ignore
+            sx={{ bgcolor: "background.paper", color: "var(--tile-amber-fg)", border: 1, borderColor: "var(--tile-amber-bg)" }} // prettier-ignore
           />
         )}
       </Stack>
@@ -601,11 +610,10 @@ export default function ChatWorkspace({
     >
       <Avatar
         sx={{
-          bgcolor: "#dceefb",
-          color: "#095895",
+          bgcolor: "grey.100",
+          color: "text.secondary",
           width: 56,
           height: 56,
-          boxShadow: "0 0 0 8px #f1f8fd",
         }}
       >
         {" "}

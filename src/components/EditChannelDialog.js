@@ -109,7 +109,7 @@ export default function EditChannelDialog({ open, onClose, channel }) {
                 >
                   <CampaignOutlinedIcon
                     fontSize="small"
-                    sx={{ color: announcementOnly ? "#8a5200" : "text.secondary", mt: 0.2 }} // prettier-ignore
+                    sx={{ color: announcementOnly ? "var(--tile-amber-fg)" : "text.secondary", mt: 0.2 }} // prettier-ignore
                   />
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>

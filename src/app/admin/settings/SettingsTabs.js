@@ -12,7 +12,13 @@ import PasswordForm from "./PasswordForm";
 
 const TABS = ["Dairy", "My details", "Password", "Users", "Rates"];
 
-export default function SettingsTabs({ settings, user, staff, rates }) {
+export default function SettingsTabs({
+  settings,
+  user,
+  staff,
+  rates,
+  themeMode,
+}) {
   const [tab, setTab] = useState(0);
 
   return (
@@ -30,7 +36,7 @@ export default function SettingsTabs({ settings, user, staff, rates }) {
       </Tabs>
 
       {tab === 0 && <DairyForm settings={settings} />}
-      {tab === 1 && <ProfileForm user={user} />}
+      {tab === 1 && <ProfileForm user={user} themeMode={themeMode} />}
       {tab === 2 && <PasswordForm />}
       {tab === 3 && <StaffSection staff={staff} currentUserId={user.id} />}
       {tab === 4 && <RatesTable rates={rates} />}

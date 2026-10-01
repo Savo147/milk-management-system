@@ -84,7 +84,7 @@ export default function Attachment({ attachment, mine }) {
         // bubble's own colour reads as part of it. An incoming bubble is
         // white itself now, so there the panel goes the other way — a grey
         // step down, or the file would vanish into the bubble.
-        bgcolor: mine ? "rgba(255, 255, 255, 0.16)" : "grey.100",
+        bgcolor: mine ? "var(--on-accent-wash)" : "grey.100",
         maxWidth: 240,
       }}
     >

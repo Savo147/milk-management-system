@@ -17,6 +17,7 @@ import { ACCOUNT_STATUS, STATUS_COLOR } from "@/lib/constants";
 import AvatarPicker from "@/components/AvatarPicker";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
+import ThemePicker from "@/components/ThemePicker";
 import { updateMyProfile, changeMyPassword, updateMyMilkPlan } from "./actions";
 
 function SaveButton({ icon: Icon = SaveIcon, label, busy }) {
@@ -59,7 +60,7 @@ function Section({ title, subtitle, action, children }) {
 
 const TABS = ["My details", "My milk details", "Password"];
 
-export default function ProfileView({ user, customer, settings }) {
+export default function ProfileView({ user, customer, settings, themeMode }) {
   const [profileState, saveProfile] = useActionState(updateMyProfile, null);
   const [passwordState, savePassword] = useActionState(changeMyPassword, null);
   const [planState, savePlan] = useActionState(updateMyMilkPlan, null);
@@ -86,6 +87,9 @@ export default function ProfileView({ user, customer, settings }) {
         <Section
           title="My details"
           subtitle="You can change your name, mobile and photo yourself."
+          // How the app looks is a setting about you, so it sits with the
+          // rest of your own details. It saves itself — nothing to press.
+          action={<ThemePicker mode={themeMode} />}
         >
           <Box component="form" action={saveProfile}>
             <Box sx={{ mb: 2.5 }}>

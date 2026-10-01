@@ -8,10 +8,12 @@ import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Grid";
+import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import SaveIcon from "@mui/icons-material/Save";
 import AvatarPicker from "@/components/AvatarPicker";
+import ThemePicker from "@/components/ThemePicker";
 import { updateProfile } from "./actions";
 
 function SubmitButton({ label, icon }) {
@@ -28,16 +30,28 @@ function SubmitButton({ label, icon }) {
   );
 }
 
-export default function ProfileForm({ user }) {
+export default function ProfileForm({ user, themeMode }) {
   const [profileState, profileAction] = useActionState(updateProfile, null);
 
   return (
     <Box sx={{ display: "grid", gap: 2 }}>
       <Card>
         <CardContent sx={{ p: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 2 }}>
-            My details
-          </Typography>
+          {/* How the app looks is a setting about you, not about the dairy,
+              so it sits with your own details rather than in a tab of its
+              own. It saves itself — there is nothing to press afterwards. */}
+          <Stack
+            direction="row"
+            sx={{
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 2,
+              mb: 2,
+            }}
+          >
+            <Typography variant="subtitle1">My details</Typography>
+            <ThemePicker mode={themeMode} />
+          </Stack>
 
           <Box component="form" action={profileAction}>
             {profileState?.error && (

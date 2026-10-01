@@ -241,7 +241,7 @@ export default function ChatButton({
                         px: 0.5,
                         borderRadius: 9,
                         bgcolor: "error.main",
-                        color: "common.white",
+                        color: "primary.contrastText",
                         fontSize: "0.65rem",
                         fontWeight: 700,
                         lineHeight: "18px",
