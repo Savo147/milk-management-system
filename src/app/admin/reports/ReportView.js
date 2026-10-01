@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import InputAdornment from "@mui/material/InputAdornment";
 import Paper from "@mui/material/Paper";
@@ -17,8 +16,6 @@ import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
-import DownloadIcon from "@mui/icons-material/Download";
-import PrintIcon from "@mui/icons-material/Print";
 import { formatAmount, formatLiters } from "@/lib/format";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import DataCards from "@/components/DataCards";
@@ -49,9 +46,6 @@ const litersDue = (r) => {
   if (amount <= 0) return 0;
   return (Number(r.liters) * due(r)) / amount;
 };
-
-/** Quotes a CSV field: commas, quotes and newlines all need escaping. */
-const csvCell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
 export default function ReportView({
   mode,
@@ -89,36 +83,6 @@ export default function ReportView({
       ),
     [rows],
   );
-
-  const download = () => {
-    const header = [
-      "Customer",
-      "Mobile",
-      "Milk (L)",
-      "Amount",
-      "Received",
-      "Due",
-      "Due (L)",
-    ];
-    const body = rows.map((r) =>
-      [r.label, r.sub, r.liters, r.amount, r.paid, due(r), litersDue(r)].map(
-        csvCell,
-      ),
-    );
-
-    // A BOM so Excel opens rupee signs and Gujarati text as UTF-8.
-    const csv =
-      "﻿" + [header.map(csvCell), ...body].map((r) => r.join(",")).join("\r\n");
-
-    const url = URL.createObjectURL(
-      new Blob([csv], { type: "text/csv;charset=utf-8;" }),
-    );
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `krishna-dairy-${from}-to-${to}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <Box>
@@ -174,27 +138,6 @@ export default function ReportView({
         />
 
         <Box sx={{ flexGrow: 1 }} />
-
-        {/* Their own row, so on a phone they sit side by side instead of
-            becoming two full-width blocks in the column stack. */}
-        <Stack direction="row" spacing={1}>
-          <Button
-            size="small"
-            startIcon={<DownloadIcon sx={{ fontSize: 17 }} />}
-            onClick={download}
-            disabled={rows.length === 0}
-          >
-            Excel
-          </Button>
-          <Button
-            size="small"
-            startIcon={<PrintIcon sx={{ fontSize: 17 }} />}
-            onClick={() => window.print()}
-            disabled={rows.length === 0}
-          >
-            PDF / Print
-          </Button>
-        </Stack>
       </Stack>
 
       <Box sx={cardsOnly} className="no-print">

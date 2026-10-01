@@ -16,7 +16,16 @@ import { getCurrentUser } from "@/lib/auth";
  * the two cannot disagree in a way that breaks a page.
  */
 const THEME_MODES = ["light", "dark"];
-const DEFAULT_MODE = "light";
+/**
+ * What to draw in when nothing else says otherwise — a first visit, the login
+ * screen before anyone has signed in, a browser with no cookie yet.
+ *
+ * It is kept in step with the column's own default by hand (migration 0014).
+ * The two answer different moments — this one before there is a row to read,
+ * that one when a row is created — so they have to agree or a new account
+ * would change colour the instant it signed in.
+ */
+const DEFAULT_MODE = "dark";
 
 const COOKIE = "theme_mode";
 /** A year. The choice is a preference, not a session. */
