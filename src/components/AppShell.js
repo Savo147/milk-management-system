@@ -105,7 +105,6 @@ export default function AppShell({
   notifications = [],
   unread = 0,
   chat = null,
-  themeMode = "light",
   children,
 }) {
   const pathname = usePathname();
@@ -266,7 +265,7 @@ export default function AppShell({
             {title}
           </Typography>
 
-          <ThemePicker mode={themeMode} />
+          <ThemePicker />
 
           {chat && (
             <ChatButton

@@ -1,81 +1,87 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 
 /**
- * The names, written here rather than imported from `@/theme`.
+ * Light or dark, and nothing else.
  *
- * theme.js is a "use client" module. Importing a value out of one into
- * server code does not hand over the value — it hands over a reference that
- * only means something in the browser, and reading `.includes` off it on the
- * server would throw at the first request. It is two words; they live here.
- * `buildTheme` falls back to the light one for anything it does not know, so
- * the two cannot disagree in a way that breaks a page.
- */
-const THEME_MODES = ["light", "dark"];
-/**
- * What to draw in when nothing else says otherwise — a first visit, the login
- * screen before anyone has signed in, a browser with no cookie yet.
+ * There is no third "follow the device" setting to pick, on purpose. The
+ * device is the *starting point*: somebody whose phone is in dark mode opens
+ * the app and it is already dark, without being asked. The moment they pick
+ * Light or Dark here, that is the answer and the device stops being asked.
  *
- * It is kept in step with the column's own default by hand (migration 0014).
- * The two answer different moments — this one before there is a row to read,
- * that one when a row is created — so they have to agree or a new account
- * would change colour the instant it signed in.
+ * So "following the device" is not a choice — it is what happens while no
+ * choice has been made. Which is why the menu has two lines, not three.
+ *
+ * Written out here rather than imported from `@/theme`. That is a "use
+ * client" module, and importing a value out of one into server code does not
+ * hand over the value — it hands over a reference that only means something
+ * in the browser, and reading `.includes` off it on the server would throw at
+ * the first request.
  */
-const DEFAULT_MODE = "dark";
+const LOOKS = ["light", "dark"];
+
+/** Where we land when nobody has chosen and the device has not reported. */
+const FALLBACK = "light";
 
 const COOKIE = "theme_mode";
+/** What the browser said the device is set to. Written by SystemTheme. */
+const SYSTEM_COOKIE = "theme_system";
 /** A year. The choice is a preference, not a session. */
 const MAX_AGE = 60 * 60 * 24 * 365;
 
-const clean = (value) => (THEME_MODES.includes(value) ? value : null);
+const asLook = (v) => (LOOKS.includes(v) ? v : null);
 
 /**
- * Which look to draw in.
+ * What to paint, and whether it was actually chosen.
  *
- * The signed-in person's own choice comes first: it is kept on their row, so
- * it follows them from the laptop to the phone and to any browser they sign
- * in from. Every row carries a value — see migration 0013 — so for anyone
- * signed in this is the only thing that answers.
+ * `explicit` is the half the root layout needs: while it is false the device
+ * is still in charge, so the browser has to keep an eye on it. Once it is
+ * true there is nothing to watch.
  *
- * The cookie is the fallback, and it is not a leftover. The login and sign-up
- * screens have nobody signed in to ask, and this is read in the root layout,
- * which runs for those pages too.
- *
- * Reading it on the server is what keeps the very first paint in the right
- * colours. Read in the browser, every page would render once in the default
- * look and then swap — a flash on every load — and React would complain that
- * the server and the browser had drawn different things.
+ * In order:
+ *   1. the signed-in person's own row — it follows them from the laptop to
+ *      the phone and to any browser they sign in from;
+ *   2. the cookie — not a leftover: the login and sign-up screens have nobody
+ *      signed in to ask, and this is read in the root layout, which runs for
+ *      those pages too. It is also what makes a reload instant, with no query
+ *      standing between the request and the first paint;
+ *   3. what the device reported;
+ *   4. light.
  *
  * `getCurrentUser` is wrapped in React's `cache`, so the row is fetched once
  * per request however many layouts ask for it.
  */
-export async function getThemeMode() {
+export async function resolveTheme() {
   const user = await getCurrentUser();
-  const mine = clean(user?.theme_mode);
-  if (mine) return mine;
-
   const store = await cookies();
-  return clean(store.get(COOKIE)?.value) ?? DEFAULT_MODE;
+
+  const chosen = asLook(user?.theme_mode) ?? asLook(store.get(COOKIE)?.value);
+  if (chosen) return { mode: chosen, explicit: true };
+
+  const device = asLook(store.get(SYSTEM_COOKIE)?.value);
+  return { mode: device ?? FALLBACK, explicit: false };
 }
 
 /**
- * Saves the choice in both places.
+ * Saves a choice. The paint has already happened.
  *
- * The row is the record. The cookie is a copy, so signing out and landing on
- * the login screen does not throw the look away, and so a cold page load does
- * not have to wait on a query before it knows what colour to be.
+ * AppTheme holds the look in client state, so the page turns the moment the
+ * menu is clicked and this runs behind it. That is the whole reason there is
+ * no `revalidatePath` here: it used to redraw every layout on the server
+ * before the colour would change, which on a slow line meant sitting and
+ * watching a spinner to switch a theme. Nothing on the server renders
+ * differently now except the next cold load, and that reads the cookie.
  *
- * A failed write to the row is not worth stopping for: the cookie has already
- * taken, the page is already the right colour, and saying "could not save"
- * about something the person can plainly see has happened reads as a bug. It
- * is logged instead.
+ * A failed write to the row is not worth stopping for: the browser has
+ * already written the cookie and the page is already the right colour, and
+ * saying "could not save" about something the person can plainly see has
+ * happened reads as a bug. It is logged instead.
  */
 export async function setThemeMode(mode) {
-  const next = clean(mode);
+  const next = asLook(mode);
   if (!next) return { error: "Unknown theme." };
 
   const store = await cookies();
@@ -95,7 +101,5 @@ export async function setThemeMode(mode) {
       console.warn("[theme] could not save to the row:", error.message);
   }
 
-  // The look is chosen in the root layout, so every page has to be redrawn.
-  revalidatePath("/", "layout");
   return { ok: true };
 }

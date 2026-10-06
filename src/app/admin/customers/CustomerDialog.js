@@ -8,9 +8,11 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import SelectField from "@/components/SelectField";
 import TimeField from "@/components/TimeField";
 import { toTimeValue } from "@/lib/format";
@@ -172,6 +174,43 @@ export default function CustomerDialog({ open, onClose, customer }) {
                 <MenuItem value="inactive">Inactive</MenuItem>
               </SelectField>
             </Grid>
+
+            {/* Only when adding. An existing customer's login is its own
+                thing — it may already be there, it may be a Google account —
+                and it is handled from the row's own menu rather than here. */}
+            {!customer && (
+              <>
+                <Grid size={12}>
+                  <Divider sx={{ mt: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Their login — optional
+                    </Typography>
+                  </Divider>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    name="email"
+                    label="Email"
+                    type="email"
+                    fullWidth
+                    autoComplete="off"
+                    helperText="Leave both empty to add them without a login"
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    name="password"
+                    label="Password"
+                    type="password"
+                    fullWidth
+                    autoComplete="new-password"
+                    helperText="At least 8 characters"
+                  />
+                </Grid>
+              </>
+            )}
           </Grid>
         </DialogContent>
 

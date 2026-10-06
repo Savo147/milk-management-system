@@ -18,7 +18,7 @@ import AvatarPicker from "@/components/AvatarPicker";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import TimeField from "@/components/TimeField";
-import { toTimeValue } from "@/lib/format";
+import { toTimeValue, formatRate } from "@/lib/format";
 import { updateMyProfile, changeMyPassword, updateMyMilkPlan } from "./actions";
 
 function SaveButton({ icon: Icon = SaveIcon, label, busy }) {
@@ -229,15 +229,16 @@ export default function ProfileView({ user, customer, settings, initialTab }) {
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6 }}>
+                  {/* Shown, not editable, and no `name` — so it is not even
+                      sent with the form. The rate is what the milk is billed
+                      at; it is the dairy's to set, and a customer who could
+                      type their own would be setting their own bill. */}
                   <TextField
-                    name="rate_per_liter"
                     label="Rate (₹ / liter)"
-                    type="number"
-                    defaultValue={customer.rate_per_liter ?? ""}
-                    required
+                    value={formatRate(customer.rate_per_liter)}
                     fullWidth
-                    helperText="Old rates are kept in history"
-                    slotProps={{ htmlInput: { min: 0.01, step: "any" } }}
+                    disabled
+                    helperText={`Set by ${settings.dairy_name}`}
                   />
                 </Grid>
 

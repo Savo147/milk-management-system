@@ -73,12 +73,44 @@ export async function saveCustomer(prevState, formData) {
         .maybeSingle()
     : { data: null };
 
-  const { error } = id
-    ? await supabase.from("customers").update(values).eq("id", id)
-    : await supabase.from("customers").insert(values);
+  const { data: saved, error } = id
+    ? await supabase.from("customers").update(values).eq("id", id).select("id")
+    : await supabase
+        .from("customers")
+        .insert(values)
+        .select("id, name, mobile, user_id");
 
   if (error) {
     return { error: `Could not save: ${error.message}` };
+  }
+
+  // A new customer can be given their login in the same breath. Optional on
+  // purpose: a dairy adds plenty of customers who will never sign in, and
+  // forcing an email for those would mean inventing one.
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!id && (email || password)) {
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return { error: "Customer saved, but that email is not valid." };
+    }
+    if (password.length < 8) {
+      return {
+        error:
+          "Customer saved, but the password must be at least 8 characters.",
+      };
+    }
+
+    const problem = await attachLogin(
+      createAdminClient(),
+      saved?.[0] ?? {},
+      email,
+      password,
+    );
+
+    // The customer is in the books either way, and saying otherwise would
+    // have the dairy add them a second time.
+    if (problem) return { error: `Customer saved, but: ${problem}` };
   }
 
   // Only when it actually moved — saving a changed address should not tell
@@ -97,6 +129,57 @@ export async function saveCustomer(prevState, formData) {
 
   revalidatePath("/admin/customers");
   return { ok: true };
+}
+
+/**
+ * Makes the auth user and joins it to a customer row.
+ *
+ * Shared by the two ways in: creating a customer with an email and password
+ * filled in, and giving an existing customer a login afterwards. The second
+ * one existed first; writing it twice is how the two would come to disagree
+ * about what a half-made login looks like.
+ *
+ * Returns an error string, or null when it worked.
+ */
+async function attachLogin(db, customer, email, password) {
+  if (customer.user_id) return "This customer already has a login.";
+
+  const { data, error } = await db.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { name: customer.name, mobile: customer.mobile },
+  });
+
+  if (error) return `Could not create the login: ${error.message}`;
+
+  // The trigger has already inserted the profile as a customer; fill in the
+  // name and mobile the dairy already knows.
+  const { error: upErr } = await db
+    .from("users")
+    .update({
+      name: customer.name,
+      mobile: customer.mobile,
+      role: "customer",
+      status: "active",
+    })
+    .eq("id", data.user.id);
+
+  if (upErr) return `Profile not updated: ${upErr.message}`;
+
+  const { error: linkErr } = await db
+    .from("customers")
+    .update({ user_id: data.user.id })
+    .eq("id", customer.id);
+
+  if (linkErr) {
+    // A login with nothing attached is worse than none at all — it would sign
+    // in to an empty panel — so undo it rather than leave it stranded.
+    await db.auth.admin.deleteUser(data.user.id);
+    return `Could not link it: ${linkErr.message}`;
+  }
+
+  return null;
 }
 
 /**
@@ -138,40 +221,8 @@ export async function createCustomerLogin(prevState, formData) {
     return { error: "This customer already has a login." };
   }
 
-  const { data, error } = await db.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { name: customer.name, mobile: customer.mobile },
-  });
-
-  if (error) return { error: `Could not create the login: ${error.message}` };
-
-  // The trigger has already inserted the profile as a customer; fill in the
-  // name and mobile the dairy already knows.
-  const { error: upErr } = await db
-    .from("users")
-    .update({
-      name: customer.name,
-      mobile: customer.mobile,
-      role: "customer",
-      status: "active",
-    })
-    .eq("id", data.user.id);
-
-  if (upErr) return { error: `Profile not updated: ${upErr.message}` };
-
-  const { error: linkErr } = await db
-    .from("customers")
-    .update({ user_id: data.user.id })
-    .eq("id", customer.id);
-
-  if (linkErr) {
-    // A login with nothing attached is worse than none at all — it would sign
-    // in to an empty panel — so undo it rather than leave it stranded.
-    await db.auth.admin.deleteUser(data.user.id);
-    return { error: `Could not link it: ${linkErr.message}` };
-  }
+  const problem = await attachLogin(db, customer, email, password);
+  if (problem) return { error: problem };
 
   revalidatePath("/admin/customers");
   return { ok: true };

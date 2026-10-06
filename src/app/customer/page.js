@@ -36,11 +36,104 @@ import {
 import PageHeader from "@/components/PageHeader";
 import StatCard, { SectionLabel } from "@/components/StatCard";
 import NotLinked from "@/components/NotLinked";
+import MilkChart from "@/components/MilkChart";
+import StatusDonut from "@/components/StatusDonut";
 
 export const metadata = { title: "Dashboard" };
 
 const sum = (rows, key) =>
   (rows ?? []).reduce((t, r) => t + Number(r[key] ?? 0), 0);
+
+/** How many days the milk report looks back over. */
+const CHART_DAYS = 7;
+/** How many rows the payments panel shows. */
+const PANEL_ROWS = 6;
+
+/**
+ * One row per day for the chart, oldest first — including the days nothing
+ * was delivered.
+ *
+ * The entries come back with the empty days simply missing. Plotting only
+ * what came back would quietly close those gaps up and draw a week that never
+ * had a quiet day in it, so the run of dates is built first and the totals
+ * are dropped into it.
+ */
+function dailySeries(rows, from, count) {
+  const totals = new Map();
+
+  for (const e of rows ?? []) {
+    const t = totals.get(e.date) ?? { liters: 0, amount: 0, count: 0 };
+    t.liters += Number(e.actual_quantity ?? 0);
+    t.amount += Number(e.total_amount ?? 0);
+    if (Number(e.actual_quantity) > 0) t.count += 1;
+    totals.set(e.date, t);
+  }
+
+  const start = new Date(`${from}T00:00:00`);
+  const days = [];
+
+  for (let i = 0; i < count; i += 1) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+
+    const pad = (v) => String(v).padStart(2, "0");
+    const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const t = totals.get(date) ?? { liters: 0, amount: 0, count: 0 };
+
+    days.push({
+      date,
+      ...t,
+      tick: d.toLocaleDateString("en-IN", { weekday: "short" }),
+      label: d.toLocaleDateString("en-IN", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      }),
+    });
+  }
+
+  return days;
+}
+
+/** The titled box the lower half of the dashboard is built out of. */
+function Panel({ title, sub: note, children }) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        border: 1,
+        borderColor: "divider",
+        borderRadius: 3,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        minWidth: 0,
+        overflow: "hidden",
+      }}
+    >
+      <Box
+        sx={{
+          px: 2.5,
+          py: 1.75,
+          flexShrink: 0,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+          {title}
+        </Typography>
+        {note && (
+          <Typography variant="body2" color="text.secondary" noWrap>
+            {note}
+          </Typography>
+        )}
+      </Box>
+
+      <Box sx={{ flexGrow: 1, minHeight: 0, minWidth: 0 }}>{children}</Box>
+    </Paper>
+  );
+}
 
 /** Date n days back from today, as local YYYY-MM-DD. */
 function daysAgo(n) {
@@ -119,7 +212,7 @@ export default async function CustomerDashboard() {
         "date, actual_quantity, rate_per_liter, total_amount, delivery_status",
       )
       .eq("customer_id", customer.id)
-      .gte("date", daysAgo(6))
+      .gte("date", daysAgo(13))
       .order("date", { ascending: false }),
     supabase
       .from("reports")
@@ -149,6 +242,37 @@ export default async function CustomerDashboard() {
   // No row saved for today yet is not the same as a missed delivery.
   const todayStatus = today.data?.delivery_status ?? "pending";
 
+  // The same two weeks the dairy's own report draws, for one customer.
+  const weekFrom = daysAgo(CHART_DAYS - 1);
+  const series = dailySeries(recent.data, weekFrom, CHART_DAYS);
+  const lastWeek = dailySeries(
+    recent.data,
+    daysAgo(CHART_DAYS * 2 - 1),
+    CHART_DAYS,
+  ).map((d) => d.liters);
+
+  // The table below keeps to a week; the chart needed a fortnight.
+  const lastSeven = (recent.data ?? []).filter((e) => e.date >= weekFrom);
+
+  const payments = (allPaid.data ?? []).slice(0, PANEL_ROWS);
+
+  // How the month has gone. Pending is counted, not left out: it is the one
+  // state with no row in the database, and a ring built only from saved
+  // entries would say "all delivered" on a month half of which has not been
+  // entered yet.
+  const monthRows = month.data ?? [];
+  const soFar = Number(day.slice(8));
+  const countOf = (key) =>
+    monthRows.filter((e) => e.delivery_status === key).length;
+
+  const byStatus = [
+    { label: DAILY_ROW_STATUS.pending, color: "var(--ring-pending)", value: Math.max(0, soFar - monthRows.length) }, // prettier-ignore
+    { label: DAILY_ROW_STATUS.delivered, color: "var(--ring-done)", value: countOf("delivered") }, // prettier-ignore
+    { label: DAILY_ROW_STATUS.partial, color: "var(--ring-partial)", value: countOf("partial") }, // prettier-ignore
+    { label: DAILY_ROW_STATUS.extra, color: "var(--ring-extra)", value: countOf("extra") }, // prettier-ignore
+    { label: DAILY_ROW_STATUS.missed, color: "var(--ring-missed)", value: countOf("missed") }, // prettier-ignore
+  ];
+
   return (
     <>
       <PageHeader
@@ -162,6 +286,13 @@ export default async function CustomerDashboard() {
         })}
       />
 
+      {/* Eight cards, eight hues, one each — and the hue belongs to the
+          card, not to the news on it. Two of them used to turn red when
+          something was wrong, which meant that on exactly the days somebody
+          is looking hardest, two cards were wearing the same colour and the
+          eye had nothing left to tell them apart by. Whether the news is bad
+          is already said by the number and the line under it. The hues are
+          the same ones, for the same things, as the dairy's own dashboard. */}
       <SectionLabel>Today</SectionLabel>
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -170,7 +301,7 @@ export default async function CustomerDashboard() {
             value={formatLiters(today.data?.actual_quantity ?? 0)}
             sub={DAILY_ROW_STATUS[todayStatus]}
             icon={LocalDrinkIcon}
-            color={todayStatus === "missed" ? "red" : "blue"}
+            color="blue"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -231,7 +362,7 @@ export default async function CustomerDashboard() {
             value={missedThisMonth}
             sub={missedThisMonth > 0 ? "days with no milk" : "nothing missed"}
             icon={LocalShippingIcon}
-            color={missedThisMonth > 0 ? "red" : "teal"}
+            color="red"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 3 }}>
@@ -240,7 +371,7 @@ export default async function CustomerDashboard() {
             value={openProblems}
             sub={openProblems > 0 ? "awaiting a reply" : "all resolved"}
             icon={ReportProblemIcon}
-            color="red"
+            color="teal"
           />
         </Grid>
       </Grid>
@@ -251,7 +382,7 @@ export default async function CustomerDashboard() {
           Component, and DataCards takes its columns as callbacks, which
           cannot cross that boundary. */}
       <Stack sx={{ ...cardsOnlyFlex, gap: 2 }}>
-        {(recent.data ?? []).length === 0 && (
+        {lastSeven.length === 0 && (
           <Paper
             elevation={0}
             sx={{
@@ -268,7 +399,7 @@ export default async function CustomerDashboard() {
           </Paper>
         )}
 
-        {(recent.data ?? []).map((e) => (
+        {lastSeven.map((e) => (
           <Paper
             key={e.date}
             elevation={0}
@@ -345,7 +476,7 @@ export default async function CustomerDashboard() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {(recent.data ?? []).length === 0 && (
+            {lastSeven.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
                   <Typography variant="body2" color="text.secondary">
@@ -355,7 +486,7 @@ export default async function CustomerDashboard() {
               </TableRow>
             )}
 
-            {(recent.data ?? []).map((e) => (
+            {lastSeven.map((e) => (
               <TableRow key={e.date} hover>
                 <TableCell>{formatDate(e.date)}</TableCell>
                 <TableCell align="right">
@@ -380,47 +511,133 @@ export default async function CustomerDashboard() {
         </Table>
       </TableContainer>
 
-      {(problems.data ?? []).length > 0 && (
-        <>
-          <Box sx={{ mt: 6 }} />
-          <SectionLabel>Recent complaints</SectionLabel>
-          <Stack spacing={1.5}>
-            {problems.data.map((p) => (
-              <Paper
-                key={p.id}
-                elevation={0}
-                sx={{ p: 2, border: 1, borderColor: "divider" }}
+      <Box sx={{ mt: 5 }} />
+      <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Panel title="Milk report" sub="Litres you got each day">
+            <Box sx={{ p: 2.5 }}>
+              <MilkChart days={series} previous={lastWeek} />
+            </Box>
+          </Panel>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Panel title="My payments" sub="What you have paid">
+            {payments.length === 0 ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ px: 2.5, py: 5, textAlign: "center" }}
               >
-                <Stack
-                  direction="row"
-                  sx={{
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 2,
-                  }}
-                >
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {p.message || "—"}
+                You have not made a payment yet.
+              </Typography>
+            ) : (
+              <Stack sx={{ px: 1.5, py: 1.5, gap: 0.25 }}>
+                {payments.map((p) => (
+                  <Stack
+                    key={`${p.paid_on}-${p.amount}`}
+                    direction="row"
+                    sx={{ alignItems: "center", gap: 1.5, px: 1, py: 0.9 }}
+                  >
+                    <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {formatDate(p.paid_on)}
+                      </Typography>
+                    </Box>
+
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 700, flexShrink: 0, color: "var(--tile-green-fg)", fontVariantNumeric: "tabular-nums" }} // prettier-ignore
+                    >
+                      {formatAmount(p.amount)}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {formatDate(p.created_at)}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    size="small"
-                    label={PROBLEM_STATE[problemState(p.status)]}
-                    color={STATUS_COLOR[problemState(p.status)]}
-                    variant={
-                      problemState(p.status) === "done" ? "filled" : "outlined"
-                    }
-                  />
-                </Stack>
-              </Paper>
-            ))}
-          </Stack>
-        </>
-      )}
+                  </Stack>
+                ))}
+              </Stack>
+            )}
+          </Panel>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Panel title="This month" sub="How your milk has come">
+            <StatusDonut
+              slices={byStatus}
+              total={soFar}
+              note="days"
+              figures={[
+                {
+                  label: "Milk this month",
+                  value: formatLiters(sum(month.data, "actual_quantity")),
+                },
+                {
+                  label: "Amount this month",
+                  value: formatAmount(sum(month.data, "total_amount")),
+                  color: "var(--tile-green-fg)",
+                },
+              ]}
+            />
+          </Panel>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Panel
+            title="My complaints"
+            sub={
+              openProblems > 0
+                ? `${openProblems} awaiting a reply`
+                : "nothing open"
+            }
+          >
+            {(problems.data ?? []).length === 0 ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ px: 2.5, py: 5, textAlign: "center" }}
+              >
+                You have not raised anything. Tell us if your milk is ever
+                wrong.
+              </Typography>
+            ) : (
+              <Stack>
+                {problems.data.map((p, i) => (
+                  <Stack
+                    key={p.id}
+                    direction="row"
+                    sx={{
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 2,
+                      px: 2.5,
+                      py: 1.75,
+                      borderTop: i === 0 ? 0 : 1,
+                      borderColor: "divider",
+                    }}
+                  >
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {p.message || "—"}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {formatDate(p.created_at)}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      size="small"
+                      label={PROBLEM_STATE[problemState(p.status)]}
+                      color={STATUS_COLOR[problemState(p.status)]}
+                      variant={
+                        problemState(p.status) === "done"
+                          ? "filled"
+                          : "outlined"
+                      }
+                    />
+                  </Stack>
+                ))}
+              </Stack>
+            )}
+          </Panel>
+        </Grid>
+      </Grid>
     </>
   );
 }

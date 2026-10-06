@@ -144,11 +144,27 @@ const loadSettings = unstable_cache(
     // The service key, only because the cookie client is off limits in here.
     // Nothing secret lives in this row — it is the shop sign.
     const db = createAdminClient();
-    const { data } = await db
+    const { data, error } = await db
       .from("business_settings")
       .select("*")
       .maybeSingle();
 
+    // Thrown, not swallowed, and this matters more than it looks.
+    //
+    // supabase-js hands a failure back as a value rather than throwing, so
+    // returning the defaults here would store *the defaults* in the cache —
+    // for the full five minutes, for every visitor. One dropped request on a
+    // bad line and the dairy's name and logo quietly revert to the stock ones
+    // and stay reverted, long after the connection has come back. That is
+    // exactly the "the old logo is still showing" everyone ends up chasing.
+    //
+    // unstable_cache does not keep a result it never got, so throwing leaves
+    // the last good answer in place and lets the next request try again. The
+    // two callers below already catch and fall back for their own render.
+    if (error) throw new Error(`business_settings: ${error.message}`);
+
+    // No row is a real answer, not a failure — a database nobody has filled
+    // in yet. That one is worth caching.
     return data ?? FALLBACK_SETTINGS;
   },
   ["business-settings"],

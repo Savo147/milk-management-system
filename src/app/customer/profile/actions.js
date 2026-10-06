@@ -3,8 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireCustomer } from "@/lib/auth";
-import { notifyAdmins } from "@/lib/notify";
-import { formatRate } from "@/lib/format";
 
 /**
  * The customer's own name, mobile and photo.
@@ -70,10 +68,10 @@ export async function changeMyPassword(prevState, formData) {
  * customers row — that is what the delivery round and the bills are built
  * from — so keeping it current is worth more than making them ring up.
  *
- * The rate is here too, by the dairy's choice. Its history looks after
- * itself: a database trigger closes the old milk_rates row and opens a new
- * one whoever makes the change, so a month already delivered stays billed at
- * the rate it was delivered at.
+ * The rate is not here. It was for a while, by the dairy's choice, and it is
+ * the one field a customer must not be able to write: it is what their milk
+ * is billed at, so setting it is setting their own bill. It is shown on the
+ * form, greyed, so they can see what they are paying and ask about it.
  *
  * The status and the name on the dairy's books are not here, and not merely
  * because this action leaves them out: migration 0007 puts a trigger on the
@@ -86,7 +84,6 @@ export async function updateMyMilkPlan(prevState, formData) {
   const address = String(formData.get("address") ?? "").trim();
   const deliveryTime = String(formData.get("delivery_time") ?? "").trim();
   const dailyQuantity = Number(formData.get("daily_quantity"));
-  const rate = Number(formData.get("rate_per_liter"));
 
   if (mobile && !/^\d{10}$/.test(mobile)) {
     return { error: "The mobile number must be 10 digits." };
@@ -100,20 +97,7 @@ export async function updateMyMilkPlan(prevState, formData) {
     return { error: "Daily milk must be between 0.25 and 99 liters." };
   }
 
-  if (!Number.isFinite(rate) || rate <= 0) {
-    return { error: "The rate must be greater than 0." };
-  }
-
   const supabase = await createClient();
-
-  // Read before writing, for the same reason the dairy's side does: once the
-  // update has run there is no old rate left to put in the message. The name
-  // comes along too — the dairy's bell needs to say whose rate moved.
-  const { data: before } = await supabase
-    .from("customers")
-    .select("id, name, rate_per_liter")
-    .eq("user_id", user.id)
-    .maybeSingle();
 
   const { error } = await supabase
     .from("customers")
@@ -122,7 +106,12 @@ export async function updateMyMilkPlan(prevState, formData) {
       address: address || null,
       delivery_time: deliveryTime || null,
       daily_quantity: dailyQuantity,
-      rate_per_liter: rate,
+      // rate_per_liter is deliberately absent. The rate is what the milk is
+      // billed at, and it is the dairy's to set — a customer who could write
+      // it would be writing their own bill. It is shown on the form, greyed,
+      // and the form does not carry it. Naming it here is the guard that
+      // matters: a Server Action is a public endpoint, so leaving it out of
+      // the update is what actually stops it, not leaving it out of the page.
     })
     // Their own row. RLS says the same thing, but an action that names what
     // it means does not depend on the policy being right.
@@ -133,18 +122,6 @@ export async function updateMyMilkPlan(prevState, formData) {
       return { error: "Editing your plan is not set up yet (migration 0007)." };
     }
     return { error: `Could not save: ${error.message}` };
-  }
-
-  // The dairy is told, and this one is not a courtesy. A customer can set
-  // their own rate — the dairy decided that deliberately — so the only thing
-  // standing between a changed rate and a wrong bill is somebody noticing.
-  if (before && Number(before.rate_per_liter) !== rate) {
-    await notifyAdmins({
-      type: "rate",
-      title: `${before.name} changed their rate`,
-      message: `${formatRate(before.rate_per_liter)} → ${formatRate(rate)} per liter. Milk delivered before today is still billed at the old rate.`,
-      referenceId: before.id,
-    });
   }
 
   revalidatePath("/customer/profile");

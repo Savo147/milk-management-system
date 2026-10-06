@@ -1,7 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import AppTheme from "@/components/AppTheme";
-import { getThemeMode } from "@/lib/theme-mode";
+import SystemTheme from "@/components/SystemTheme";
+import { resolveTheme } from "@/lib/theme-mode";
 import { getPublicBranding } from "@/lib/auth";
 import "./globals.css";
 
@@ -41,7 +42,7 @@ export async function generateMetadata() {
 export default async function RootLayout({ children }) {
   // Read here, at the root, so the very first paint is already in the chosen
   // colours rather than swapping once the browser catches up.
-  const mode = await getThemeMode();
+  const { mode, explicit } = await resolveTheme();
 
   return (
     <html
@@ -51,7 +52,14 @@ export default async function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col">
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-          <AppTheme mode={mode}>{children}</AppTheme>
+          <AppTheme mode={mode}>
+            {/* Only while nobody has picked Light or Dark in the app: it
+                keeps the look on whatever this phone or laptop is set to.
+                Once there is a choice, it is left out and the device is not
+                asked again. */}
+            {!explicit && <SystemTheme painted={mode} />}
+            {children}
+          </AppTheme>
         </AppRouterCacheProvider>
       </body>
     </html>

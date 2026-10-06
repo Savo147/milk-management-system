@@ -223,7 +223,10 @@ export default async function AdminDashboard() {
         "date, delivery_status, actual_quantity, total_amount, customer_id, customers(name)",
       )
       .gte("date", since),
-    // One row per customer, summed by the database — see migration 0010.
+    // A view, not a table: one row per customer with what they owe, added
+    // up by the database. Pulling the entries and the payments and
+    // subtracting them here would be the same sum done over a much larger
+    // download, every time anybody opens the dashboard.
     supabase.from("customer_balances").select("customer_id, name, due"),
     // Complaints nobody has answered yet. Not a month's slice: a complaint
     // left unanswered from three weeks ago is the one that matters most.
