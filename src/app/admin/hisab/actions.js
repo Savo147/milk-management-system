@@ -3,38 +3,44 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { todayLocal } from "@/lib/range";
 
 function refresh() {
   revalidatePath("/admin/hisab");
   revalidatePath("/admin");
+  // The customer's own copy of the same account.
+  revalidatePath("/customer/my-hisab");
+  revalidatePath("/customer");
 }
 
 const isDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v);
 
 /**
- * Sets how much a customer has paid for one span of days.
+ * Writes down money received.
  *
- * The amount is the span's running total, not an addition — the dialog shows
- * that span's bill and the box is pre-filled with it, so typing what is on
- * screen has to mean "this much has come in", never "add this much again".
+ * The date matters more than it looks: the next bill starts the morning
+ * after it. That is the whole shape of the book — milk up to the day they
+ * paid is finished business, milk after it is what they owe now — so a
+ * payment dated into the future would settle milk nobody has delivered yet.
+ * Today is as late as it may be.
  *
- * Payments are dated rows, so the span's payments are replaced with a single
- * row for the new figure. That keeps the number the screen shows and the
- * number in the database the same thing.
+ * It no longer has to fall inside the month on the picker. The bill is read
+ * from every payment on record rather than one month's worth, so pinning the
+ * date to the month being viewed was only ever bending the truth to fit the
+ * query.
  */
 export async function recordPayment(prevState, formData) {
   // A Server Action is a public endpoint; the page guard does not cover it.
   const admin = await requireAdmin();
 
   const customerId = String(formData.get("customer_id") ?? "");
-  const from = String(formData.get("from") ?? "");
-  const to = String(formData.get("to") ?? "");
   const paidOn = String(formData.get("paid_on") ?? "");
   const amount = Number(formData.get("amount"));
 
   if (!customerId) return { error: "Customer not found." };
-  if (!isDate(from) || !isDate(to) || !isDate(paidOn)) {
-    return { error: "That date is not valid." };
+  if (!isDate(paidOn)) return { error: "That date is not valid." };
+  if (paidOn > todayLocal()) {
+    return { error: "A payment cannot be dated in the future." };
   }
   if (!Number.isFinite(amount) || amount <= 0) {
     return { error: "Enter an amount greater than 0." };
@@ -42,18 +48,13 @@ export async function recordPayment(prevState, formData) {
 
   const supabase = await createClient();
 
-  // Added to what is already there, not put in its place. A customer pays a
-  // bill in two or three goes; wiping the span and writing one row made the
-  // earlier instalments disappear, and the dialog then offered the whole bill
-  // again as though nothing had been paid.
-  //
-  // Dated inside the span, so re-opening the same span reads it back.
-  const on = paidOn >= from && paidOn <= to ? paidOn : to;
-
+  // Added to what is already there, never in its place. A customer pays a
+  // bill in two or three goes, and each one is a row of its own — the sum is
+  // what the account is read from.
   const { error } = await supabase.from("payments").insert({
     customer_id: customerId,
     amount,
-    paid_on: on,
+    paid_on: paidOn,
     created_by: admin.id,
   });
 

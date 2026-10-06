@@ -1,5 +1,7 @@
 import Alert from "@mui/material/Alert";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAll } from "@/lib/supabase/all";
+import { accountOf } from "@/lib/account";
 import { requireCustomerAccount } from "@/lib/auth";
 import { resolveRange } from "@/lib/range";
 import PageHeader from "@/components/PageHeader";
@@ -44,17 +46,23 @@ export default async function MyBillingPage({ searchParams }) {
       .gte("paid_on", from)
       .lte("paid_on", to)
       .order("paid_on", { ascending: false }),
-    // All-time, so "kul baki" is the real outstanding figure rather than this
-    // period's slice of it.
-    supabase
-      .from("milk_entries")
-      .select("total_amount")
-      .eq("customer_id", customer.id),
-    supabase
-      .from("payments")
-      .select("amount, paid_on")
-      .eq("customer_id", customer.id)
-      .order("paid_on", { ascending: false }),
+    // All-time, and with the dates on them. "Kul baki" is a running figure,
+    // not this period's slice — and the same rows answer what the last
+    // payment settled and what has come since.
+    fetchAll(() =>
+      supabase
+        .from("milk_entries")
+        .select("date, actual_quantity, total_amount")
+        .eq("customer_id", customer.id)
+        .order("date"),
+    ),
+    fetchAll(() =>
+      supabase
+        .from("payments")
+        .select("amount, paid_on")
+        .eq("customer_id", customer.id)
+        .order("paid_on"),
+    ),
   ]);
 
   const error = entries.error ?? payments.error;
@@ -62,8 +70,9 @@ export default async function MyBillingPage({ searchParams }) {
   const billed = sum(entries.data, "total_amount");
   const received = sum(payments.data, "amount");
 
-  const totalBilled = sum(allMilk.data, "total_amount");
-  const totalPaid = sum(allPaid.data, "amount");
+  // The account proper: measured from the day after the last payment, the
+  // same way the dairy's own Billing page measures it.
+  const account = accountOf(allMilk.data ?? [], allPaid.data ?? []);
 
   return (
     <>
@@ -86,11 +95,13 @@ export default async function MyBillingPage({ searchParams }) {
           liters={sum(entries.data, "actual_quantity")}
           billed={billed}
           received={received}
-          // Paying ahead leaves payments above the milk; a negative figure
-          // would just read as broken.
-          baki={Math.max(0, billed - received)}
-          totalDue={Math.max(0, totalBilled - totalPaid)}
-          lastPaidOn={allPaid.data?.[0]?.paid_on ?? null}
+          totalDue={account.due}
+          since={account.since}
+          sinceLiters={account.liters}
+          sinceAmount={account.amount}
+          lastPaidOn={account.lastPaidOn}
+          lastPaidAmount={account.lastPaidAmount}
+          lastPaidLiters={account.lastPaidLiters}
           payments={payments.data ?? []}
           days={entries.data?.length ?? 0}
         />

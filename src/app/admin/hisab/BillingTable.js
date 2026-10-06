@@ -31,9 +31,22 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import RangePicker from "@/components/RangePicker";
 import PaymentDialog from "./PaymentDialog";
 
-/** Settled once the money in matches the milk out for the shown span. */
-const statusOf = (row) =>
-  Number(row.received_amount) >= Number(row.total_amount) ? "done" : "pending";
+/**
+ * Settled once nothing is owed — the whole account, not the month on screen.
+ * It used to compare the span's payments against the span's milk, which read
+ * "done" for a month somebody happened to pay inside while a older bill of
+ * theirs was still open.
+ */
+const statusOf = (row) => (Number(row.due) > 0 ? "pending" : "done");
+
+/** "06 Oct 2026 · ₹2,500 · 35 L" — the whole last payment in one line. */
+function lastPaymentText(row) {
+  if (!row.last_paid_on) return "None yet";
+
+  const parts = [formatDate(row.last_paid_on), formatAmount(row.last_paid_amount)];
+  if (row.last_paid_liters > 0) parts.push(formatLiters(row.last_paid_liters));
+  return parts.join(" · ");
+}
 
 export default function BillingTable({
   mode,
@@ -70,12 +83,12 @@ export default function BillingTable({
   const sums = useMemo(() => {
     const liters = rows.reduce((t, r) => t + Number(r.total_liters), 0);
     const total = rows.reduce((t, r) => t + Number(r.total_amount), 0);
-    const received = rows.reduce((t, r) => t + Number(r.received_amount), 0);
+    // Not another rupee figure — "To pay" above is already that, and a
+    // second card saying the same number twice is just noise. This says how
+    // many of them it is spread across.
+    const owing = rows.filter((r) => Number(r.due) > 0).length;
 
-    // Paying a span in full and then looking at a later one leaves payments
-    // ahead of the milk. Nothing is owed then — a negative "Due" would just
-    // read as broken.
-    return { liters, total, due: Math.max(0, total - received) };
+    return { liters, total, owing };
   }, [rows]);
 
   return (
@@ -126,15 +139,16 @@ export default function BillingTable({
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 6, md: 4 }}>
           <StatCard
-            label="Total amount"
+            label="To pay"
             value={formatAmount(sums.total)}
+            sub="since the last payment"
             icon={CurrencyRupeeIcon}
             color="green"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4 }}>
           <StatCard
-            label="Total milk"
+            label="Milk since payment"
             value={formatLiters(sums.liters)}
             icon={LocalDrinkIcon}
             color="blue"
@@ -142,9 +156,9 @@ export default function BillingTable({
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <StatCard
-            label="Due"
-            value={formatAmount(sums.due)}
-            sub={sums.due > 0 ? "still to collect" : "all settled"}
+            label="Customers owing"
+            value={sums.owing}
+            sub={sums.owing > 0 ? "still to collect from" : "all settled"}
             icon={AccountBalanceWalletIcon}
             color="amber"
           />
@@ -169,12 +183,9 @@ export default function BillingTable({
           );
         }}
         fields={(r) => [
-          ["Milk", formatLiters(r.total_liters)],
-          ["Total amount", formatAmount(r.total_amount)],
-          [
-            "Last payment",
-            r.last_paid_on ? formatDate(r.last_paid_on) : "None yet",
-          ],
+          ["Milk since payment", formatLiters(r.total_liters)],
+          ["To pay", formatAmount(r.total_amount)],
+          ["Last payment", lastPaymentText(r)],
         ]}
         actions={(r) =>
           statusOf(r) === "done" ? (
@@ -214,13 +225,13 @@ export default function BillingTable({
           <TableHead>
             <TableRow>
               <TableCell>Customer</TableCell>
-              <TableCell align="right" sx={{ width: "16%" }}>
-                Milk
+              <TableCell align="right" sx={{ width: "15%" }}>
+                Milk since payment
               </TableCell>
-              <TableCell align="right" sx={{ width: "18%" }}>
-                Total amount
+              <TableCell align="right" sx={{ width: "15%" }}>
+                To pay
               </TableCell>
-              <TableCell align="center" sx={{ width: "15%" }}>
+              <TableCell align="center" sx={{ width: "19%" }}>
                 Last payment
               </TableCell>
               <TableCell align="center" sx={{ width: "14%" }}>
@@ -266,15 +277,31 @@ export default function BillingTable({
                     {formatAmount(r.total_amount)}
                   </TableCell>
 
+                  {/* When, how much, and what it was for. "35 L nu ₹2500" is
+                      the sentence the dairy says out loud, so it is the one
+                      the column prints. */}
                   <TableCell align="center">
                     {r.last_paid_on ? (
-                      formatDate(r.last_paid_on)
+                      <>
+                        <Typography variant="body2">
+                          {formatDate(r.last_paid_on)}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontVariantNumeric: "tabular-nums" }}
+                        >
+                          {formatAmount(r.last_paid_amount)}
+                          {r.last_paid_liters > 0 &&
+                            ` · ${formatLiters(r.last_paid_liters)}`}
+                        </Typography>
+                      </>
                     ) : (
                       <Typography
                         variant="caption"
                         sx={{ color: "text.disabled" }}
                       >
-                        —
+                        None yet
                       </Typography>
                     )}
                   </TableCell>
@@ -319,7 +346,6 @@ export default function BillingTable({
 
       <PaymentDialog
         row={paying}
-        from={from}
         to={to}
         today={today}
         onClose={() => setPaying(null)}

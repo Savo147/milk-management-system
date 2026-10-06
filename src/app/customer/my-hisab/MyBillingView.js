@@ -32,9 +32,13 @@ export default function MyBillingView({
   liters,
   billed,
   received,
-  baki,
   totalDue,
+  since,
+  sinceLiters,
+  sinceAmount,
   lastPaidOn,
+  lastPaidAmount,
+  lastPaidLiters,
   payments,
   days,
 }) {
@@ -89,31 +93,46 @@ export default function MyBillingView({
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <StatCard
-            label="Due for this period"
-            value={formatAmount(baki)}
+            label="To pay"
+            value={formatAmount(totalDue)}
             icon={AccountBalanceWalletIcon}
             color="amber"
           />
         </Grid>
       </Grid>
 
+      {/* The account itself, which is not the period above it. The cards
+          report whatever month is on the picker; this says what is owed
+          today — milk since the last payment, and nothing that payment
+          already settled. */}
       <Alert
         severity={totalDue > 0 ? "warning" : "success"}
         icon={<AccountBalanceWalletIcon fontSize="small" />}
         sx={{ mb: 3 }}
       >
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          sx={{ alignItems: { sm: "baseline" }, gap: 1, flexWrap: "wrap" }}
-        >
+        <Stack sx={{ gap: 0.5 }}>
           <Typography variant="body2">
-            <strong>Total due (to date):</strong> {formatAmount(totalDue)}
+            <strong>To pay:</strong> {formatAmount(totalDue)}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {lastPaidOn
-              ? `Last payment on ${formatDate(lastPaidOn)}`
-              : "No payment has been made yet"}
-          </Typography>
+
+          {lastPaidOn ? (
+            <>
+              {/* "35 L nu ₹2,500 apya hata" — the sentence, written down. */}
+              <Typography variant="caption" color="text.secondary">
+                Last payment {formatAmount(lastPaidAmount)} on{" "}
+                {formatDate(lastPaidOn)}
+                {lastPaidLiters > 0 && ` — for ${formatLiters(lastPaidLiters)}`}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Since then ({formatDate(since)} onwards):{" "}
+                {formatLiters(sinceLiters)} · {formatAmount(sinceAmount)}
+              </Typography>
+            </>
+          ) : (
+            <Typography variant="caption" color="text.secondary">
+              No payment has been made yet
+            </Typography>
+          )}
         </Stack>
       </Alert>
 

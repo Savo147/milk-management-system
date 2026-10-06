@@ -1,5 +1,7 @@
 import Alert from "@mui/material/Alert";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAll } from "@/lib/supabase/all";
+import { accountOf } from "@/lib/account";
 import PageHeader from "@/components/PageHeader";
 import { resolveRange, todayLocal } from "@/lib/range";
 import BillingTable from "./BillingTable";
@@ -8,33 +10,44 @@ import { errorText } from "@/lib/format";
 export const metadata = { title: "Billing" };
 
 /**
- * Milk delivered and money received, per customer, for one span of days.
+ * What each customer owes, counted from the day after they last paid.
  *
- * Both sides are read from dated rows — milk_entries and payments — so any
- * span answers the same way, and a month is nothing more than a span from its
- * first day to its last. While payments lived on a month's bill instead, a
- * range that crossed months had no honest answer at all.
+ * This is how the book is actually kept. Somebody takes 35 L, pays for the
+ * 35 L, and from that moment the 35 L is finished business — the next bill
+ * starts the following morning. The screen used to go on showing the whole
+ * month whatever had been paid inside it, so a settled customer still had
+ * their milk and their money sitting in front of the dairy, and working out
+ * what was really outstanding meant doing the subtraction by eye.
+ *
+ * So the figures here are not the span's. The span picks the day the
+ * accounts are read *up to*, and which customers are worth listing; each
+ * bill's own start is the day after that customer last paid, however many
+ * months back that reaches. A debt does not expire because the month did.
+ *
+ * The arithmetic itself lives in @/lib/account, which the customer's own My
+ * Billing reads from too — so the two sides can never disagree about what is
+ * owed.
  */
-async function fetchRange(supabase, from, to) {
-  const [entries, payments, latest] = await Promise.all([
-    supabase
-      .from("milk_entries")
-      .select(
-        "customer_id, actual_quantity, total_amount, customers(name, mobile)",
-      )
-      .gte("date", from)
-      .lte("date", to),
-    supabase
-      .from("payments")
-      .select("customer_id, amount")
-      .gte("paid_on", from)
-      .lte("paid_on", to),
-    // Not limited to the span: "when did this customer last pay me" is worth
-    // knowing precisely when the answer is before the period being viewed.
-    supabase
-      .from("payments")
-      .select("customer_id, paid_on")
-      .order("paid_on", { ascending: false }),
+async function fetchAccounts(supabase, from, to) {
+  const [entries, payments] = await Promise.all([
+    // Everything up to the end of the span, not just inside it: a bill that
+    // opened in September is still owed in October.
+    fetchAll(() =>
+      supabase
+        .from("milk_entries")
+        .select(
+          "customer_id, date, actual_quantity, total_amount, customers(name, mobile)",
+        )
+        .lte("date", to)
+        .order("date"),
+    ),
+    fetchAll(() =>
+      supabase
+        .from("payments")
+        .select("customer_id, amount, paid_on")
+        .lte("paid_on", to)
+        .order("paid_on"),
+    ),
   ]);
 
   if (entries.error) return { rows: [], error: entries.error };
@@ -44,35 +57,52 @@ async function fetchRange(supabase, from, to) {
   const paymentsMissing = Boolean(payments.error);
 
   const byCustomer = new Map();
+  const of = (id) => {
+    if (!byCustomer.has(id)) {
+      byCustomer.set(id, {
+        id,
+        name: "—",
+        mobile: "",
+        entries: [],
+        payments: [],
+        inRange: false,
+      });
+    }
+    return byCustomer.get(id);
+  };
+
   for (const e of entries.data ?? []) {
-    const row = byCustomer.get(e.customer_id) ?? {
-      id: e.customer_id,
-      customer_name: e.customers?.name ?? "—",
-      customer_mobile: e.customers?.mobile ?? "",
-      total_liters: 0,
-      total_amount: 0,
-      received_amount: 0,
-      last_paid_on: null,
-    };
-    row.total_liters += Number(e.actual_quantity ?? 0);
-    row.total_amount += Number(e.total_amount ?? 0);
-    byCustomer.set(e.customer_id, row);
+    const c = of(e.customer_id);
+    c.name = e.customers?.name ?? c.name;
+    c.mobile = e.customers?.mobile ?? c.mobile;
+    c.entries.push(e);
+    if (e.date >= from && e.date <= to) c.inRange = true;
   }
 
-  for (const p of payments.data ?? []) {
-    const row = byCustomer.get(p.customer_id);
-    if (row) row.received_amount += Number(p.amount ?? 0);
-  }
+  for (const p of payments.data ?? []) of(p.customer_id).payments.push(p);
 
-  // Rows come newest first, so the first one seen for a customer is theirs.
-  for (const p of latest.data ?? []) {
-    const row = byCustomer.get(p.customer_id);
-    if (row && !row.last_paid_on) row.last_paid_on = p.paid_on;
-  }
-
-  const rows = [...byCustomer.values()].sort((a, b) =>
-    a.customer_name.localeCompare(b.customer_name),
-  );
+  const rows = [...byCustomer.values()]
+    .map((c) => {
+      const a = accountOf(c.entries, c.payments);
+      return {
+        id: c.id,
+        customer_name: c.name,
+        customer_mobile: c.mobile,
+        inRange: c.inRange,
+        // Since the day after the last payment.
+        total_liters: a.liters,
+        total_amount: a.amount,
+        since: a.since,
+        due: a.due,
+        last_paid_on: a.lastPaidOn,
+        last_paid_amount: a.lastPaidAmount,
+        last_paid_liters: a.lastPaidLiters,
+      };
+    })
+    // Somebody with no milk this month but money still owed belongs on a page
+    // about who owes what. Somebody with neither does not.
+    .filter((r) => r.inRange || r.due > 0)
+    .sort((a, b) => a.customer_name.localeCompare(b.customer_name));
 
   return { rows, paymentsMissing, error: null };
 }
@@ -80,18 +110,23 @@ async function fetchRange(supabase, from, to) {
 export default async function BillingPage({ searchParams }) {
   const params = await searchParams;
 
-  // Both pickers resolve to the same thing: a span of days. Milk and payments
-  // are dated, so the span is all the query needs.
+  // The span says which day the accounts are read up to, and whose accounts
+  // are worth showing. Each bill's own start is the day after that customer
+  // last paid — see fetchAccounts.
   const { mode, from, to, label, monthFrom, monthTo } = resolveRange(params);
 
   const supabase = await createClient();
-  const { rows, paymentsMissing, error } = await fetchRange(supabase, from, to);
+  const { rows, paymentsMissing, error } = await fetchAccounts(
+    supabase,
+    from,
+    to,
+  );
 
   return (
     <>
       <PageHeader
         title="Billing & Payments"
-        subtitle={`${label} — every customer's account`}
+        subtitle={`${label} — what each customer owes since they last paid`}
       />
 
       {error ? (

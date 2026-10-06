@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAdmin } from "@/lib/auth";
+import { clearBrandingMemo, requireAdmin } from "@/lib/auth";
 import { BRANDING_TAG } from "@/lib/cache-tags";
 import { notifyCustomer } from "@/lib/notify";
 import { formatRate } from "@/lib/format";
@@ -38,8 +38,11 @@ export async function saveBusinessSettings(prevState, formData) {
 
   if (error) return { error: `Could not save: ${error.message}` };
 
-  // The name and logo are cached for everyone, signed in or not. Without this
-  // a rename would keep showing the old one for the next five minutes.
+  // The name and logo are held for everyone, signed in or not. Without both
+  // of these a rename would keep showing the old one for five minutes: the
+  // tag clears the rendered pages, the memo clears the row they were drawn
+  // from.
+  await clearBrandingMemo();
   revalidateTag(BRANDING_TAG);
 
   refresh();

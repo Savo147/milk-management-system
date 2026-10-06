@@ -18,6 +18,8 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAll } from "@/lib/supabase/all";
+import { accountOf } from "@/lib/account";
 import { requireAdmin } from "@/lib/auth";
 import {
   DAIRY_TZ,
@@ -203,7 +205,8 @@ export default async function AdminDashboard() {
     { count: activeCustomers },
     { data: todayEntries },
     { data: recentEntries },
-    { data: balances },
+    { data: allEntries },
+    { data: allPayments },
     { data: openReports },
     { data: chartEntries },
     { data: todayRows },
@@ -223,11 +226,21 @@ export default async function AdminDashboard() {
         "date, delivery_status, actual_quantity, total_amount, customer_id, customers(name)",
       )
       .gte("date", since),
-    // A view, not a table: one row per customer with what they owe, added
-    // up by the database. Pulling the entries and the payments and
-    // subtracting them here would be the same sum done over a much larger
-    // download, every time anybody opens the dashboard.
-    supabase.from("customer_balances").select("customer_id, name, due"),
+    // What each customer owes: the milk they have taken since the day they
+    // last paid. There is a customer_balances view that would answer in one
+    // row per customer, but it answers a different question — everything
+    // billed minus everything paid, all the way back — and a dashboard that
+    // disagrees with the Billing page about who owes what is worse than a
+    // slightly larger download. @/lib/account settles it in one place.
+    fetchAll(() =>
+      supabase
+        .from("milk_entries")
+        .select("customer_id, date, actual_quantity, total_amount, customers(name)")
+        .order("date"),
+    ),
+    fetchAll(() =>
+      supabase.from("payments").select("customer_id, amount, paid_on"),
+    ),
     // Complaints nobody has answered yet. Not a month's slice: a complaint
     // left unanswered from three weeks ago is the one that matters most.
     supabase
@@ -372,6 +385,31 @@ export default async function AdminDashboard() {
     paid_on: p.paid_on,
   }));
 
+  // One row per customer, worked out the same way the Billing page works
+  // it out — see the query above.
+  const balances = (() => {
+    const byCustomer = new Map();
+    const of = (id) => {
+      if (!byCustomer.has(id)) {
+        byCustomer.set(id, { customer_id: id, name: "—", entries: [], payments: [] });
+      }
+      return byCustomer.get(id);
+    };
+
+    for (const e of allEntries ?? []) {
+      const c = of(e.customer_id);
+      c.name = e.customers?.name ?? c.name;
+      c.entries.push(e);
+    }
+    for (const p of allPayments ?? []) of(p.customer_id).payments.push(p);
+
+    return [...byCustomer.values()].map((c) => ({
+      customer_id: c.customer_id,
+      name: c.name,
+      due: accountOf(c.entries, c.payments).due,
+    }));
+  })();
+
   // The card above says how much is outstanding in all; this says who by.
   const debtors = (balances ?? [])
     .filter((b) => Number(b.due) > 0)
@@ -403,8 +441,8 @@ export default async function AdminDashboard() {
   const served = (todayEntries ?? []).filter(
     (e) => e.delivery_status !== "missed",
   ).length;
-  // Everything owed, by everybody, all time. Not a month's slice of it:
-  // what is owed does not reset when the month does.
+  // Everything owed, by everybody. Not a month's slice of it: what is owed
+  // does not reset when the month does — it resets when they pay.
   const totalDue = (balances ?? []).reduce((t, b) => t + Number(b.due ?? 0), 0);
   const owing = (balances ?? []).filter((b) => Number(b.due) > 0).length;
 

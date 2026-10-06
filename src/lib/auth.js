@@ -1,9 +1,7 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BRANDING_TAG } from "@/lib/cache-tags";
 import { withDeadline } from "@/lib/deadline";
 
 /**
@@ -124,52 +122,80 @@ export async function requireCustomerAccount() {
 /**
  * The dairy's name, logo and settings.
  *
- * Cached, because every single page asks for it and it changes perhaps twice
- * a year — it was costing a round trip to Supabase on every navigation, which
- * is most of what made moving between pages feel slow.
- * Saving on the Settings page clears it through the "branding" tag.
+ * Held for five minutes, because every single page asks for it and it
+ * changes perhaps twice a year — it was costing a round trip to Supabase on
+ * every navigation, which is most of what made moving between pages feel
+ * slow. Saving on the Settings page clears it.
  *
- * unstable_cache cannot see request state, so neither of these may use the
- * cookie-based client. Neither needs to: the row is the same for everybody.
+ * Read with the service key rather than the cookie-based client. It is not
+ * request state: the row is the same for everybody, signed in or not.
  */
 const FALLBACK_SETTINGS = {
   dairy_name: "Krishna Dairy",
   logo_url: null,
 };
 
-const CACHE = { revalidate: 300, tags: [BRANDING_TAG] };
+/** How long a good answer is kept before asking again. */
+const CACHE_MS = 300_000;
 
-const loadSettings = unstable_cache(
-  async () => {
-    // The service key, only because the cookie client is off limits in here.
-    // Nothing secret lives in this row — it is the shop sign.
-    const db = createAdminClient();
-    const { data, error } = await db
-      .from("business_settings")
-      .select("*")
-      .maybeSingle();
+/**
+ * The last answer the database actually gave, and when.
+ *
+ * Kept here rather than in `unstable_cache`, and the reason is the failures,
+ * not the successes.
+ *
+ * supabase-js hands a failure back as a value rather than throwing, so the
+ * obvious `data ?? defaults` would put *the defaults* into the cache — for
+ * the full five minutes, for every visitor. One dropped request on a bad line
+ * and the dairy's name and logo quietly revert to the stock ones and stay
+ * reverted long after the connection is back. That is the "the old logo is
+ * still showing" everybody ends up chasing, and it was real: four such
+ * entries were found written to disk.
+ *
+ * Throwing instead did keep the cache clean — unstable_cache does not store a
+ * result it never got — but Next logs every rejection out of a cached
+ * function, so on a connection that drops in bursts the dev overlay filled up
+ * with an error about a page that had rendered perfectly well.
+ *
+ * Holding it here answers both. Only a real answer is ever written down, a
+ * dropped request falls back to the last real answer rather than to the stock
+ * name, and nothing is thrown for Next to shout about. The cost is that each
+ * server instance keeps its own copy and a rename can take up to five minutes
+ * to reach them all — which is what the five minutes already meant.
+ */
+let settingsMemo = null;
 
-    // Thrown, not swallowed, and this matters more than it looks.
-    //
-    // supabase-js hands a failure back as a value rather than throwing, so
-    // returning the defaults here would store *the defaults* in the cache —
-    // for the full five minutes, for every visitor. One dropped request on a
-    // bad line and the dairy's name and logo quietly revert to the stock ones
-    // and stay reverted, long after the connection has come back. That is
-    // exactly the "the old logo is still showing" everyone ends up chasing.
-    //
-    // unstable_cache does not keep a result it never got, so throwing leaves
-    // the last good answer in place and lets the next request try again. The
-    // two callers below already catch and fall back for their own render.
-    if (error) throw new Error(`business_settings: ${error.message}`);
+/** Forgets the memo, so the next read goes to the database. */
+export async function clearBrandingMemo() {
+  settingsMemo = null;
+}
 
-    // No row is a real answer, not a failure — a database nobody has filled
-    // in yet. That one is worth caching.
-    return data ?? FALLBACK_SETTINGS;
-  },
-  ["business-settings"],
-  CACHE,
-);
+async function loadSettings() {
+  if (settingsMemo && Date.now() - settingsMemo.at < CACHE_MS) {
+    return settingsMemo.value;
+  }
+
+  // The service key, only because the cookie client is off limits in here.
+  // Nothing secret lives in this row — it is the shop sign.
+  const db = createAdminClient();
+  const { data, error } = await db
+    .from("business_settings")
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    // Stale is better than wrong. Only when there is nothing to be stale with
+    // does this become the callers' problem.
+    if (settingsMemo) return settingsMemo.value;
+    throw new Error(`business_settings: ${error.message}`);
+  }
+
+  // No row is a real answer, not a failure — a database nobody has filled in
+  // yet. That one is worth remembering.
+  const value = data ?? FALLBACK_SETTINGS;
+  settingsMemo = { value, at: Date.now() };
+  return value;
+}
 
 /** Full settings row. Signed-in users only. */
 export async function getBusinessSettings() {

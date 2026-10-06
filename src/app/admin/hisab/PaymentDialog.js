@@ -49,7 +49,7 @@ function Actions({ onClose }) {
   );
 }
 
-export default function PaymentDialog({ row, from, to, today, onClose }) {
+export default function PaymentDialog({ row, to, today, onClose }) {
   const [state, formAction] = useActionState(recordPayment, null);
 
   // Closed once per save, not once per render. useActionState keeps the
@@ -66,9 +66,15 @@ export default function PaymentDialog({ row, from, to, today, onClose }) {
     }
   }, [state, onClose]);
 
+  // The milk since the last payment, what is still owed from before it, and
+  // the two added up. The bill's own start is the day after that payment —
+  // the page worked it out per customer, this just reads it.
+  // The milk since the last payment, and nothing else. Paying settles
+  // everything up to the day it was paid, so there is no older figure to add
+  // on and none to apologise for.
   const total = Number(row?.total_amount ?? 0);
-  const received = Number(row?.received_amount ?? 0);
-  const remaining = Math.max(0, total - received);
+  const paidOn = row?.last_paid_on ?? null;
+  const since = row?.since ?? null;
 
   return (
     <Dialog
@@ -82,15 +88,17 @@ export default function PaymentDialog({ row, from, to, today, onClose }) {
         <form action={formAction}>
           <DialogTitle sx={{ pb: 1 }}>
             {row.customer_name}
+            {/* The days this bill covers, which is not the month on the
+                picker: it opens the morning after the last payment. */}
             <Typography variant="body2" color="text.secondary">
-              {formatDate(from)} – {formatDate(to)}
+              {paidOn
+                ? `${formatDate(since)} – ${formatDate(to)}`
+                : `Everything up to ${formatDate(to)}`}
             </Typography>
           </DialogTitle>
 
           <DialogContent>
             <input type="hidden" name="customer_id" value={row.id} />
-            <input type="hidden" name="from" value={from} />
-            <input type="hidden" name="to" value={to} />
 
             {state?.error && (
               <Alert severity="error" sx={{ mb: 2 }}>
@@ -98,29 +106,34 @@ export default function PaymentDialog({ row, from, to, today, onClose }) {
               </Alert>
             )}
 
+            {/* What the last payment was, and the milk it settled, is on the
+                row behind this dialog — the Last payment column. Repeating it
+                here put the previous bill directly above the one being paid,
+                which is two amounts side by side when only one of them is
+                being typed into the box below. */}
             <Stack spacing={1} sx={{ mb: 3 }}>
-              <Row label="Milk" value={formatLiters(row.total_liters)} />
-              <Row label="Total" value={formatAmount(total)} />
-              {received > 0 && (
-                <Row label="Already paid" value={formatAmount(received)} />
-              )}
-              <Row label="Remaining" value={formatAmount(remaining)} strong />
+              <Row
+                label="Milk since then"
+                value={formatLiters(row.total_liters)}
+              />
+              <Row label="To pay" value={formatAmount(total)} strong />
             </Stack>
 
-            {/* The date has to sit inside the span being billed, or
-                re-opening that span would not find the payment again. Today
-                when today is in it, the last day of it otherwise — which is
-                what a bill settled after the period closed actually means. */}
+            {/* Today, and no later. The date is what the next bill counts
+                from, so a payment dated into next week would wipe out milk
+                that has not been delivered yet. It no longer has to sit
+                inside the month on the picker — the bill is read from every
+                payment there has ever been, not from one month's worth. */}
             <TextField
               name="paid_on"
               label="Paid on"
               type="date"
-              defaultValue={today >= from && today <= to ? today : to}
+              defaultValue={today}
               required
               fullWidth
               sx={{ mb: 2 }}
-              slotProps={{ htmlInput: { min: from, max: to } }}
-              helperText={`Anywhere between ${formatDate(from)} and ${formatDate(to)}`}
+              slotProps={{ htmlInput: { max: today } }}
+              helperText="The next bill starts the day after this"
             />
 
             <TextField
@@ -131,7 +144,7 @@ export default function PaymentDialog({ row, from, to, today, onClose }) {
               // of what they owe should not have to work out the difference,
               // and the total was being handed to them as if nothing had been
               // paid yet.
-              defaultValue={remaining > 0 ? remaining : ""}
+              defaultValue={total > 0 ? total : ""}
               required
               fullWidth
               autoFocus

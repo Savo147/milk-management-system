@@ -17,6 +17,8 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAll } from "@/lib/supabase/all";
+import { accountOf } from "@/lib/account";
 import { requireCustomerAccount } from "@/lib/auth";
 import {
   DAIRY_TZ,
@@ -194,13 +196,16 @@ export default async function CustomerDashboard() {
       .select("actual_quantity, total_amount, delivery_status")
       .eq("customer_id", customer.id)
       .gte("date", monthStart()),
-    // Due is an all-time figure on purpose: what is owed does not reset when
-    // the month does, and a customer looking at this card wants the real
-    // number, not this month's slice of it.
-    supabase
-      .from("milk_entries")
-      .select("total_amount")
-      .eq("customer_id", customer.id),
+    // Not this month's slice: what is owed does not reset when the month
+    // does — it resets when they pay. The dates come along because the bill
+    // is counted from the day after that payment; see @/lib/account.
+    fetchAll(() =>
+      supabase
+        .from("milk_entries")
+        .select("date, actual_quantity, total_amount")
+        .eq("customer_id", customer.id)
+        .order("date"),
+    ),
     supabase
       .from("payments")
       .select("amount, paid_on")
@@ -222,11 +227,10 @@ export default async function CustomerDashboard() {
       .limit(3),
   ]);
 
-  const billed = sum(allMilk.data, "total_amount");
-  const paid = sum(allPaid.data, "amount");
-  // Paying ahead leaves payments above the milk; a negative Due would just
-  // read as broken.
-  const baki = Math.max(0, billed - paid);
+  // The milk taken since the last payment. Paying settles everything up to
+  // that day, so nothing older than it is owed.
+  const account = accountOf(allMilk.data ?? [], allPaid.data ?? []);
+  const baki = account.due;
 
   // Days the round did not reach them. A day nobody has recorded yet is not
   // a missed one — only an entry saved as "missed" counts.
