@@ -19,13 +19,16 @@ export default async function SettingsPage({ searchParams }) {
       .from("users")
       .select("id, name, email, mobile, role, status, created_at")
       .order("created_at"),
+    // Only the rate in force, one row per customer. The database keeps the
+    // closed ones behind this as its own record of what was charged when,
+    // but this screen is answering "what does each customer pay" — and a
+    // list that answers it twice over, with yesterday's number sitting under
+    // today's, is a list you have to read twice to trust once.
     supabase
       .from("milk_rates")
-      .select(
-        "id, customer_id, rate_per_liter, effective_from, effective_to, customers(name)",
-      )
-      .order("effective_from", { ascending: false })
-      .limit(100),
+      .select("id, customer_id, rate_per_liter, effective_from, customers(name)")
+      .is("effective_to", null)
+      .limit(200),
   ]);
 
   // A missing table or a blocked read should not take the whole page down —
@@ -61,11 +64,7 @@ export default async function SettingsPage({ searchParams }) {
 
   const rateRows = (rates.data ?? [])
     .map((r) => ({ ...r, customer_name: r.customers?.name ?? "—" }))
-    .sort(
-      (a, b) =>
-        a.customer_name.localeCompare(b.customer_name) ||
-        b.effective_from.localeCompare(a.effective_from),
-    );
+    .sort((a, b) => a.customer_name.localeCompare(b.customer_name));
 
   return (
     <>

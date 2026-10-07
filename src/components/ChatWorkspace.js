@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
+import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -20,12 +21,14 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
 import ExploreOutlinedIcon from "@mui/icons-material/ExploreOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import PublicIcon from "@mui/icons-material/Public";
 import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import ChatThread from "@/components/ChatThread";
 import MessagesIcon from "@/components/MessagesIcon";
 import DiscoverDialog from "@/components/DiscoverDialog";
+import ChannelMembersDialog from "@/components/ChannelMembersDialog";
 import CreateChannelDialog from "@/components/CreateChannelDialog";
 import EditChannelDialog from "@/components/EditChannelDialog";
 import { ago, preview } from "@/lib/chat-format";
@@ -193,6 +196,8 @@ export default function ChatWorkspace({
   const [creating, setCreating] = useState(false);
   // Which channel the settings dialog is for, or null when it is shut.
   const [editing, setEditing] = useState(null);
+  // And which one's People list is open.
+  const [viewingMembers, setViewingMembers] = useState(null);
 
   const chattingWith = useMemo(
     () => new Set(threads.map((t) => t.customerId)),
@@ -250,17 +255,34 @@ export default function ChatWorkspace({
       unread: t.unread,
     });
 
+  /**
+   * The line under a channel's name: what it is, who is in it, and its own
+   * description if it was given one. The count is the thing worth having up
+   * there — "Public" on its own does not say whether that is six customers
+   * or sixty.
+   */
+  const channelSub = (c) => {
+    const parts = [`${c.isPrivate ? "Private" : "Public"} channel`];
+
+    if (c.members != null) {
+      parts.push(`${c.members} customer${c.members === 1 ? "" : "s"}`);
+    }
+    if (c.description) parts.push(c.description);
+
+    return parts.join(" · ");
+  };
+
   const pickChannel = (c) =>
     setSelected({
       kind: "channel",
       id: c.id,
       name: c.name,
-      sub:
-        c.description ||
-        `${c.isPrivate ? "Private" : "Public"} channel${c.announcementOnly ? " · announcements" : ""}`,
+      sub: channelSub(c),
       unread: c.unread,
       isPrivate: c.isPrivate,
       announcementOnly: c.announcementOnly,
+      members: c.members,
+      memberIds: c.memberIds,
     });
 
   const sidebar = (
@@ -334,56 +356,64 @@ export default function ChatWorkspace({
       </Box>
 
       <Box sx={{ flexGrow: 1, minHeight: 0, overflowY: "auto", px: 1, pb: 1 }}>
-        <Stack direction="row" sx={{ alignItems: "center", pr: 0.5 }}>
-          <Typography variant="caption" sx={{ ...sectionSx, flexGrow: 1 }}>
-            Channels
-          </Typography>
-          {isAdmin && (
-            <Tooltip title="Create a channel">
-              <IconButton size="small" onClick={() => setCreating(true)}>
-                <AddIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+        {/* Channels are hidden while "Only with complaints" is on. A
+            channel has no complaints in it — the toggle is for working
+            through who has raised one, and a notice board on top of that
+            list is just something else to scroll past. */}
+        {!onlyProblems && (
+          <>
+          <Stack direction="row" sx={{ alignItems: "center", pr: 0.5 }}>
+            <Typography variant="caption" sx={{ ...sectionSx, flexGrow: 1 }}>
+              Channels
+            </Typography>
+            {isAdmin && (
+              <Tooltip title="Create a channel">
+                <IconButton size="small" onClick={() => setCreating(true)}>
+                  <AddIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Stack>
+
+          {rooms.length === 0 && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ px: 1, py: 1 }}
+            >
+              {isAdmin
+                ? "No channels yet. Make one to tell every customer something at once."
+                : "No channels yet."}
+            </Typography>
           )}
-        </Stack>
 
-        {rooms.length === 0 && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ px: 1, py: 1 }}
-          >
-            {isAdmin
-              ? "No channels yet. Make one to tell every customer something at once."
-              : "No channels yet."}
-          </Typography>
+          {rooms.map((c) => (
+            <Row
+              key={c.id}
+              item={c}
+              selected={selected?.kind === "channel" && selected.id === c.id}
+              onClick={() => pickChannel(c)}
+              avatar={
+                <Avatar
+                  variant="rounded"
+                  sx={{
+                    width: 34,
+                    height: 34,
+                    bgcolor: toneFor(c).bg,
+                    color: toneFor(c).fg,
+                  }}
+                >
+                  {c.isPrivate ? (
+                    <LockOutlinedIcon sx={{ fontSize: 18 }} />
+                  ) : (
+                    <PublicIcon sx={{ fontSize: 18 }} />
+                  )}
+                </Avatar>
+              }
+            />
+          ))}
+          </>
         )}
-
-        {rooms.map((c) => (
-          <Row
-            key={c.id}
-            item={c}
-            selected={selected?.kind === "channel" && selected.id === c.id}
-            onClick={() => pickChannel(c)}
-            avatar={
-              <Avatar
-                variant="rounded"
-                sx={{
-                  width: 34,
-                  height: 34,
-                  bgcolor: toneFor(c).bg,
-                  color: toneFor(c).fg,
-                }}
-              >
-                {c.isPrivate ? (
-                  <LockOutlinedIcon sx={{ fontSize: 18 }} />
-                ) : (
-                  <PublicIcon sx={{ fontSize: 18 }} />
-                )}
-              </Avatar>
-            }
-          />
-        ))}
 
         <Stack direction="row" sx={{ alignItems: "center", pr: 0.5 }}>
           <Typography variant="caption" sx={{ ...sectionSx, flexGrow: 1 }}>
@@ -423,7 +453,15 @@ export default function ChatWorkspace({
             <Switch
               size="small"
               checked={onlyProblems}
-              onChange={(e) => setOnlyProblems(e.target.checked)}
+              onChange={(e) => {
+                const on = e.target.checked;
+                setOnlyProblems(on);
+
+                // A channel open on the right, with its row gone from the
+                // left, would be the one thing on screen that has nothing to
+                // do with what the screen now says it is showing.
+                if (on && selected?.kind === "channel") setSelected(null);
+              }}
               slotProps={{
                 input: { "aria-label": "Show only customers who complained" },
               }}
@@ -558,6 +596,22 @@ export default function ChatWorkspace({
           </Typography>
         </Box>
 
+        {/* The count, and a way to see the names behind it. A notice going
+            out to "6 customers" is worth checking before it goes out. */}
+        {isChannel && selected.members != null && (
+          <Tooltip title="Who is in this channel">
+            <Button
+              size="small"
+              color="inherit"
+              onClick={() => setViewingMembers(selected)}
+              startIcon={<PeopleAltOutlinedIcon sx={{ fontSize: 18 }} />}
+              sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", color: "text.secondary", minWidth: 0, px: 1.25 }} // prettier-ignore
+            >
+              {selected.members}
+            </Button>
+          </Tooltip>
+        )}
+
         {isChannel && isAdmin && (
           <Tooltip title="Channel settings">
             <IconButton
@@ -684,6 +738,13 @@ export default function ChatWorkspace({
             customers={customers}
             chattingWith={chattingWith}
             onPick={pickCustomer}
+          />
+
+          <ChannelMembersDialog
+            open={Boolean(viewingMembers)}
+            onClose={() => setViewingMembers(null)}
+            channel={viewingMembers}
+            customers={customers}
           />
 
           <CreateChannelDialog

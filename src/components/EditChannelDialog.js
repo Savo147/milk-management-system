@@ -148,6 +148,8 @@ export default function EditChannelDialog({ open, onClose, channel }) {
             <Box>
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
                 {isPrivate ? "Private channel" : "Public channel"}
+                {channel?.members != null &&
+                  ` · ${channel.members} customer${channel.members === 1 ? "" : "s"}`}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {isPrivate

@@ -69,6 +69,11 @@ export default function CreateChannelDialog({
 
   const isPrivate = visibility === "private";
 
+  // Only the ones still taking milk. A public channel is counted the same way
+  // once it exists (see @/lib/channels), and the two numbers have to be the
+  // same number or picking Public would promise one thing and show another.
+  const activeCount = customers.filter((c) => c.status === "active").length;
+
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return customers;
@@ -175,17 +180,24 @@ export default function CreateChannelDialog({
               value={visibility}
               onChange={(e) => setVisibility(e.target.value)}
             >
+              {/* Choosing between these is choosing between two numbers, so
+                  both say what the number is. "Every customer" does not tell
+                  you whether that is six people or sixty. */}
               <VisibilityOption
                 value="public"
                 icon={PublicIcon}
                 title="Public"
-                note="Every customer is in it — including anyone you add later."
+                note={`All ${activeCount} customers, and anyone added later.`}
               />
               <VisibilityOption
                 value="private"
                 icon={LockOutlinedIcon}
                 title="Private"
-                note="Only the customers you pick below can see it."
+                note={
+                  members.size
+                    ? `${members.size} of ${customers.length} picked below.`
+                    : "Only the customers you pick below can see it."
+                }
               />
             </RadioGroup>
           </Box>

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
@@ -29,28 +28,20 @@ export default function RatesTable({ rates }) {
         items={rates}
         getKey={(r) => r.id}
         title={(r) => r.customer_name}
-        badge={(r) =>
-          r.effective_to ? null : (
-            <Chip size="small" label="Current" color="success" />
-          )
-        }
         fields={(r) => [
           ["Rate", `${formatRate(r.rate_per_liter)} / L`],
-          ["From", formatDate(r.effective_from)],
-          ["Until", r.effective_to ? formatDate(r.effective_to) : "Now"],
+          ["Since", formatDate(r.effective_from)],
         ]}
-        actions={(r) =>
-          r.effective_to ? null : (
-            <Button
-              size="small"
-              startIcon={<EditIcon sx={{ fontSize: 17 }} />}
-              onClick={() => setEditing(r)}
-            >
-              Change rate
-            </Button>
-          )
-        }
-        empty="No rate history yet."
+        actions={(r) => (
+          <Button
+            size="small"
+            startIcon={<EditIcon sx={{ fontSize: 17 }} />}
+            onClick={() => setEditing(r)}
+          >
+            Change rate
+          </Button>
+        )}
+        empty="No rates set yet."
       />
 
       <TableContainer
@@ -64,16 +55,10 @@ export default function RatesTable({ rates }) {
               <TableCell align="center" sx={{ width: "16%" }}>
                 Rate
               </TableCell>
-              <TableCell align="center" sx={{ width: "18%" }}>
-                From
+              <TableCell align="center" sx={{ width: "22%" }}>
+                Since
               </TableCell>
-              <TableCell align="center" sx={{ width: "18%" }}>
-                Until
-              </TableCell>
-              <TableCell align="center" sx={{ width: "14%" }}>
-                Current
-              </TableCell>
-              <TableCell align="right" sx={{ width: "8%" }}>
+              <TableCell align="right" sx={{ width: "10%" }}>
                 Action
               </TableCell>
             </TableRow>
@@ -82,65 +67,39 @@ export default function RatesTable({ rates }) {
           <TableBody>
             {rates.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
-                    No rate history yet.
+                    No rates set yet.
                   </Typography>
                 </TableCell>
               </TableRow>
             )}
 
-            {rates.map((r) => {
-              const current = !r.effective_to;
-              return (
-                <TableRow key={r.id} hover>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {r.customer_name}
-                    </Typography>
-                  </TableCell>
+            {rates.map((r) => (
+              <TableRow key={r.id} hover>
+                <TableCell>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {r.customer_name}
+                  </Typography>
+                </TableCell>
 
-                  <TableCell align="center" sx={{ fontWeight: 600 }}>
-                    {formatRate(r.rate_per_liter)}
-                  </TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}>
+                  {formatRate(r.rate_per_liter)}
+                </TableCell>
 
-                  <TableCell align="center">
-                    {formatDate(r.effective_from)}
-                  </TableCell>
+                <TableCell align="center">
+                  {formatDate(r.effective_from)}
+                </TableCell>
 
-                  <TableCell align="center">
-                    {r.effective_to ? (
-                      formatDate(r.effective_to)
-                    ) : (
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "text.disabled" }}
-                      >
-                        —
-                      </Typography>
-                    )}
-                  </TableCell>
-
-                  <TableCell align="center">
-                    {current && (
-                      <Chip size="small" label="Current" color="success" />
-                    )}
-                  </TableCell>
-
-                  <TableCell align="right">
-                    {/* Only the rate in force can be changed. The closed rows
-                        are what customers were already billed at. */}
-                    {current && (
-                      <Tooltip title="Change rate">
-                        <IconButton size="small" onClick={() => setEditing(r)}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                <TableCell align="right">
+                  <Tooltip title="Change rate">
+                    <IconButton size="small" onClick={() => setEditing(r)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
@@ -149,9 +108,9 @@ export default function RatesTable({ rates }) {
         variant="caption"
         sx={{ mt: 1.5, display: "block", color: "text.secondary" }}
       >
-        Changing a rate here changes it on the Customers page too — there is one
-        rate per customer, and both screens show it. The old row closes itself
-        as the new one starts.
+        One row per customer — the rate they pay today, and the day it started.
+        Changing it here changes it on the Customers page too. Milk already
+        delivered keeps the rate it was billed at.
       </Typography>
 
       <RateDialog rate={editing} onClose={() => setEditing(null)} />
