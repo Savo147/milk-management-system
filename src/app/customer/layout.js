@@ -2,6 +2,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import LocalDrinkIcon from "@mui/icons-material/LocalDrink";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
+import EventBusyIcon from "@mui/icons-material/EventBusy";
 import PersonIcon from "@mui/icons-material/Person";
 import { requireCustomer, getBusinessSettings } from "@/lib/auth";
 import { getNotifications } from "@/lib/notifications";
@@ -19,6 +20,11 @@ const customerNav = [
     section: "My dairy",
     items: [
       { href: "/customer/my-milk", label: "My Milk", icon: LocalDrinkIcon },
+      {
+        href: "/customer/leave",
+        label: "Festival Leave",
+        icon: EventBusyIcon,
+      },
       {
         href: "/customer/my-hisab",
         label: "My Billing",

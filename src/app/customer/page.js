@@ -28,6 +28,7 @@ import {
   formatRate,
 } from "@/lib/format";
 import { monthStart, todayLocal } from "@/lib/range";
+import { unrecordedDays } from "@/lib/day-status";
 import { tableOnly, cardsOnlyFlex } from "@/lib/responsive";
 import {
   DAILY_ROW_STATUS,
@@ -184,59 +185,83 @@ export default async function CustomerDashboard() {
   const supabase = await createClient();
   const day = todayLocal();
 
-  const [today, month, allMilk, allPaid, recent, problems] = await Promise.all([
-    supabase
-      .from("milk_entries")
-      .select("actual_quantity, total_amount, delivery_status")
-      .eq("customer_id", customer.id)
-      .eq("date", day)
-      .maybeSingle(),
-    supabase
-      .from("milk_entries")
-      .select("actual_quantity, total_amount, delivery_status")
-      .eq("customer_id", customer.id)
-      .gte("date", monthStart()),
-    // Not this month's slice: what is owed does not reset when the month
-    // does — it resets when they pay. The dates come along because the bill
-    // is counted from the day after that payment; see @/lib/account.
-    fetchAll(() =>
+  const [today, month, allMilk, allPaid, leaves, recent, problems] =
+    await Promise.all([
       supabase
         .from("milk_entries")
-        .select("date, actual_quantity, total_amount")
+        .select("actual_quantity, total_amount, delivery_status")
         .eq("customer_id", customer.id)
-        .order("date"),
-    ),
-    supabase
-      .from("payments")
-      .select("amount, paid_on")
-      .eq("customer_id", customer.id)
-      .order("paid_on", { ascending: false }),
-    supabase
-      .from("milk_entries")
-      .select(
-        "date, actual_quantity, rate_per_liter, total_amount, delivery_status",
-      )
-      .eq("customer_id", customer.id)
-      .gte("date", daysAgo(13))
-      .order("date", { ascending: false }),
-    supabase
-      .from("reports")
-      .select("id, issue_type, message, status, created_at")
-      .eq("customer_id", customer.id)
-      .order("created_at", { ascending: false })
-      .limit(3),
-  ]);
+        .eq("date", day)
+        .maybeSingle(),
+      supabase
+        .from("milk_entries")
+        // date comes along so a day with no entry at all can be told apart
+        // from one that was recorded — see the missed count below.
+        .select("date, actual_quantity, total_amount, delivery_status")
+        .eq("customer_id", customer.id)
+        .gte("date", monthStart()),
+      // Not this month's slice: what is owed does not reset when the month
+      // does — it resets when they pay. The dates come along because the bill
+      // is counted from the day after that payment; see @/lib/account.
+      fetchAll(() =>
+        supabase
+          .from("milk_entries")
+          .select("date, actual_quantity, total_amount")
+          .eq("customer_id", customer.id)
+          .order("date"),
+      ),
+      supabase
+        .from("payments")
+        .select("amount, paid_on")
+        .eq("customer_id", customer.id)
+        .order("paid_on", { ascending: false }),
+      // Days they asked to be skipped. Not missed days — nobody missed them.
+      supabase
+        .from("customer_leaves")
+        .select("from_date, to_date")
+        .eq("customer_id", customer.id)
+        .gte("to_date", monthStart()),
+      supabase
+        .from("milk_entries")
+        .select(
+          "date, actual_quantity, rate_per_liter, total_amount, delivery_status",
+        )
+        .eq("customer_id", customer.id)
+        .gte("date", daysAgo(13))
+        .order("date", { ascending: false }),
+      supabase
+        .from("reports")
+        .select("id, issue_type, message, status, created_at")
+        .eq("customer_id", customer.id)
+        .order("created_at", { ascending: false })
+        .limit(3),
+    ]);
 
   // The milk taken since the last payment. Paying settles everything up to
   // that day, so nothing older than it is owed.
   const account = accountOf(allMilk.data ?? [], allPaid.data ?? []);
   const baki = account.due;
 
-  // Days the round did not reach them. A day nobody has recorded yet is not
-  // a missed one — only an entry saved as "missed" counts.
-  const missedThisMonth = (month.data ?? []).filter(
-    (e) => e.delivery_status === "missed",
-  ).length;
+  // Days the round did not reach them — written down as missed, and days
+  // that were simply never written up at all.
+  //
+  // The second kind used to be left out, on the grounds that "nobody has
+  // recorded it yet" is not the same as "no milk came". True on the morning
+  // itself; not true a week later, when the day has been over for 24 hours
+  // and still says nothing. @/lib/day-status draws that line, and the
+  // dairy's own Daily Milk page draws it in the same place.
+  const missedThisMonth =
+    (month.data ?? []).filter((e) => e.delivery_status === "missed").length +
+    unrecordedDays({
+      from: monthStart(),
+      to: day,
+      today: day,
+      // Not a customer yet is not a day they were missed on.
+      joinedOn: customer.created_at?.slice(0, 10) ?? null,
+      recorded: new Set((month.data ?? []).map((e) => e.date)),
+      // Booked off, so not missed.
+      leaves: leaves.data ?? [],
+    }).length;
   const lastPaid = allPaid.data?.[0]?.paid_on ?? null;
 
   const openProblems = (problems.data ?? []).filter(

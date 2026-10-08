@@ -35,6 +35,7 @@ import {
 import { formatAmount, formatLiters, formatRate } from "@/lib/format";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import DataCards from "@/components/DataCards";
+import { rowStatus } from "@/lib/day-status";
 import { saveOneEntry } from "./actions";
 
 /**
@@ -204,7 +205,7 @@ function RowSave({ date, customerId, qty, saved }) {
   );
 }
 
-export default function DailyMilkForm({ date, customers }) {
+export default function DailyMilkForm({ date, today, customers }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   // Defaults to "pending": on a fresh day that is every customer, and each
@@ -227,12 +228,12 @@ export default function DailyMilkForm({ date, customers }) {
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return customers.filter((c) => {
-      const status = c.entry ? c.entry.delivery_status : "pending";
+      const status = rowStatus(c.entry, date, today, c.onLeave);
       if (statusFilter !== "all" && status !== statusFilter) return false;
       if (!q) return true;
       return c.name.toLowerCase().includes(q) || c.mobile.includes(q);
     });
-  }, [customers, query, statusFilter]);
+  }, [customers, query, statusFilter, date, today]);
 
   /**
    * What is actually recorded for the day — saved rows only.
@@ -334,7 +335,7 @@ export default function DailyMilkForm({ date, customers }) {
         title={(c) => c.name}
         subtitle={(c) => c.mobile}
         badge={(c) => {
-          const status = c.entry ? c.entry.delivery_status : "pending";
+          const status = rowStatus(c.entry, date, today, c.onLeave);
           return (
             <Chip
               size="small"
@@ -438,7 +439,7 @@ export default function DailyMilkForm({ date, customers }) {
 
               // Straight from the database: no row for this date means the
               // delivery has not happened yet.
-              const status = c.entry ? c.entry.delivery_status : "pending";
+              const status = rowStatus(c.entry, date, today, c.onLeave);
 
               const amount =
                 qty === "" ? null : Number(qty) * Number(c.rate_per_liter);

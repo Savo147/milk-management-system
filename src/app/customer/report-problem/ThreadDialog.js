@@ -23,6 +23,7 @@ import {
 } from "@/lib/constants";
 import { formatDate, formatLiters } from "@/lib/format";
 import { replyOnProblem } from "./actions";
+import usePhone from "@/components/usePhone";
 
 function Field({ label, value }) {
   return (
@@ -53,6 +54,7 @@ function SendButton() {
 
 export default function ThreadDialog({ problem, replies, onClose }) {
   const [state, formAction] = useActionState(replyOnProblem, null);
+  const phone = usePhone();
 
   // Clear the box only once the message is actually in.
   useEffect(() => {
@@ -70,6 +72,10 @@ export default function ThreadDialog({ problem, replies, onClose }) {
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      // Full screen on a phone. As a floating card these open with the
+      // keyboard across the bottom half and the save button somewhere
+      // underneath it.
+      fullScreen={phone}
       key={problem?.id ?? "none"}
     >
       {problem && (

@@ -20,6 +20,7 @@ import SendIcon from "@mui/icons-material/Send";
 import { ISSUE_TYPE, PROBLEM_STATE, problemState } from "@/lib/constants";
 import { formatDate, formatLiters } from "@/lib/format";
 import { replyToProblem, setProblemStatus } from "./actions";
+import usePhone from "@/components/usePhone";
 
 function Field({ label, value }) {
   return (
@@ -86,6 +87,7 @@ function ReplyButton() {
 
 export default function ProblemDialog({ problem, replies, onClose }) {
   const [state, formAction] = useActionState(replyToProblem, null);
+  const phone = usePhone();
 
   // Clear the box only once the reply is actually in.
   useEffect(() => {
@@ -101,6 +103,10 @@ export default function ProblemDialog({ problem, replies, onClose }) {
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      // Full screen on a phone. As a floating card these open with the
+      // keyboard across the bottom half and the save button somewhere
+      // underneath it.
+      fullScreen={phone}
       key={problem?.id ?? "none"}
     >
       {problem && (

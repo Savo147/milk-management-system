@@ -17,6 +17,7 @@ import SelectField from "@/components/SelectField";
 import TimeField from "@/components/TimeField";
 import { toTimeValue } from "@/lib/format";
 import { saveCustomer } from "./actions";
+import usePhone from "@/components/usePhone";
 
 function Actions({ onClose }) {
   const { pending } = useFormStatus();
@@ -34,6 +35,7 @@ function Actions({ onClose }) {
 
 export default function CustomerDialog({ open, onClose, customer }) {
   const [state, formAction] = useActionState(saveCustomer, null);
+  const phone = usePhone();
 
   // Close only once the action reports success, so errors stay visible.
   /**
@@ -61,6 +63,10 @@ export default function CustomerDialog({ open, onClose, customer }) {
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      // Full screen on a phone. As a floating card these open with the
+      // keyboard across the bottom half and the save button somewhere
+      // underneath it.
+      fullScreen={phone}
       // Remount on customer change, otherwise the fields keep the old
       // defaultValue when switching between Edit rows.
       key={customer?.id ?? "new"}

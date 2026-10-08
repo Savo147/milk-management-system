@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getPublicBranding } from "@/lib/auth";
 import { getMyCustomerId } from "@/lib/chat";
 import { ISSUE_TYPE, PROBLEM_STATE, problemState } from "@/lib/constants";
 import { setProblemStatus } from "@/app/admin/problems/actions";
@@ -151,7 +151,20 @@ export async function loadMessages(kind, id, withComplaints = false) {
   if (error) return { error: error.message };
 
   const rows = data ?? [];
-  const links = await signAttachments(rows);
+
+  // In a channel the dairy posts as the dairy, not as whoever was holding
+  // the phone. Two reasons, and the second is the one that shows:
+  //
+  //   A customer reading a notice wants it to come from Krishna Dairy, not
+  //   from a staff member's first name — they have no idea who that is.
+  //
+  //   And they cannot read that staff row anyway. RLS keeps the users table
+  //   to its owners, so the joined name came back null and the circle beside
+  //   every notice drew "—".
+  const [links, branding] = await Promise.all([
+    signAttachments(rows),
+    isChannel ? getPublicBranding() : Promise.resolve(null),
+  ]);
 
   const messages = rows.map((m) => ({
     id: m.id,
@@ -166,8 +179,14 @@ export async function loadMessages(kind, id, withComplaints = false) {
       : null,
     from_admin: m.from_admin,
     created_at: m.created_at,
-    sender_name: m.users?.name ?? "—",
-    photo: m.users?.profile_photo ?? null,
+    sender_name:
+      isChannel && m.from_admin
+        ? branding.dairy_name
+        : (m.users?.name ?? "—"),
+    photo:
+      isChannel && m.from_admin
+        ? branding.logo_url
+        : (m.users?.profile_photo ?? null),
     // Whether this bubble is the reader's own, so the client does not have
     // to know the caller's role to lay the thread out. In a channel other
     // people's messages need a name on them; in a direct thread there are

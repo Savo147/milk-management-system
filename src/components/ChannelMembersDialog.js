@@ -17,6 +17,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PublicIcon from "@mui/icons-material/Public";
+import usePhone from "@/components/usePhone";
 
 /**
  * Who is in this channel.
@@ -36,6 +37,7 @@ import PublicIcon from "@mui/icons-material/Public";
  *             against that same list.
  */
 export default function ChannelMembersDialog({ open, onClose, channel, customers = [] }) {
+  const phone = usePhone();
   const [query, setQuery] = useState("");
 
   const isPrivate = Boolean(channel?.isPrivate);
@@ -69,7 +71,7 @@ export default function ChannelMembersDialog({ open, onClose, channel, customers
   };
 
   return (
-    <Dialog open={open} onClose={close} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={close} maxWidth="xs" fullWidth fullScreen={phone}>
       <DialogTitle sx={{ pb: 1, pr: 6 }}>
         <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
           {isPrivate ? (

@@ -18,6 +18,7 @@ import SendIcon from "@mui/icons-material/Send";
 import { ISSUE_TYPE, MILK_QUANTITIES } from "@/lib/constants";
 import { formatLiters } from "@/lib/format";
 import { raiseProblem } from "./actions";
+import usePhone from "@/components/usePhone";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -35,6 +36,7 @@ function SubmitButton() {
 
 export default function NewProblemDialog({ open, customer, today, onClose }) {
   const [state, formAction] = useActionState(raiseProblem, null);
+  const phone = usePhone();
 
   /**
    * Close once, on the result that said so.
@@ -61,6 +63,10 @@ export default function NewProblemDialog({ open, customer, today, onClose }) {
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      // Full screen on a phone. As a floating card these open with the
+      // keyboard across the bottom half and the save button somewhere
+      // underneath it.
+      fullScreen={phone}
       // A fresh action state per opening; otherwise the previous attempt's
       // error is still on screen the next time it opens.
       key={open ? "open" : "closed"}

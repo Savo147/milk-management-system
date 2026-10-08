@@ -540,9 +540,9 @@ export default function ChatWorkspace({
       <Stack
         direction="row"
         sx={{
-          gap: 1.5,
+          gap: { xs: 1, sm: 1.5 },
           alignItems: "center",
-          p: 1.75,
+          p: { xs: 1.25, sm: 1.75 },
           flexShrink: 0,
           bgcolor: isChannel ? toneFor(selected).bg : "grey.50",
           borderBottom: 1,
@@ -587,12 +587,28 @@ export default function ChatWorkspace({
           )}
         </Avatar>
 
-        <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+        <Box sx={{ minWidth: 0, flexGrow: 1, overflow: "hidden" }}>
           <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700 }}>
             {selected.name}
           </Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            noWrap
+            sx={{ display: "block" }}
+          >
             {selected.sub || "Customer"}
+            {/* The chip on the right says this too, but it is dropped on a
+                phone to leave the name some room — so on a phone the line
+                has to carry it. */}
+            {isChannel && selected.announcementOnly && (
+              <Box
+                component="span"
+                sx={{ display: { xs: "inline", sm: "none" } }}
+              >
+                {" · Announcements"}
+              </Box>
+            )}
           </Typography>
         </Box>
 
@@ -605,7 +621,7 @@ export default function ChatWorkspace({
               color="inherit"
               onClick={() => setViewingMembers(selected)}
               startIcon={<PeopleAltOutlinedIcon sx={{ fontSize: 18 }} />}
-              sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", color: "text.secondary", minWidth: 0, px: 1.25 }} // prettier-ignore
+              sx={{ flexShrink: 0, bgcolor: "background.paper", border: 1, borderColor: "divider", color: "text.secondary", minWidth: 0, px: 1, "& .MuiButton-startIcon": { mr: 0.5 } }} // prettier-ignore
             >
               {selected.members}
             </Button>
@@ -618,19 +634,22 @@ export default function ChatWorkspace({
               size="small"
               onClick={() => setEditing(selected)}
               aria-label="Channel settings"
-              sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider" }} // prettier-ignore
+              sx={{ flexShrink: 0, bgcolor: "background.paper", border: 1, borderColor: "divider" }} // prettier-ignore
             >
               <SettingsOutlinedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
 
+        {/* Hidden on a phone, where it was pushing the channel's own name
+            down to "Annou…" to make room for a word the line underneath can
+            say just as well. */}
         {isChannel && selected.announcementOnly && (
           <Chip
             size="small"
             icon={<CampaignOutlinedIcon sx={{ fontSize: 16, color: "inherit !important" }} />} // prettier-ignore
             label="Announcements"
-            sx={{ bgcolor: "background.paper", color: "var(--tile-amber-fg)", border: 1, borderColor: "var(--tile-amber-bg)" }} // prettier-ignore
+            sx={{ display: { xs: "none", sm: "flex" }, flexShrink: 0, bgcolor: "background.paper", color: "var(--tile-amber-fg)", border: 1, borderColor: "var(--tile-amber-bg)" }} // prettier-ignore
           />
         )}
       </Stack>

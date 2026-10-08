@@ -5,10 +5,11 @@ import InventoryIcon from "@mui/icons-material/Inventory";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
+import EventBusyIcon from "@mui/icons-material/EventBusy";
 import SettingsIcon from "@mui/icons-material/Settings";
 
 /**
- * Admin — 8 main pages, grouped the way the day's work splits up: what is
+ * Admin — 9 main pages, grouped the way the day's work splits up: what is
  * happening now, the milk round itself, the money, and everything the dairy
  * only touches now and then.
  */
@@ -27,6 +28,9 @@ export const adminNav = [
         icon: LocalShippingIcon,
       },
       { href: "/admin/stock", label: "Stock", icon: InventoryIcon },
+      // Next to Daily Milk on purpose: who is away is read at the same
+      // moment as who gets milk, on the same morning.
+      { href: "/admin/leaves", label: "Leaves", icon: EventBusyIcon },
     ],
   },
   {

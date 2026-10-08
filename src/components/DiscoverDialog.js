@@ -16,6 +16,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import ExploreOutlinedIcon from "@mui/icons-material/ExploreOutlined";
+import usePhone from "@/components/usePhone";
 import SearchIcon from "@mui/icons-material/Search";
 
 /**
@@ -30,6 +31,7 @@ export default function DiscoverDialog({
   chattingWith = new Set(),
   onPick,
 }) {
+  const phone = usePhone();
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState("all");
 
@@ -65,7 +67,12 @@ export default function DiscoverDialog({
       onClose={close}
       maxWidth="sm"
       fullWidth
-      slotProps={{ paper: { sx: { borderRadius: 3, height: 560 } } }}
+      // Full screen on a phone: a list with a search box and three tabs
+      // inside a 560px card leaves about four rows showing.
+      fullScreen={phone}
+      slotProps={{
+        paper: { sx: phone ? {} : { borderRadius: 3, height: 560 } },
+      }}
     >
       <Stack
         direction="row"

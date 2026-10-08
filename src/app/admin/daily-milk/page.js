@@ -35,6 +35,18 @@ export default async function DailyMilkPage({ searchParams }) {
       .eq("date", date),
   ]);
 
+  // Who asked to be skipped today. A leave is a span, so the question is
+  // "does any booked span cover this date" rather than "is there a row for
+  // it". Never fatal: the table arrives with migration 0019, and until it
+  // is run the page should still show the round.
+  const { data: leaves } = await supabase
+    .from("customer_leaves")
+    .select("customer_id")
+    .lte("from_date", date)
+    .gte("to_date", date);
+
+  const onLeave = new Set((leaves ?? []).map((l) => l.customer_id));
+
   const entryByCustomer = new Map(
     (entries ?? []).map((e) => [e.customer_id, e]),
   );
@@ -42,6 +54,7 @@ export default async function DailyMilkPage({ searchParams }) {
   const rows = (customers ?? []).map((c) => ({
     ...c,
     entry: entryByCustomer.get(c.id) ?? null,
+    onLeave: onLeave.has(c.id),
   }));
 
   return (
@@ -56,7 +69,13 @@ export default async function DailyMilkPage({ searchParams }) {
           Could not load customers: {errorText(error)}
         </Alert>
       ) : (
-        <DailyMilkForm date={date} customers={rows} />
+        <DailyMilkForm
+          date={date}
+          // Once a day has been over for 24 hours its empty rows are read as
+          // missed rather than left pending for good — see @/lib/day-status.
+          today={todayLocal()}
+          customers={rows}
+        />
       )}
     </>
   );

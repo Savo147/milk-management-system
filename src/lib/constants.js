@@ -13,12 +13,16 @@ export const DELIVERY_STATUS = {
 };
 
 /**
- * What the Daily Milk row shows. "pending" is UI-only — it means no entry has
- * been saved for that customer on that date, so it has no database enum value;
- * the other four mirror delivery_status.
+ * What the Daily Milk row shows.
+ *
+ * "pending" and "leave" are UI-only — neither is a delivery_status and
+ * neither is ever written. Both describe a row with no entry: pending means
+ * nobody has got to it yet, leave means nobody was going to. The other four
+ * mirror delivery_status.
  */
 export const DAILY_ROW_STATUS = {
   pending: "Pending",
+  leave: "On leave",
   ...DELIVERY_STATUS,
 };
 
@@ -47,6 +51,9 @@ export const STATUS_COLOR = {
   extra: "info",
   missed: "error",
   pending: "warning",
+  // Grey on purpose. Nothing is wrong on a leave day and nothing is owed —
+  // it is the one row on the page that wants no colour at all.
+  leave: "default",
   done: "success",
   pending_verification: "warning",
   confirmed: "success",

@@ -26,6 +26,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PublicIcon from "@mui/icons-material/Public";
 import SearchIcon from "@mui/icons-material/Search";
 import { createChannel } from "@/lib/chat-actions";
+import usePhone from "@/components/usePhone";
 
 /** The two visibility choices, each with the line that explains it. */
 function VisibilityOption({ value, icon: Icon, title, note }) {
@@ -58,6 +59,7 @@ export default function CreateChannelDialog({
   onCreated,
 }) {
   const router = useRouter();
+  const phone = usePhone();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState("public");
@@ -141,7 +143,9 @@ export default function CreateChannelDialog({
       onClose={close}
       maxWidth="sm"
       fullWidth
-      slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+      // The member picker makes this the tallest dialog in the app.
+      fullScreen={phone}
+      slotProps={{ paper: { sx: phone ? {} : { borderRadius: 3 } } }}
     >
       <DialogTitle sx={{ fontWeight: 700 }}>Create a channel</DialogTitle>
 

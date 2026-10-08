@@ -111,7 +111,9 @@ export async function requireCustomerAccount() {
   const { data: customer } = await supabase
     .from("customers")
     .select(
-      "id, name, mobile, address, daily_quantity, rate_per_liter, delivery_time, status",
+      // created_at is the day they came on the books. It keeps a "missed"
+      // count from reaching back to mornings before they were a customer.
+      "id, name, mobile, address, daily_quantity, rate_per_liter, delivery_time, status, created_at",
     )
     .eq("user_id", user.id)
     .maybeSingle();

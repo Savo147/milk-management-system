@@ -559,12 +559,20 @@ export default async function AdminDashboard() {
           >
             <TableContainer sx={{ borderRadius: 0 }}>
               <Table size="small">
+                {/* Five columns do not fit a phone, and this panel is on
+                    the dashboard rather than behind a card list of its own.
+                    The row number and the amount step aside there: the
+                    number is only a counter, and the amount follows from the
+                    litres and a rate the dairy knows. Name, milk and whether
+                    it arrived are what the round is read for. */}
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: 52 }}>#</TableCell>
+                    <TableCell sx={{ width: 52, ...{ display: { xs: "none", sm: "table-cell" } } }}>#</TableCell>
                     <TableCell>Customer</TableCell>
                     <TableCell align="right">Milk</TableCell>
-                    <TableCell align="right">Amount</TableCell>
+                    <TableCell align="right" sx={{ display: { xs: "none", sm: "table-cell" } }}>
+                      Amount
+                    </TableCell>
                     <TableCell align="center">Status</TableCell>
                   </TableRow>
                 </TableHead>
@@ -581,14 +589,19 @@ export default async function AdminDashboard() {
 
                   {deliveries.map((d, i) => (
                     <TableRow key={d.id} hover>
-                      <TableCell sx={{ color: "text.disabled" }}>
+                      <TableCell
+                        sx={{ color: "text.disabled", ...{ display: { xs: "none", sm: "table-cell" } } }}
+                      >
                         {i + 1}
                       </TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{d.name}</TableCell>
                       <TableCell align="right">
                         {formatLiters(d.liters)}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                      <TableCell
+                        align="right"
+                        sx={{ fontWeight: 600, ...{ display: { xs: "none", sm: "table-cell" } } }}
+                      >
                         {formatAmount(d.amount)}
                       </TableCell>
                       <TableCell align="center">

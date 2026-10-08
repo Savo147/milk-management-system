@@ -45,50 +45,70 @@ const num = (v) => Number(v ?? 0);
  *
  * Order does not matter; nothing here assumes it.
  */
-export function accountOf(entries = [], payments = []) {
-  let lastPaidOn = null;
-  let prevPaidOn = null;
+/** The latest payment on or before `limit`, or the latest of all. */
+function latestPaidOn(payments, limit = null) {
+  let latest = null;
 
   for (const p of payments) {
     if (!p.paid_on) continue;
+    if (limit && p.paid_on >= limit) continue;
+    if (!latest || p.paid_on > latest) latest = p.paid_on;
+  }
 
-    if (!lastPaidOn || p.paid_on > lastPaidOn) {
-      prevPaidOn = lastPaidOn;
-      lastPaidOn = p.paid_on;
-    } else if (
-      p.paid_on !== lastPaidOn &&
-      (!prevPaidOn || p.paid_on > prevPaidOn)
-    ) {
-      prevPaidOn = p.paid_on;
+  return latest;
+}
+
+/**
+ * What one payment settled: the money, and the milk it was for.
+ *
+ * "₹2,500 nu 35 L" — the sentence a dairy says. The 35 L is the milk from
+ * the morning after the payment before it up to and including the day of
+ * this one, which is exactly the stretch this payment closed.
+ *
+ * `paidOn` is a day, not a row: two payments handed over on the same day are
+ * one payment as far as the book cares, so they are added together.
+ *
+ * `payments` must reach back past `paidOn` — the payment before it is what
+ * decides where its stretch begins, and it may well be in another month.
+ */
+export function paymentCover(entries = [], payments = [], paidOn = null) {
+  if (!paidOn) return { amount: 0, liters: 0, from: null };
+
+  const before = latestPaidOn(payments, paidOn);
+
+  const amount = payments
+    .filter((p) => p.paid_on === paidOn)
+    .reduce((t, p) => t + num(p.amount), 0);
+
+  let liters = 0;
+  for (const e of entries) {
+    if (e.date <= paidOn && (!before || e.date > before)) {
+      liters += num(e.actual_quantity);
     }
   }
 
-  // Two payments on the same day are one payment as far as the book cares.
-  const lastPaidAmount = lastPaidOn
-    ? payments
-        .filter((p) => p.paid_on === lastPaidOn)
-        .reduce((t, p) => t + num(p.amount), 0)
-    : 0;
+  return { amount, liters, from: before ? nextDay(before) : null };
+}
+
+export function accountOf(entries = [], payments = []) {
+  const lastPaidOn = latestPaidOn(payments);
 
   // The first day of the bill that is open now.
   const since = lastPaidOn ? nextDay(lastPaidOn) : BEGINNING;
 
+  // What that last payment was for — the same question the Reports page
+  // asks of a payment in the middle of a period, so it is asked in one place.
+  const covered = paymentCover(entries, payments, lastPaidOn);
+
   let liters = 0;
   let amount = 0;
-  let lastPaidLiters = 0;
 
   for (const e of entries) {
-    const l = num(e.actual_quantity);
-    const a = num(e.total_amount);
-
+    // Everything from `since` onwards is not paid for yet. This, and only
+    // this, is what they owe.
     if (e.date >= since) {
-      // Not paid for yet. This, and only this, is what they owe.
-      liters += l;
-      amount += a;
-    } else if (!prevPaidOn || e.date > prevPaidOn) {
-      // Inside the stretch the last payment settled — the "35 L" the ₹2,500
-      // was for.
-      lastPaidLiters += l;
+      liters += num(e.actual_quantity);
+      amount += num(e.total_amount);
     }
   }
 
@@ -102,7 +122,7 @@ export function accountOf(entries = [], payments = []) {
     due: amount,
     /** The last payment: when, how much, and how much milk it covered. */
     lastPaidOn,
-    lastPaidAmount,
-    lastPaidLiters,
+    lastPaidAmount: covered.amount,
+    lastPaidLiters: covered.liters,
   };
 }

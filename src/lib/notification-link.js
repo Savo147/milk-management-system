@@ -16,12 +16,19 @@ import { DAIRY_TZ } from "@/lib/format";
  *
  * **A rate change** has no thread to open, so it goes to wherever the rate
  * can be seen: the dairy's Rates tab, or the customer's own milk details.
+ *
+ * **A leave** goes to the list it was booked on — the dairy's Leaves page,
+ * or the customer's own.
  */
 export function problemHref(createdAt, isAdmin, reportId, type = "problem") {
   if (type === "rate") {
     return isAdmin
       ? "/admin/settings?tab=rates"
       : "/customer/profile?tab=my+milk+details";
+  }
+
+  if (type === "leave") {
+    return isAdmin ? "/admin/leaves" : "/customer/leave";
   }
 
   const day = new Intl.DateTimeFormat("en-CA", {

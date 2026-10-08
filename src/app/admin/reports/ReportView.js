@@ -16,7 +16,7 @@ import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
-import { formatAmount, formatLiters } from "@/lib/format";
+import { formatAmount, formatDate, formatLiters } from "@/lib/format";
 import { tableOnly, cardsOnly } from "@/lib/responsive";
 import DataCards from "@/components/DataCards";
 import StatCard from "@/components/StatCard";
@@ -25,27 +25,33 @@ import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import RangePicker from "@/components/RangePicker";
 
 /**
- * What is still owed for the period.
+ * What is still owed for the period, and the same thing in litres.
  *
- * Floored at zero: somebody who paid a whole span and is then looked at over
- * a later one has more money in than milk out, and a negative here would
- * only read as broken.
+ * Both are worked out on the server, day by day, against the date the last
+ * payment settled up to — see the page. They used to be worked out here as
+ * "this period's amount minus this period's payments", which read sensibly
+ * and was wrong: February's ₹2,500 handed over in March wiped out March's
+ * own ₹2,400, and a month in which nothing had been paid for showed as
+ * settled.
  */
-const due = (r) => Math.max(0, Number(r.amount) - Number(r.paid));
+const due = (r) => Number(r.due ?? 0);
+const litersDue = (r) => Number(r.due_liters ?? 0);
 
 /**
- * The same shortfall counted in litres.
+ * "15 Mar 2026 · Rs2,500 · 35 L" — the last payment of the period, and what
+ * it was for.
  *
- * Worked out from the money rather than the days, because a span can hold
- * more than one rate and a payment is never tied to particular days. Owing a
- * fifteenth of the bill is owing a fifteenth of the milk, whatever the rate
- * was on any given morning.
+ * The litres are not the period's: money handed over in March is usually for
+ * milk that went out in February, so they are counted from the payment
+ * before it. The page works that out; this only writes it down.
  */
-const litersDue = (r) => {
-  const amount = Number(r.amount);
-  if (amount <= 0) return 0;
-  return (Number(r.liters) * due(r)) / amount;
-};
+function lastPaymentText(r) {
+  if (!r.last_paid_on) return "—";
+
+  const parts = [formatDate(r.last_paid_on), formatAmount(r.last_paid_amount)];
+  if (r.last_paid_liters > 0) parts.push(formatLiters(r.last_paid_liters));
+  return parts.join(" · ");
+}
 
 export default function ReportView({
   mode,
@@ -69,6 +75,8 @@ export default function ReportView({
     );
   }, [allRows, query]);
 
+  // "Last payment" is deliberately not in here: a column of dates has no
+  // total, and the biggest of them would answer a question nobody asked.
   const totals = useMemo(
     () =>
       rows.reduce(
@@ -148,9 +156,10 @@ export default function ReportView({
           title={(r) => r.label}
           subtitle={(r) => r.sub}
           fields={(r) => [
-            ["Milk", formatLiters(r.liters)],
-            ["Amount", formatAmount(r.amount)],
+            ["Total milk", formatLiters(r.liters)],
+            ["Total amount", formatAmount(r.amount)],
             ["Received", formatAmount(r.paid)],
+            ["Last payment", lastPaymentText(r)],
             ["Due", formatAmount(due(r))],
             ["Due (milk)", formatLiters(litersDue(r))],
           ]}
@@ -227,19 +236,24 @@ export default function ReportView({
           <TableHead>
             <TableRow>
               <TableCell>Customer</TableCell>
-              <TableCell align="right" sx={{ width: "16%" }}>
-                Milk
+              {/* The period's whole figure, not what is left of it — the
+                  two "Due" columns further along are the leftover. */}
+              <TableCell align="right" sx={{ width: "14%" }}>
+                Total milk
               </TableCell>
-              <TableCell align="right" sx={{ width: "18%" }}>
-                Amount
-              </TableCell>
-              <TableCell align="right" sx={{ width: "18%" }}>
-                Received
-              </TableCell>
-              <TableCell align="right" sx={{ width: "16%" }}>
-                Due
+              <TableCell align="right" sx={{ width: "15%" }}>
+                Total amount
               </TableCell>
               <TableCell align="right" sx={{ width: "14%" }}>
+                Received
+              </TableCell>
+              <TableCell align="center" sx={{ width: "20%" }}>
+                Last payment
+              </TableCell>
+              <TableCell align="right" sx={{ width: "13%" }}>
+                Due
+              </TableCell>
+              <TableCell align="right" sx={{ width: "12%" }}>
                 Due (milk)
               </TableCell>
             </TableRow>
@@ -248,7 +262,7 @@ export default function ReportView({
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
                     No records in this period.
                   </Typography>
@@ -274,6 +288,31 @@ export default function ReportView({
                 </TableCell>
 
                 <TableCell align="right">{formatAmount(r.paid)}</TableCell>
+
+                {/* When they last paid inside this period, how much, and
+                    the milk it settled. */}
+                <TableCell align="center">
+                  {r.last_paid_on ? (
+                    <>
+                      <Typography variant="body2">
+                        {formatDate(r.last_paid_on)}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontVariantNumeric: "tabular-nums" }}
+                      >
+                        {formatAmount(r.last_paid_amount)}
+                        {r.last_paid_liters > 0 &&
+                          ` · ${formatLiters(r.last_paid_liters)}`}
+                      </Typography>
+                    </>
+                  ) : (
+                    <Typography variant="caption" sx={{ color: "text.disabled" }}>
+                      —
+                    </Typography>
+                  )}
+                </TableCell>
 
                 <TableCell
                   align="right"
