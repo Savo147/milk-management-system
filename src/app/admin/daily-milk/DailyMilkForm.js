@@ -264,6 +264,10 @@ export default function DailyMilkForm({ date, today, customers }) {
         spacing={2}
         sx={{ mb: 2, alignItems: { sm: "center" } }}
       >
+        {/* Today is as far forward as this goes. Tomorrow's round has not
+            been walked, so there is nothing to write down — and an entry
+            saved against it would bill milk that has not been delivered and
+            then sit there as a figure nobody can check. */}
         <TextField
           type="date"
           label="Date"
@@ -273,6 +277,7 @@ export default function DailyMilkForm({ date, today, customers }) {
             router.push(`/admin/daily-milk?date=${e.target.value}`)
           }
           sx={{ minWidth: 180 }}
+          slotProps={{ htmlInput: { max: today } }}
         />
         <TextField
           value={query}

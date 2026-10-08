@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { todayLocal } from "@/lib/range";
 /**
  * What a day's entry may be. A range, not a list: a customer on 6 L has to
  * be recordable, and the quarter-litre step is only there to keep a slipped
@@ -44,6 +45,13 @@ export async function saveOneEntry(prevState, formData) {
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date))
     return { error: "That date is not valid." };
+
+  // A Server Action is a public endpoint, so the picker's own limit does not
+  // cover it. Milk that has not gone out must not be recordable as having
+  // gone out: it would be billed, and there would be no round to check it
+  // against.
+  if (date > todayLocal()) return { error: "That day has not happened yet." };
+
   if (!customerId) return { error: "Customer not found." };
 
   const actual = Number(raw);

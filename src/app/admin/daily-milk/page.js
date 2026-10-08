@@ -14,9 +14,14 @@ function todayLocal() {
 
 export default async function DailyMilkPage({ searchParams }) {
   const params = await searchParams;
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(params?.date ?? "")
+  // Today at the latest. The picker says so too, but ?date= is only a URL —
+  // typed, bookmarked, or arrived at with a back button — and a day that has
+  // not happened yet has nothing to record and nothing to show.
+  const today = todayLocal();
+  const asked = /^\d{4}-\d{2}-\d{2}$/.test(params?.date ?? "")
     ? params.date
-    : todayLocal();
+    : today;
+  const date = asked > today ? today : asked;
 
   const supabase = await createClient();
 
@@ -73,7 +78,7 @@ export default async function DailyMilkPage({ searchParams }) {
           date={date}
           // Once a day has been over for 24 hours its empty rows are read as
           // missed rather than left pending for good — see @/lib/day-status.
-          today={todayLocal()}
+          today={today}
           customers={rows}
         />
       )}
