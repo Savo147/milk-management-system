@@ -148,7 +148,12 @@ export default function BookForCustomerDialog({
           <Button onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button type="submit" variant="contained" color={everybody ? "warning" : "primary"}>
+          {/* The theme's own button, not a warning-coloured one. Every
+              other button in the app is the same black; one orange button
+              here read as an error rather than as "this goes to everyone".
+              The title and the line under the message box already say how
+              far this reaches. */}
+          <Button type="submit" variant="contained">
             {everybody ? "Tell everybody" : "Book"}
           </Button>
         </DialogActions>

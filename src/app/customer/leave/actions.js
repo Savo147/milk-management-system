@@ -175,8 +175,16 @@ async function closeTheRound({ supabase, user, from, to, reason }) {
   const already = new Set((booked ?? []).map((l) => l.customer_id));
   const fresh = customers.filter((c) => !already.has(c.id));
 
+  const span =
+    from === to ? formatDate(from) : `${formatDate(from)} – ${formatDate(to)}`;
+
+  // Nothing left to do, and saying so is the whole answer — but "already
+  // booked" on its own leaves somebody wondering whether it saved or not.
+  // It did, and the list below this dialog is where it can be undone.
   if (fresh.length === 0) {
-    return { error: "Everybody is already booked off for those days." };
+    return {
+      error: `All ${customers.length} customers are already off on ${span} — it is booked. Cancel it in the list to change it.`,
+    };
   }
 
   const { error } = await supabase.from("customer_leaves").insert(
@@ -190,9 +198,6 @@ async function closeTheRound({ supabase, user, from, to, reason }) {
   );
 
   if (error) return { error: `Could not save: ${error.message}` };
-
-  const span =
-    from === to ? formatDate(from) : `${formatDate(from)} – ${formatDate(to)}`;
 
   // One by one, so each customer gets it in their own bell. Told in
   // sequence rather than all at once: on this dairy's line a burst of

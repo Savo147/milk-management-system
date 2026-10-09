@@ -1,7 +1,7 @@
 import Alert from "@mui/material/Alert";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAll } from "@/lib/supabase/all";
-import { paymentCover } from "@/lib/account";
+import { accountOf, paymentCover } from "@/lib/account";
 import PageHeader from "@/components/PageHeader";
 import { resolveRange } from "@/lib/range";
 import ReportView from "./ReportView";
@@ -129,6 +129,13 @@ async function buildReport(supabase, from, to) {
         dueLiters += Number(e.actual_quantity ?? 0);
       }
 
+      // And the whole of it, period or no period: everything they have
+      // taken since their last payment, however far back that runs. Three
+      // unpaid months read as three separate months in the period column
+      // and as one number here, which is the number the dairy is actually
+      // chasing. Both are on the row; the screen's toggle picks.
+      const all = accountOf(row.entries, row.payments);
+
       return {
         key: row.key,
         label: row.label,
@@ -138,6 +145,8 @@ async function buildReport(supabase, from, to) {
         paid: row.paid,
         due,
         due_liters: dueLiters,
+        due_all: all.due,
+        due_all_liters: all.liters,
         last_paid_on: row.lastPaidOn,
         last_paid_amount: covered.amount,
         last_paid_liters: covered.liters,

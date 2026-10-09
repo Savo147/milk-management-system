@@ -84,14 +84,33 @@ async function fetchAccounts(supabase, from, to) {
   const rows = [...byCustomer.values()]
     .map((c) => {
       const a = accountOf(c.entries, c.payments);
+
+      // The same unpaid milk, cut down to the span on the picker. October's
+      // share of a three-month debt, for the screen's toggle — never for
+      // the payment dialog, which has to go on offering the whole of it.
+      let periodLiters = 0;
+      let periodAmount = 0;
+
+      for (const e of c.entries) {
+        if (e.date < from || e.date > to) continue;
+        if (e.date < a.since) continue;
+
+        periodLiters += Number(e.actual_quantity ?? 0);
+        periodAmount += Number(e.total_amount ?? 0);
+      }
+
       return {
         id: c.id,
         customer_name: c.name,
         customer_mobile: c.mobile,
         inRange: c.inRange,
-        // Since the day after the last payment.
+        // Since the day after the last payment. These two are what the
+        // payment dialog reads, so they are always the whole debt.
         total_liters: a.liters,
         total_amount: a.amount,
+        // The same thing inside the span, for the table's toggle only.
+        period_liters: periodLiters,
+        period_amount: periodAmount,
         since: a.since,
         due: a.due,
         last_paid_on: a.lastPaidOn,

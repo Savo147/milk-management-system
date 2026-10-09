@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
@@ -61,6 +62,11 @@ export default function BillingTable({
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paying, setPaying] = useState(null);
+  // What the two milk-and-money columns show: the whole debt, or only the
+  // part of it that falls inside the span on the picker. Opens on the whole,
+  // because that is what this page is for.
+  const [scope, setScope] = useState("all");
+  const inPeriod = scope === "period";
 
   const go = (nextMode, a, b) =>
     router.push(`/admin/hisab?mode=${nextMode}&from=${a}&to=${b}`);
@@ -80,16 +86,22 @@ export default function BillingTable({
   // Totalled from what is on screen, not from everyone. Search one customer
   // and these say what that customer owes — which is the question being asked
   // when somebody types a name into the box.
+  const litersOf = (r) =>
+    Number((inPeriod ? r.period_liters : r.total_liters) ?? 0);
+  const amountOf = (r) =>
+    Number((inPeriod ? r.period_amount : r.total_amount) ?? 0);
+
   const sums = useMemo(() => {
-    const liters = rows.reduce((t, r) => t + Number(r.total_liters), 0);
-    const total = rows.reduce((t, r) => t + Number(r.total_amount), 0);
+    const liters = rows.reduce((t, r) => t + litersOf(r), 0);
+    const total = rows.reduce((t, r) => t + amountOf(r), 0);
     // Not another rupee figure — "To pay" above is already that, and a
     // second card saying the same number twice is just noise. This says how
     // many of them it is spread across.
     const owing = rows.filter((r) => Number(r.due) > 0).length;
 
     return { liters, total, owing };
-  }, [rows]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, inPeriod]);
 
   return (
     <>
@@ -124,6 +136,19 @@ export default function BillingTable({
           }}
         />
 
+        {/* Which milk the two columns count. The range picker chooses the
+            days; this chooses whether the bill is read inside them or all
+            the way back to the last payment. */}
+        <SelectField
+          size="small"
+          value={scope}
+          onChange={(e) => setScope(e.target.value)}
+          sx={{ minWidth: 175 }}
+        >
+          <MenuItem value="all">Everything owed</MenuItem>
+          <MenuItem value="period">In this period only</MenuItem>
+        </SelectField>
+
         <SelectField
           size="small"
           value={statusFilter}
@@ -136,19 +161,30 @@ export default function BillingTable({
         </SelectField>
       </Stack>
 
+      {/* Said out loud, because this is the one page where reading the
+          smaller number and acting on it costs money. The toggle narrows
+          what the table shows; it does not narrow the debt, and the payment
+          dialog goes on offering the whole of it. */}
+      {inPeriod && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Showing only what is unpaid inside this period. Taking a payment
+          still settles everything owed — the dialog shows the full amount.
+        </Alert>
+      )}
+
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 6, md: 4 }}>
           <StatCard
             label="To pay"
             value={formatAmount(sums.total)}
-            sub="since the last payment"
+            sub={inPeriod ? "inside this period" : "since the last payment"}
             icon={CurrencyRupeeIcon}
             color="green"
           />
         </Grid>
         <Grid size={{ xs: 6, md: 4 }}>
           <StatCard
-            label="Milk since payment"
+            label={inPeriod ? "Unpaid milk, this period" : "Milk since payment"}
             value={formatLiters(sums.liters)}
             icon={LocalDrinkIcon}
             color="blue"
@@ -183,8 +219,11 @@ export default function BillingTable({
           );
         }}
         fields={(r) => [
-          ["Milk since payment", formatLiters(r.total_liters)],
-          ["To pay", formatAmount(r.total_amount)],
+          [
+            inPeriod ? "Unpaid milk, this period" : "Milk since payment",
+            formatLiters(litersOf(r)),
+          ],
+          [inPeriod ? "To pay, this period" : "To pay", formatAmount(amountOf(r))], // prettier-ignore
           ["Last payment", lastPaymentText(r)],
         ]}
         actions={(r) =>
@@ -226,10 +265,10 @@ export default function BillingTable({
             <TableRow>
               <TableCell>Customer</TableCell>
               <TableCell align="right" sx={{ width: "15%" }}>
-                Milk since payment
+                {inPeriod ? "Unpaid milk, this period" : "Milk since payment"}
               </TableCell>
               <TableCell align="right" sx={{ width: "15%" }}>
-                To pay
+                {inPeriod ? "To pay, this period" : "To pay"}
               </TableCell>
               <TableCell align="center" sx={{ width: "19%" }}>
                 Last payment
@@ -270,11 +309,11 @@ export default function BillingTable({
                   </TableCell>
 
                   <TableCell align="right">
-                    {formatLiters(r.total_liters)}
+                    {formatLiters(litersOf(r))}
                   </TableCell>
 
                   <TableCell align="right" sx={{ fontWeight: 600 }}>
-                    {formatAmount(r.total_amount)}
+                    {formatAmount(amountOf(r))}
                   </TableCell>
 
                   {/* When, how much, and what it was for. "35 L nu ₹2500" is

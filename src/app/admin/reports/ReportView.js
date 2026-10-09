@@ -22,20 +22,34 @@ import DataCards from "@/components/DataCards";
 import StatCard from "@/components/StatCard";
 import LocalDrinkIcon from "@mui/icons-material/LocalDrink";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
+import MenuItem from "@mui/material/MenuItem";
+import SelectField from "@/components/SelectField";
 import RangePicker from "@/components/RangePicker";
 
 /**
- * What is still owed for the period, and the same thing in litres.
+ * What is still owed, and the same thing in litres.
  *
- * Both are worked out on the server, day by day, against the date the last
- * payment settled up to — see the page. They used to be worked out here as
- * "this period's amount minus this period's payments", which read sensibly
- * and was wrong: February's ₹2,500 handed over in March wiped out March's
- * own ₹2,400, and a month in which nothing had been paid for showed as
- * settled.
+ * Two answers, because there are two questions and the dairy asks both of
+ * the same screen:
+ *
+ *   "period"  — of the milk in the month on the picker, how much is unpaid.
+ *               The month's own record, which is what a report is for.
+ *   "all"     — everything they owe, however many months back it runs.
+ *               Three unpaid months read as ₹2,000 in October's report and
+ *               as ₹6,000 here, and ₹6,000 is the figure somebody about to
+ *               knock on the door wants.
+ *
+ * Both are worked out on the server, day by day, against the date their last
+ * payment settled up to. They used to be "this period's amount minus this
+ * period's payments", which read sensibly and was wrong: February's ₹2,500
+ * handed over in March wiped out March's own ₹2,400, and a month nothing had
+ * been paid for showed as settled.
  */
-const due = (r) => Number(r.due ?? 0);
-const litersDue = (r) => Number(r.due_liters ?? 0);
+const due = (r, scope) =>
+  Number((scope === "all" ? r.due_all : r.due) ?? 0);
+
+const litersDue = (r, scope) =>
+  Number((scope === "all" ? r.due_all_liters : r.due_liters) ?? 0);
 
 /**
  * "15 Mar 2026 · Rs2,500 · 35 L" — the last payment of the period, and what
@@ -63,6 +77,10 @@ export default function ReportView({
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  // The month's own unpaid milk, or everything outstanding. Opens on the
+  // month, because that is what the page is a report of.
+  const [scope, setScope] = useState("period");
+  const allTime = scope === "all";
 
   const go = (nextMode, a, b) =>
     router.push(`/admin/reports?mode=${nextMode}&from=${a}&to=${b}`);
@@ -84,12 +102,12 @@ export default function ReportView({
           liters: t.liters + Number(r.liters),
           amount: t.amount + Number(r.amount),
           paid: t.paid + Number(r.paid),
-          due: t.due + due(r),
-          litersDue: t.litersDue + litersDue(r),
+          due: t.due + due(r, scope),
+          litersDue: t.litersDue + litersDue(r, scope),
         }),
         { liters: 0, amount: 0, paid: 0, due: 0, litersDue: 0 },
       ),
-    [rows],
+    [rows, scope],
   );
 
   return (
@@ -145,6 +163,19 @@ export default function ReportView({
           }}
         />
 
+        {/* Which "Due" the last two columns mean. The range picker above
+            chooses the days; this chooses whether the leftover is counted
+            inside them or all the way back. */}
+        <SelectField
+          size="small"
+          value={scope}
+          onChange={(e) => setScope(e.target.value)}
+          sx={{ minWidth: 190 }}
+        >
+          <MenuItem value="period">Due in this period</MenuItem>
+          <MenuItem value="all">Everything owed</MenuItem>
+        </SelectField>
+
         <Box sx={{ flexGrow: 1 }} />
       </Stack>
 
@@ -160,8 +191,11 @@ export default function ReportView({
             ["Total amount", formatAmount(r.amount)],
             ["Received", formatAmount(r.paid)],
             ["Last payment", lastPaymentText(r)],
-            ["Due", formatAmount(due(r))],
-            ["Due (milk)", formatLiters(litersDue(r))],
+            [allTime ? "Total due" : "Due", formatAmount(due(r, scope))],
+            [
+              allTime ? "Total due (milk)" : "Due (milk)",
+              formatLiters(litersDue(r, scope)),
+            ],
           ]}
           empty="No records in this period."
         />
@@ -189,8 +223,11 @@ export default function ReportView({
                 ["Milk", formatLiters(totals.liters)],
                 ["Amount", formatAmount(totals.amount)],
                 ["Received", formatAmount(totals.paid)],
-                ["Due", formatAmount(totals.due)],
-                ["Due (milk)", formatLiters(totals.litersDue)],
+                [allTime ? "Total due" : "Due", formatAmount(totals.due)],
+                [
+                  allTime ? "Total due (milk)" : "Due (milk)",
+                  formatLiters(totals.litersDue),
+                ],
               ].map(([label, value]) => (
                 <Stack
                   key={label}
@@ -251,10 +288,10 @@ export default function ReportView({
                 Last payment
               </TableCell>
               <TableCell align="right" sx={{ width: "13%" }}>
-                Due
+                {allTime ? "Total due" : "Due"}
               </TableCell>
               <TableCell align="right" sx={{ width: "12%" }}>
-                Due (milk)
+                {allTime ? "Total due (milk)" : "Due (milk)"}
               </TableCell>
             </TableRow>
           </TableHead>
@@ -318,17 +355,21 @@ export default function ReportView({
                   align="right"
                   sx={{
                     fontWeight: 600,
-                    color: due(r) > 0 ? "warning.dark" : "text.secondary",
+                    color:
+                      due(r, scope) > 0 ? "warning.dark" : "text.secondary",
                   }}
                 >
-                  {formatAmount(due(r))}
+                  {formatAmount(due(r, scope))}
                 </TableCell>
 
                 <TableCell
                   align="right"
-                  sx={{ color: due(r) > 0 ? "warning.dark" : "text.secondary" }}
+                  sx={{
+                    color:
+                      due(r, scope) > 0 ? "warning.dark" : "text.secondary",
+                  }}
                 >
-                  {formatLiters(litersDue(r))}
+                  {formatLiters(litersDue(r, scope))}
                 </TableCell>
               </TableRow>
             ))}
