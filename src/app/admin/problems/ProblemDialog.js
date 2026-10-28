@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -38,13 +38,18 @@ function Field({ label, value }) {
 function StatusPicker({ problem }) {
   const [state, formAction] = useActionState(setProblemStatus, null);
 
+  // A ref, not `event.target.form` — MUI's Select replaces the event's
+  // target with a plain { name, value }, so there is no form on it to
+  // submit. See StaffSection, where the same reach threw silently.
+  const formRef = useRef(null);
+
   return (
     // Pushed to the right by its own margin rather than by a spacer next to
     // it. A spacer only works while everything stays on one line; the moment
     // the row wraps on a narrow screen the spacer fills the end of the first
     // line and this drops to the start of the second, which is where it was
     // turning up on a phone.
-    <Box component="form" action={formAction} sx={{ ml: "auto" }}>
+    <Box component="form" action={formAction} ref={formRef} sx={{ ml: "auto" }}>
       <input type="hidden" name="report_id" value={problem.id} />
       <SelectField
         size="small"
@@ -54,7 +59,7 @@ function StatusPicker({ problem }) {
         sx={{ width: 132 }}
         // Submitting on change keeps this to one click; there is nothing else
         // to fill in.
-        onChange={(e) => e.target.form.requestSubmit()}
+        onChange={() => formRef.current?.requestSubmit()}
       >
         {Object.entries(PROBLEM_STATE).map(([value, text]) => (
           <MenuItem key={value} value={value}>

@@ -32,10 +32,11 @@ function ConfirmButton() {
 /**
  * Asks before removing a login, and says what goes with it.
  *
- * Deleting takes the person's replies on complaint threads along with them —
- * the database removes those rows too. Everything else survives: the milk,
- * the billing, the complaints themselves, and the customer record, which is
- * simply unlinked. An admin should know all that before pressing, not after.
+ * For an admin it is only a login. For somebody on the round it is
+ * everything: the customer, their deliveries, their payments, their
+ * complaints. That is what the word is read to mean, and the alert below
+ * says it in those words rather than leaving it to be discovered on the
+ * Customers page afterwards.
  */
 export default function DeleteStaffDialog({ member, onClose }) {
   const [state, formAction] = useActionState(deleteStaff, null);
@@ -101,9 +102,11 @@ export default function DeleteStaffDialog({ member, onClose }) {
                 )}
 
                 {member.linked_customer && (
-                  <Alert severity="info">
-                    <strong>{member.linked_customer}</strong> is kept — only the
-                    login is removed, and the customer goes back to having none.
+                  <Alert severity="error">
+                    <strong>{member.linked_customer}</strong> is a customer.
+                    Their milk, payments, leave and complaints all go with
+                    this — they come off the round, the billing and the
+                    dashboard.
                   </Alert>
                 )}
 

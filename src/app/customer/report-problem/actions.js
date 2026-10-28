@@ -10,7 +10,10 @@ function refresh() {
   revalidatePath("/customer/report-problem");
   revalidatePath("/customer");
   revalidatePath("/admin/problems");
-  revalidatePath("/", "layout");
+  // The dairy's bell, which lives in their layout. Theirs only — clearing
+  // from "/" would rebuild the customer's own pages too, and the customer is
+  // the one standing here waiting for the dialog to close.
+  revalidatePath("/admin", "layout");
 }
 
 const isDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v);

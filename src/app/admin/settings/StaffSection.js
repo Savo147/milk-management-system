@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -34,9 +34,42 @@ import { formatDate } from "@/lib/format";
 import { updateStaff, addStaff } from "./actions";
 import DeleteStaffDialog from "./DeleteStaffDialog";
 
-/** Role and status for one row, saved the moment either dropdown changes. */
+/** The Save beside a row, awake only once something has actually moved. */
+function SaveRow({ changed }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      size="small"
+      variant="contained"
+      disabled={!changed || pending}
+      sx={{ flexShrink: 0 }}
+    >
+      {pending ? "Saving..." : "Save"}
+    </Button>
+  );
+}
+
+/**
+ * Role and status for one row.
+ *
+ * Saved on a button, not the moment a dropdown moves. Making somebody an
+ * admin hands them every customer's money and the power to delete logins,
+ * and a menu that does that on the way past — on a phone, with a thumb — is
+ * a dropdown you can fall into. Pick, look at it, then press Save.
+ *
+ * (It was an auto-save, and it had never once worked: MUI's Select is not a
+ * <select>, and its onChange hands over an event whose target it has
+ * replaced with a plain { name, value }. There was no form on it to submit,
+ * so the reach for one threw inside the change handler — where React has no
+ * page to show an error on. The dropdown moved and the row did not.)
+ */
 function StaffControls({ member, isSelf }) {
   const [state, formAction] = useActionState(updateStaff, null);
+
+  const [role, setRole] = useState(member.role);
+  const [status, setStatus] = useState(member.status);
 
   if (isSelf) {
     return (
@@ -46,15 +79,21 @@ function StaffControls({ member, isSelf }) {
     );
   }
 
+  const changed = role !== member.role || status !== member.status;
+
   return (
     <Box component="form" action={formAction}>
       <input type="hidden" name="user_id" value={member.id} />
-      <Stack direction="row" spacing={1} sx={{ justifyContent: "center" }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ justifyContent: "center", alignItems: "center" }}
+      >
         <SelectField
           size="small"
           name="role"
-          defaultValue={member.role}
-          onChange={(e) => e.target.form.requestSubmit()}
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
           sx={{ minWidth: 118 }}
         >
           <MenuItem value="admin">Admin</MenuItem>
@@ -64,8 +103,8 @@ function StaffControls({ member, isSelf }) {
         <SelectField
           size="small"
           name="status"
-          defaultValue={member.status}
-          onChange={(e) => e.target.form.requestSubmit()}
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
           sx={{ minWidth: 118 }}
         >
           {Object.entries(ACCOUNT_STATUS).map(([value, text]) => (
@@ -74,6 +113,8 @@ function StaffControls({ member, isSelf }) {
             </MenuItem>
           ))}
         </SelectField>
+
+        <SaveRow changed={changed} />
       </Stack>
 
       {state?.error && (

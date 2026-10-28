@@ -6,10 +6,28 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { clearBrandingMemo, requireAdmin } from "@/lib/auth";
 import { BRANDING_TAG } from "@/lib/cache-tags";
 import { notifyCustomer } from "@/lib/notify";
+import { purgeCustomer } from "@/lib/purge-customer";
 import { formatRate } from "@/lib/format";
 
-function refresh() {
+/**
+ * Clearing the right amount of cache.
+ *
+ * `revalidatePath("/", "layout")` throws away every page and every layout in
+ * the app. The next render then rebuilds the lot — branding, the bell, the
+ * chat preview, and whatever the page itself reads — and on this dairy's
+ * line that is several seconds of staring at a button that has already
+ * done its job.
+ *
+ * So it is only used for the two things that really do appear on every
+ * screen: the dairy's name and logo, and the signed-in admin's own name and
+ * photo in the header. Everything else clears the one page it changed.
+ */
+function refreshEverywhere() {
   revalidatePath("/", "layout");
+}
+
+function refreshSettings() {
+  revalidatePath("/admin/settings");
 }
 
 /** Dairy name, logo, address, phone and the low-stock threshold. */
@@ -45,7 +63,7 @@ export async function saveBusinessSettings(prevState, formData) {
   await clearBrandingMemo();
   revalidateTag(BRANDING_TAG);
 
-  refresh();
+  refreshEverywhere();
   return { ok: true };
 }
 
@@ -77,7 +95,9 @@ export async function updateProfile(prevState, formData) {
 
   if (error) return { error: `Could not save: ${error.message}` };
 
-  refresh();
+  // The whole app: this admin's own name and photo sit in the header of
+  // every page they open.
+  refreshEverywhere();
   return { ok: true };
 }
 
@@ -202,7 +222,7 @@ export async function updateStaff(prevState, formData) {
 
   if (error) return { error: `Could not save: ${error.message}` };
 
-  refresh();
+  refreshSettings();
   return { ok: true };
 }
 
@@ -247,12 +267,36 @@ export async function deleteStaff(prevState, formData) {
     }
   }
 
+  // If this login belongs to somebody on the round, they go too — the
+  // person, their milk, their money, their complaints.
+  //
+  // It used to unlink them and leave the customer standing, on the reasoning
+  // that somebody can stop using the phone app and still take milk every
+  // morning. True, but it is not what "delete" is read to mean: the name
+  // stayed on the Customers page and in the dairy's own totals, and the only
+  // way to be rid of it was the database. Keeping somebody while taking
+  // their login away is what Inactive is for, and the dialog says so.
+  const { data: customer } = await db
+    .from("customers")
+    .select("id")
+    .eq("user_id", id)
+    .maybeSingle();
+
+  if (customer) {
+    const purged = await purgeCustomer(db, customer.id);
+    if (purged.error) return purged;
+  }
+
   const { error } = await db.auth.admin.deleteUser(id);
   if (error) return { error: `Could not delete: ${error.message}` };
 
-  // The Customers page lists unlinked logins in a banner, so it changes too.
+  // Everywhere their name could still be showing.
   revalidatePath("/admin/settings");
   revalidatePath("/admin/customers");
+  revalidatePath("/admin");
+  revalidatePath("/admin/daily-milk");
+  revalidatePath("/admin/hisab");
+  revalidatePath("/admin/leaves");
   return { ok: true };
 }
 
@@ -300,6 +344,6 @@ export async function addStaff(prevState, formData) {
 
   if (upErr) return { error: `Profile not updated: ${upErr.message}` };
 
-  refresh();
+  refreshSettings();
   return { ok: true };
 }

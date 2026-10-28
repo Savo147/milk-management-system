@@ -10,9 +10,11 @@ function refresh() {
   revalidatePath("/admin/problems");
   revalidatePath("/admin");
   // The customer's own pages and their bell, which live under a different
-  // path entirely.
-  revalidatePath("/customer/report-problem");
-  revalidatePath("/", "layout");
+  // path entirely. Their layout, not the whole app's: the bell sits in the
+  // customer layout, and clearing from "/" threw away the admin's tree as
+  // well — leaving the admin, who is the one waiting on this, paying for a
+  // rebuild of pages that had not changed.
+  revalidatePath("/customer", "layout");
 }
 
 /**
